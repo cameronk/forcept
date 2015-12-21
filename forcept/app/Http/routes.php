@@ -11,6 +11,121 @@
 |
 */
 
-Route::get('/', function () {
-    return view('welcome');
+Route::group(['middleware' => 'auth'], function () {
+
+	
+	Route::get('/', [
+		'as' => 'index',
+		function() {
+			return view('index');
+		}
+	]);
+
+	/** 
+	 * Console
+	 */
+	Route::group([
+		'prefix'=> 'console', 
+		'as' => 'console::', 
+		'namespace' => 'Console'
+	], function() {
+
+		// Console index
+		Route::get('/', [
+			'as' => 'index',
+			'uses' => 'ConsoleController@getIndex'
+		]);
+
+
+		/**
+		 * User controller resource
+		 */
+		Route::group([
+			'prefix' => 'users',
+			'as' => 'users::',
+		], function() {
+
+			// Users index
+			Route::get('/', [
+				'as' => 'index',
+				'uses' => 'UsersController@index'
+			]);
+
+			// Create user
+			Route::get('create', [
+				'as' => 'create',
+				'uses' => 'UsersController@create'
+			]);
+
+			// Store user
+			Route::post('create', [
+				'as' => 'store',
+				'uses' => 'UsersController@store'
+			]);
+
+			// Delete user
+			Route::delete('delete/{id}', [
+				'uses' => 'UsersController@destroy'
+			]);
+
+		});
+
+		/**
+		 * Flow controller resource
+		 */
+		Route::group([
+			'prefix' => 'flow',
+			'as' => 'flow::', 
+		], function() {
+
+			// Flow index
+			Route::get('/', [
+				'as' => 'index',
+				'uses' => 'FlowController@index'
+			]);
+
+			// Create stage
+			Route::get('create', [
+				'as' => 'create',
+				'uses' => 'FlowController@create'
+			]);
+
+			// Store stage
+			Route::post('create', [
+				'as' => 'store',
+				'uses' => 'FlowController@store'
+			]);
+
+			// Edit stage
+			Route::get('edit/{id}', [
+				'uses' => 'FlowController@edit'
+			]);
+
+			// Update stage
+			Route::post('edit/{id}', [
+				'uses' => 'FlowController@update'
+			]);
+
+			// Delete stage
+			Route::delete('delete/{id}', [
+				'uses' => 'FlowController@destroy'
+			]);
+
+		});
+	});
+
 });
+
+
+/**
+ * Auth
+ */
+Route::get('auth/login', [
+	'as' => 'auth::login', 
+	'uses' => 'Auth\AuthController@getLogin'
+]);
+Route::get('auth/logout', [
+	'as' => 'auth::logout',
+	'uses' => 'Auth\AuthController@getLogout'
+]);
+Route::post('auth/login', 'Auth\AuthController@postLogin');

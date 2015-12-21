@@ -1,0 +1,48 @@
+/**
+ * template.scss
+ */
+
+// Bootstrap and respective variables
+@import "bootstrap/scss/bootstrap";
+
+
+// Forcept variables
+$forcept-navbar-height:    4rem;
+
+
+/**
+ * Control page content size based on viewport
+ */
+@include media-breakpoint-up(xl) {
+    #page-content {
+        max-width: 80%;
+        margin: 0 auto;
+    }
+}
+
+
+
+/**
+ * Bootstrap fixes
+ */
+
+// form-control-lg adds border radius even though it's disabled
+.form-control.form-control-lg {
+    border-radius: 0;
+}
+
+// fix line-height for input-group-addons with .label class
+.form-control-lg + .input-group-addon.label {
+    padding: 0 $input-padding-y-lg;
+    line-height: $input-height-lg;
+}
+
+// Navigation
+@import "navigation";
+
+// Content
+@import "content";
+@import "signin";    
+
+// Patient-related modules
+@import "patient";
