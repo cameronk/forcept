@@ -37,6 +37,10 @@
 
 }
 
+.nav-item > a.disabled {
+    opacity: 0.5;
+}
+
 #footer {
     background: $component-active-bg;
     color: $gray-lightest;

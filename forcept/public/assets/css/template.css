@@ -4495,6 +4495,9 @@ a.bg-danger:focus, a.bg-danger:hover {
       height: 4rem;
       line-height: 4rem; }
 
+.nav-item > a.disabled {
+  opacity: 0.5; }
+
 #footer {
   background: #0275d8;
   color: #f7f7f9;

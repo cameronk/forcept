@@ -19,29 +19,13 @@ function __debug() {
 
 /* =================================================== */
 
-/**
- * Field JSON structure
-
- {
-  "fields": {
-    "[id]": {
-      "name": "Patient name",
-      "type": "text"
-    },
-    "[id]": { 
-      "name": "Location",
-      "type": "select",
-      "settings": {
-        "options": ["option 1", "option 2"],
-        "allowCustomData": true
-      }
-    }
-  }
-}
-
-*/
-
-var flowEditorCustomizableFields = ["select"];
+var flowEditor_CustomizableFields = ["select"];
+var flowEditor_DefaultFieldState = {
+	name: "",
+	type: "text",
+	mutable: true,
+	settings: null,
+};
 
 var FlowEditorFieldConfiguratorSettingsDialog = React.createClass({
 
@@ -213,13 +197,34 @@ var FlowEditorFieldConfiguratorSettingsDialog = React.createClass({
 	 * Render the settings dialog
 	 */
 	render: function() {
-		// Check what type of input this dialog is for
-		if(this.props.type == "text" || this.props.type == "date") {
-			return (
-				<div className="alert alert-info">
-					No configuration is required for {this.props.type} inputs.
+
+		var mutabilityMessage;
+
+		// Add a message if this field is immutable
+		if(this.props.mutable == false) {
+			mutabilityMessage = (
+				<div className="alert alert-danger">
+					<strong>Notice:</strong> This field is protected. Only the display name and type-based settings can be modified.
 				</div>
 			);
+		} else {
+			mutabilityMessage = (
+				<span></span>
+			);
+		}
+
+		// Check what type of input this dialog is for
+		if(this.props.type == "text" || this.props.type == "date") {
+
+			return (
+				<div>
+					<div className="alert alert-info m-t">
+						No configuration is required for {this.props.type} inputs.
+					</div>
+					{mutabilityMessage}
+				</div>
+			);
+
 		} else if(this.props.type == "select") {
 
 			var optionInputs,
@@ -280,6 +285,7 @@ var FlowEditorFieldConfiguratorSettingsDialog = React.createClass({
 	            	<h5>Options ({ this.state.hasOwnProperty('options') ? this.state.options.length : 0 })</h5>
 					{optionInputs}
 					{customDataCheckbox}
+					{mutabilityMessage}
 					<button type="button" className="btn btn-primary-outline" onClick={this.handleAddOption}>Add another option</button>
 				</div>
 			);
@@ -288,6 +294,27 @@ var FlowEditorFieldConfiguratorSettingsDialog = React.createClass({
 });
 
 
+/**
+ * Field JSON structure
+
+ {
+  "fields": {
+    "[id]": {
+      "name": "Patient name",
+      "type": "text",
+    },
+    "[id]": { 
+      "name": "Location",
+      "type": "select",
+      "settings": {
+        "options": ["option 1", "option 2"],
+        "allowCustomData": true
+      }
+    }
+  }
+}
+
+*/
 
 var FlowEditorFieldConfigurator = React.createClass({
 
@@ -295,11 +322,7 @@ var FlowEditorFieldConfigurator = React.createClass({
 	 * Initial state for a field
 	 */
  	getInitialState: function() {
- 		return {
- 			name: "",
- 			type: "text",
- 			settings: null,
- 		};
+ 		return flowEditor_DefaultFieldState;
  	},
 
  	/*
@@ -310,10 +333,11 @@ var FlowEditorFieldConfigurator = React.createClass({
  			// Required properties
  			name: this.props.name,
  			type: this.props.type,
+ 			mutable: this.props.mutable,
 
  			// Settings
  			settings: 
- 				flowEditorCustomizableFields.indexOf(this.props.type) !== -1 // If this field is a customizable field
+ 				flowEditor_CustomizableFields.indexOf(this.props.type) !== -1 // If this field is a customizable field
  				&& typeof this.props.settings === "object" // If the settings object exists
  				&& Object.keys(this.props.settings).length > 0  // If the settings object has parameters
  					? this.props.settings // Use the settings object
@@ -342,7 +366,6 @@ var FlowEditorFieldConfigurator = React.createClass({
 	 		// Remind container to check validity of inputs
 	 		this.props.onChange(this.props['data-key']);
  		});
-
  	},
 
  	/*
@@ -431,7 +454,7 @@ var FlowEditorFieldConfigurator = React.createClass({
  						</div>
 	 					<div className="col-sm-12 col-md-4">
 		 					<h4 className="field-title m-b">
-		 						<button type="button" className="btn btn-sm btn-danger-outline pull-right" onClick={this.handleRemoveField}>&times; Remove {this.state.name.length > 0 ? '"' + this.state.name + '"' : 'this input'}</button>
+		 						<button type="button" className="btn btn-sm btn-danger-outline pull-right" disabled={!this.state.mutable} onClick={this.handleRemoveField}>&times; Remove {this.state.name.length > 0 ? '"' + this.state.name + '"' : 'this input'}</button>
 		 					</h4>
 		 				</div>
  					</div>
@@ -442,7 +465,7 @@ var FlowEditorFieldConfigurator = React.createClass({
  					{nameInputGroup}
  					<div className="form-group">
  						<label className="form-control-label">Type:</label>
-	 					<select className="form-control" onChange={this.handleFieldTypeChange} defaultValue={this.state.type}>
+	 					<select className="form-control" disabled={!this.state.mutable} onChange={this.handleFieldTypeChange} defaultValue={this.state.type}>
 	 						<option value="text">Text input</option>
 	 						<option value="date">Date input</option>
 	 						<option value="select">Select input with options</option>
@@ -456,6 +479,7 @@ var FlowEditorFieldConfigurator = React.createClass({
 	                	ref={'settings-' + this.props['data-key']}
 	                	field-key={this.props['data-key']}
 	                	type={this.state.type} 
+	                	mutable={this.state.mutable}
 	                	settings={this.state.settings}
 	                	onChange={this.handleFieldSettingsChange} 
 	                	/>
@@ -516,7 +540,7 @@ var FlowEditorFields = React.createClass({
 		var fieldValidities = this.state.fieldValidities;
 		var key = new Date().getTime();
 
-		fields[key] = { name: "", type: "text", settings: null }; // Default settings for a new input
+		fields[key] = flowEditor_DefaultFieldState; // Default settings for a new input
 		fieldValidities[key] = false; // Input defaults to invalid
 
 		this.setState({ fields: fields, fieldValidities: fieldValidities });

@@ -26,7 +26,20 @@ class DatabaseSeeder extends Seeder
             'type' => 'basic',
             'name' => 'Check-in',
             'root' => true,
-            'fields' => '{}'
+            'fields' => json_encode([
+                "first_name" => [
+                    "type" => "text",
+                    "name" => "First name",
+                    "mutable" => false,
+                    "settings" => null,
+                ],
+                "last_name" => [
+                    "type" => "text",
+                    "name" => "Last name",
+                    "mutable" => false,
+                    "settings" => null,
+                ]
+            ])
         ]);
 
         Model::reguard();

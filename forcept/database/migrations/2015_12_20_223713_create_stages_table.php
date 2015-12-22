@@ -33,6 +33,6 @@ class CreateStagesTable extends Migration
     public function down()
     {
         //
-        Schema::drop('stages');
+        Schema::dropIfExists('stages');
     }
 }

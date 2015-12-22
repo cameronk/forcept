@@ -9,6 +9,7 @@ class Stage extends Model
     //
     // public $timestamps = false;
 
+
     /*
      * Smart table name getters
      */
@@ -19,7 +20,7 @@ class Stage extends Model
 
     public function getTableNameAttribute()
     {
-    	return 'stage_' . $this->id;
+    	return $this->root == false ? 'stage_' . $this->id : 'patients';
     }
 
     /*

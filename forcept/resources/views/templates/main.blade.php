@@ -35,15 +35,7 @@
             
             <!--| nav links | -->
             <ul class="nav nav-pills nav-stacked">
-                <li class="nav-item">
-                    <a href="#" class="nav-link active">Triage</a>
-                </li>
-                <li class="nav-item">
-                    <a href="#" class="nav-link">Medical</a>
-                </li>
-                <li class="nav-item">
-                    <a href="#" class="nav-link">Pharmacy</a>
-                </li>
+                @include('components/nav')
             </ul>
             
         </div>
@@ -58,15 +50,8 @@
         
         <!--| nav links | -->
         <ul class="nav navbar-nav">
-            <li class="nav-item">
-                <a href="#" class="nav-link active">Triage</a>
-            </li>
-            <li class="nav-item">
-                <a href="#" class="nav-link">Medical</a>
-            </li>
-            <li class="nav-item">
-                <a href="#" class="nav-link">Pharmacy</a>
-            </li>
+            
+            @include('components/nav')
             
             <li class="nav-item pull-right dropdown">
                 <a href="#" class="nav-link dropdown-toggle" data-toggle="dropdown" href="#" role="button" aria-haspopup="true" aria-expanded="false"><span class="glyphicon glyphicon-user"></span> {{ Auth::user()->username }}</a>

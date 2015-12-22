@@ -1,7 +1,5 @@
 @extends('templates/console')
 
-@inject('stages', 'App\Stage')
-
 @section('page-title', 'Flow management - Forcept console')
 
 @section('console-content')
@@ -33,4 +31,5 @@
             </div>
         </div>
     </form>
+
 @endsection

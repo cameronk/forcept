@@ -79,6 +79,25 @@
     </div><!-- /.modal-dialog -->
 </div><!-- /.modal -->
 
+<!--| Warning modal |-->
+<div class="modal fade" id="stage-edit-relativity-information">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title">Field relativity</h4>
+            </div>
+            <div class="modal-body">
+                Field relativity denotes how a field should relate to a certain patient.<br/><hr/>
+                Choosing <strong>"Patient Information"</strong> means this field will be treated as biographical information of the patient &mdash; think name, age, or hometown.<br/><br/>
+                Choosing <strong>"Visit Information"</strong> denotes this field as visit related. It will not be populated based on pre-existing data, if such data exists.
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-primary" data-dismiss="modal">Got it &raquo;</a>
+            </div>
+        </div><!-- /.modal-content -->
+    </div><!-- /.modal-dialog -->
+</div><!-- /.modal -->
+
 <h1 class="p-t">Edit stage "{{ $stage->name }}"</h1>
 <hr/>
 
@@ -98,6 +117,12 @@
     <div class="col-sm-10">
         <input type="text" name="name" class="form-control" id="stage-name" value="{{ oom('name', $stage->name) }}" placeholder="Enter stage name">
     </div>
+</div>
+
+<div class="alert alert-info">
+    <strong>Heads up!</strong>
+    <p>This stage is the root stage, meaning it is where patients are paired with a new visit. During this process, patient data is either pulled from a pre-existing patient record for updating, or a new record is created from scratch.</p>
+    <p>As a result, this stage cannot be deleted. In addition, some fields (such as patient first and last name) may be immutable.</p>
 </div>
 
 <!--| console::flow::create - input config |-->

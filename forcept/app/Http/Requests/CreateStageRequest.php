@@ -26,7 +26,7 @@ class CreateStageRequest extends Request
     {
         return [
             'type' => 'required|alpha_num',
-            'name' => 'required|alpha_num|unique:stages'
+            'name' => 'required|unique:stages'
         ];
     }
 }
