@@ -25,7 +25,8 @@ class DatabaseSeeder extends Seeder
         DB::table('stages')->insert([
             'type' => 'basic',
             'name' => 'Check-in',
-            'root' => true
+            'root' => true,
+            'fields' => '{}'
         ]);
 
         Model::reguard();

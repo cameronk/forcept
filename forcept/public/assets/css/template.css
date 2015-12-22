@@ -4519,12 +4519,10 @@ a.bg-danger:focus, a.bg-danger:hover {
 h4.field-title span.title {
   padding-left: 1rem; }
 
-#flow-editor-fields-contain {
-  padding-left: 1rem; }
-  #flow-editor-fields-contain .flow-editor-configurator-row {
-    border-bottom: #9ca3a9 dashed 1px;
-    margin-bottom: 2rem;
-    padding-bottom: 2rem; }
+#flow-editor-fields-contain .flow-editor-configurator-row {
+  border-bottom: #9ca3a9 dashed 1px;
+  margin-bottom: 2rem;
+  padding-bottom: 2rem; }
 
 #cfg-submitting h5 {
   display: inline-block;

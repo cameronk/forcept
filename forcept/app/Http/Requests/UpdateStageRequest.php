@@ -3,6 +3,7 @@
 namespace App\Http\Requests;
 
 use App\Http\Requests\Request;
+use Auth;
 
 class UpdateStageRequest extends Request
 {
@@ -24,7 +25,8 @@ class UpdateStageRequest extends Request
     public function rules()
     {
         return [
-            'name' => 'required|size:30'
+            'name' => 'required|max:30',
+            'fields' => 'required'
         ];
     }
 }

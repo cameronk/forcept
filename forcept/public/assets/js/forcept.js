@@ -5,8 +5,16 @@
 /*
  * Add debug data to tooltip
  */
-function __debug(data) {
-	$("#forcept-debug-content code").html(data)
+function __debug() {
+	var compile = ""
+	for(var i = 0; i < arguments.length; i++) {
+		var data = arguments[i];
+		if(typeof data == "object" && data !== null) {
+			data = JSON.stringify(data, null, "  ");
+		}
+		compile += (data + "<br/><br/>");
+	}
+	$("#forcept-debug-content code").html(compile);
 }
 
 /* =================================================== */
@@ -93,9 +101,9 @@ var FlowEditorFieldConfiguratorSettingsDialog = React.createClass({displayName: 
 					}
 
 					// If there's a set value for allowing custom data...
-					if(this.props.settings.hasOwnProperty("allowCustomData") && typeof this.props.settings.allowCustomData === "boolean") {
+					if(this.props.settings.hasOwnProperty("allowCustomData") && this.props.settings.allowCustomData == "true") {
 						console.log("\t\t| Input has allowCustomData [" + this.props.settings.allowCustomData + "], pushing to state.");
-						this.setState({ allowCustomData: this.props.settings.allowCustomData });
+						this.setState({ allowCustomData: (this.props.settings.allowCustomData == "true") });
 					}
 
 				} else {
@@ -182,7 +190,8 @@ var FlowEditorFieldConfiguratorSettingsDialog = React.createClass({displayName: 
 	 */
 	handleAllowCustomDataChange: function() {
 		console.log("");
-		console.log("--[change allow custom data: " + this.props['field-key'] + "]--");
+		console.log("--[handleAllowCustomDataChange]--");
+		console.log("\t| for: " + this.props['field-key']);
 		console.log("\t| State before custom data change:");
 		console.log(this.state);
 
@@ -194,7 +203,7 @@ var FlowEditorFieldConfiguratorSettingsDialog = React.createClass({displayName: 
 			// Bump changes to parent element for aggregation
 			this.props.onChange(this.state);
 
-			console.log("--[/change allow custom data: " + this.props['field-key'] + "]--");
+			console.log("--[/handleAllowCustomDataChange]--");
 			console.log("");
 		});
 
@@ -204,7 +213,6 @@ var FlowEditorFieldConfiguratorSettingsDialog = React.createClass({displayName: 
 	 * Render the settings dialog
 	 */
 	render: function() {
-
 		// Check what type of input this dialog is for
 		if(this.props.type == "text" || this.props.type == "date") {
 			return (
@@ -219,6 +227,8 @@ var FlowEditorFieldConfiguratorSettingsDialog = React.createClass({displayName: 
 
 			// If there are options in the state
 			if(this.state.hasOwnProperty('options') && this.state.options.length > 0) {
+
+				console.log("render config, allowCustomData:" + typeof this.state.allowCustomData);
 
 				// Map option input containers to one variable
 				optionInputs = this.state.options.map(function(value, index) {
@@ -243,7 +253,10 @@ var FlowEditorFieldConfiguratorSettingsDialog = React.createClass({displayName: 
 					React.createElement("div", {className: "col-sm-12"}, 
 						React.createElement("div", {className: "checkbox m-t"}, 
 							React.createElement("label", null, 
-								React.createElement("input", {type: "checkbox", checked: this.state.allowCustomData, onChange: this.handleAllowCustomDataChange}), " Allow users to enter custom data for this field"
+								React.createElement("input", {type: "checkbox", 
+									checked: this.state.allowCustomData == true, 
+									onChange: this.handleAllowCustomDataChange}), 
+									"Allow users to enter custom data for this field"
 							)
 						)
 					)
@@ -342,10 +355,23 @@ var FlowEditorFieldConfigurator = React.createClass({displayName: "FlowEditorFie
  	/*
  	 * Handle change to field settings.
  	 */
- 	handleFieldSettingsChange: function(settings) {
+ 	handleFieldSettingsChange: function() {
+
+ 		console.log("");
+ 		console.log("--[handleFieldSettings change - "+ this.props['data-key'] + "]--");
+ 		console.log("\t| State for this field's settings component:");
+
+ 		// Grab state object via React ref
  		var settings = this.refs['settings-' + this.props['data-key']].state;
 
- 		this.setState({ settings: settings });
+ 		console.log(settings);
+
+ 		// Bump child state up to parent settings state
+ 		this.setState({ settings: settings }, function() {
+ 			console.log("\t| New state for " + this.props['data-key']);
+ 			console.log(this.state);
+ 			console.log("--[/handleFieldSettings change]--");
+ 		}.bind(this));
  	},
 
  	/*
@@ -375,7 +401,7 @@ var FlowEditorFieldConfigurator = React.createClass({displayName: "FlowEditorFie
  			nameInputGroup = (
  				React.createElement("div", {className: "form-group has-error"}, 
  					React.createElement("label", {className: "form-control-label", for: "name-" + this.props['data-key']}, "Name:"), 
- 					React.createElement("input", {type: "text", id: "name-" + this.props['data-key'], className: "form-control form-control-error", placeholder: "Field name", maxlength: "30", onChange: this.handleFieldNameChange, defaultValue: this.state.name}), 
+ 					React.createElement("input", {type: "text", id: "name-" + this.props['data-key'], className: "form-control form-control-error", placeholder: "Field name", maxLength: "30", onChange: this.handleFieldNameChange, defaultValue: this.state.name}), 
  					React.createElement("div", {className: "alert alert-danger"}, 
  						React.createElement("strong", null, "Heads up:"), " all inputs require a name."
  					)
@@ -385,7 +411,7 @@ var FlowEditorFieldConfigurator = React.createClass({displayName: "FlowEditorFie
  			nameInputGroup = (
  				React.createElement("div", {className: "form-group"}, 
  					React.createElement("label", {className: "form-control-label", for: "name-" + this.props['data-key']}, "Name:"), 
- 					React.createElement("input", {type: "text", id: "name-" + this.props['data-key'], className: "form-control", placeholder: "Field name", maxlength: "30", onChange: this.handleFieldNameChange, defaultValue: this.state.name})	
+ 					React.createElement("input", {type: "text", id: "name-" + this.props['data-key'], className: "form-control", placeholder: "Field name", maxLength: "30", onChange: this.handleFieldNameChange, defaultValue: this.state.name})	
  				)	
  			);
  		}
@@ -431,7 +457,7 @@ var FlowEditorFieldConfigurator = React.createClass({displayName: "FlowEditorFie
 	                	"field-key": this.props['data-key'], 
 	                	type: this.state.type, 
 	                	settings: this.state.settings, 
-	                	onChange: this.handleFieldSettingsChange.bind(this, this.state.settings)}
+	                	onChange: this.handleFieldSettingsChange}
 	                	)
 	            )
 	        )
@@ -463,6 +489,7 @@ var FlowEditorFields = React.createClass({displayName: "FlowEditorFields",
 			fieldValidities: {},
 			invalidCount: 0,
 			isValid: true,
+			fieldsRemoved: [],
 		};
 	},
 
@@ -470,6 +497,11 @@ var FlowEditorFields = React.createClass({displayName: "FlowEditorFields",
 	 * Add prop fields to state before mount
 	 */
 	componentWillMount: function() {
+		// console.log("");
+		// console.log("--[FlowEditorFields mount]--");
+		// console.log("\t| Default props: ");
+		// console.log(this.props);
+
 		this.setState({ fields: this.props.fields }, function() {
 			this.checkContainerValidity();
 		}.bind(this));
@@ -499,15 +531,17 @@ var FlowEditorFields = React.createClass({displayName: "FlowEditorFields",
  	handleRemoveField: function(key) {
 		var fields = this.state.fields;
 		var fieldValidities = this.state.fieldValidities;
+		var fieldsRemoved = this.state.fieldsRemoved;
 
 		if(fields.hasOwnProperty(key)) {
+			fieldsRemoved.push( (this.refs[key].state.name.length > 0 ? this.refs[key].state.name : '<em>Untitled field</em>' ) + " &nbsp; <span class='label label-default'>" + key + "</span>");
 			delete fields[key];
 		}
 		if(fieldValidities.hasOwnProperty(key)) {
 			delete fieldValidities[key];
 		}
 
-		this.setState({ fields: fields, fieldValidities: fieldValidities });
+		this.setState({ fields: fields, fieldValidities: fieldValidities, fieldsRemoved: fieldsRemoved });
 
 		// Since we removed a field, we should re-check validity of the container
 		this.checkContainerValidity();
@@ -567,8 +601,17 @@ var FlowEditorFields = React.createClass({displayName: "FlowEditorFields",
 		// Check if any fields are stored in state.
 		if(Object.keys(this.state.fields).length > 0) {
 			fields = Object.keys(this.state.fields).map(function(key, index) {
+				console.log(" => Creating field " + key + " (" + this.state.fields[key].name + ", " + this.state.fields[key].type + ")");
+				console.log(this.state.fields[key]);
 				return (
-					React.createElement(FlowEditorFieldConfigurator, React.__spread({},  this.state.fields[key], {onChange: this.checkFieldValidity.bind(this, key), onRemove: this.handleRemoveField.bind(this, key), key: key, "data-key": key, ref: key, index: index}))
+					React.createElement(FlowEditorFieldConfigurator, React.__spread({},  
+						this.state.fields[key], 
+						{onChange: this.checkFieldValidity.bind(this, key), 
+						onRemove: this.handleRemoveField.bind(this, key), 
+						key: key, 
+						"data-key": key, 
+						ref: key, 
+						index: index}))
 				);
 			}.bind(this));
 		} else {

@@ -109,6 +109,7 @@ $(function() {
     $("#forcept-launch-debug").on('click', function() {
         $("#forcept-debug-content").toggleClass('hidden'); 
     });
+    
 });
 </script>
     

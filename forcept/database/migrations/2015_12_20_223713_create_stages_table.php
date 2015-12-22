@@ -19,7 +19,7 @@ class CreateStagesTable extends Migration
             $table->string('name');
             $table->enum('type', ['basic', 'pharmacy']);
             $table->boolean('root')->default(false);
-            $table->json('config');
+            $table->json('fields');
             $table->softDeletes();
         });
     }

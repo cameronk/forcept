@@ -7,6 +7,7 @@ use App\Stage;
 
 use App\Http\Requests;
 use App\Http\Requests\CreateStageRequest;
+use App\Http\Requests\UpdateStageRequest;
 use App\Http\Controllers\Controller;
 
 use Illuminate\Database\Schema\Blueprint;
@@ -48,6 +49,7 @@ class FlowController extends Controller
         $stage = new Stage;
             $stage->name = $request->name;
             $stage->type = $request->type;
+            $stage->fields = "{}";
 
             // Save stage model
             if($stage->save()) {
@@ -95,25 +97,57 @@ class FlowController extends Controller
     public function update(UpdateStageRequest $request, $id)
     {
         $stage = Stage::where('id', $id);
-        $response = {};
 
         // Check if this stage exists
         if($stage->count() > 0) {
 
             // Get stage.
             $stage = $stage->first();
-                $stage->name = $request->name;
+
+            $prior = $stage->fields;
+
+            // Check if we're changing the stage's name...
+            if($stage->name !== $request->name) {
+                // Check if this new name is unique.
+                if(Stage::where('name', '=', $request->name)->count() > 0) {
+
+                    // Already exists!
+                    return response()->json([
+                        "status" => "failure",
+                        "message" => "This name is already taken by another stage. Please choose a different name."
+                    ], 422);
+
+                } else {
+                    $stage->name = $request->name;
+                }
+            }
+
+            // Continue with updating other fields
+            $stage->fields = $request->fields;
+
+            // Attempt to save stage record
+            if($stage->save()) {
+
+                return response()->json([
+                    "status" => "success",
+                    "message" => "Changes saved."
+                ]);
+
+            } else {
+                return response()->json([
+                    "status" => "failure",
+                    "message" => "Failed to save stage."
+                ], 422);
+            } 
 
 
         } else {
-            $response = {
+            return response()->json([
                 "status" => "failure",
                 "message" => "Stage with ID " . $id . " does not exist in the database."
-            };
+            ], 422);
         }
 
-        //
-        return response()->json($response);
     }
 
     /**
