@@ -3,9 +3,8 @@
 namespace App\Http\Requests;
 
 use App\Http\Requests\Request;
-use Auth;
 
-class CreateStageRequest extends Request
+class UpdateStageRequest extends Request
 {
     /**
      * Determine if the user is authorized to make this request.
@@ -25,8 +24,7 @@ class CreateStageRequest extends Request
     public function rules()
     {
         return [
-            'type' => 'required|alpha_num',
-            'name' => 'required|alpha_num|unique:stages'
+            'name' => 'required|size:30'
         ];
     }
 }

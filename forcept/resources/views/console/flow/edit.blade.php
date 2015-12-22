@@ -21,7 +21,7 @@
     <div class="form-group row">
         <label for="name" class="col-sm-2 form-control-label">Stage name</label>
         <div class="col-sm-10">
-            <input type="text" name="name" class="form-control" id="name" value="{{ oom('name', $stage->name) }}" placeholder="Enter stage name">
+            <input type="text" name="name" class="form-control" id="stage-name" value="{{ oom('name', $stage->name) }}" placeholder="Enter stage name">
         </div>
     </div>
 
@@ -62,14 +62,26 @@
                 $("#cfg-contain").slideUp();
                 $("#cfg-submitting").fadeIn();
                 
-                console.log(FlowEditorFields.compileData());
+                
+                var data = {
+                    "_token": "{{ csrf_token() }}",
+                    name: $("#stage-name").val(),
+                    fields: FlowEditorFields.compileData()
+                };
+                
+                $.post("{{ url('console/flow/edit/' . $stage->id) }}", data, function(response) {
+                    console.log(response);
+                });
+                
+                $.post
+                
             }
         }),
         document.getElementById("cfg-contain")
     );
            
     setInterval(function() {
-        var data = FlowEditorFields.compileData();
+        var data = FlowEditorFields.state;
         __debug(JSON.stringify(data, null, "  "));
     }, 1000);
     

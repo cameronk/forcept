@@ -200,8 +200,12 @@ var FlowEditorFieldConfiguratorSettingsDialog = React.createClass({
 
 	},
 
+	/*
+	 * Render the settings dialog
+	 */
 	render: function() {
 
+		// Check what type of input this dialog is for
 		if(this.props.type == "text" || this.props.type == "date") {
 			return (
 				<div className="alert alert-info">
@@ -213,6 +217,7 @@ var FlowEditorFieldConfiguratorSettingsDialog = React.createClass({
 			var optionInputs,
 				customDataCheckbox;
 
+			// If there are options in the state
 			if(this.state.hasOwnProperty('options') && this.state.options.length > 0) {
 
 				// Map option input containers to one variable
@@ -244,6 +249,8 @@ var FlowEditorFieldConfiguratorSettingsDialog = React.createClass({
 					</div>
 				);
 			} else {
+
+				// No options available, show info message
 				optionInputs = (
 					<div className="alert alert-info">
 						No options have been defined &mdash; try <a className="alert-link" onClick={this.handleAddOption}>adding one</a>. 
@@ -254,8 +261,10 @@ var FlowEditorFieldConfiguratorSettingsDialog = React.createClass({
 				);
 			}
 
+			// Ta-da!
 			return (
 				<div className="field-select-options-contain">
+	            	<h5>Options ({ this.state.hasOwnProperty('options') ? this.state.options.length : 0 })</h5>
 					{optionInputs}
 					{customDataCheckbox}
 					<button type="button" className="btn btn-primary-outline" onClick={this.handleAddOption}>Add another option</button>
@@ -269,6 +278,9 @@ var FlowEditorFieldConfiguratorSettingsDialog = React.createClass({
 
 var FlowEditorFieldConfigurator = React.createClass({
 
+	/*
+	 * Initial state for a field
+	 */
  	getInitialState: function() {
  		return {
  			name: "",
@@ -277,6 +289,9 @@ var FlowEditorFieldConfigurator = React.createClass({
  		};
  	},
 
+ 	/*
+ 	 * Set up field state based on props prior to mount
+ 	 */
  	componentWillMount: function() {
  		this.setState({ 
  			// Required properties
@@ -294,35 +309,73 @@ var FlowEditorFieldConfigurator = React.createClass({
  		});
  	},
 
+ 	/*
+ 	 * Handle field name change
+ 	 */
  	handleFieldNameChange: function(event) {
- 		this.setState({ name: event.target.value });
+ 		this.setState({ name: event.target.value }, function() {
+	 		// Remind container to check validity of inputs
+	 		this.props.onChange(this.props['data-key']);
+ 		});
+
  	},
 
+ 	/*
+ 	 * Handle field type change
+ 	 */
  	handleFieldTypeChange: function(event) {
  		console.log("Type change from " + this.state.type + " => " + event.target.value);
- 		this.setState({ type: event.target.value });
+ 		this.setState({ type: event.target.value }, function() {
+	 		// Remind container to check validity of inputs
+	 		this.props.onChange(this.props['data-key']);
+ 		});
+
  	},
 
+ 	/*
+ 	 * Handle field removal
+ 	 */
  	handleRemoveField: function() {
  		this.props.onRemove(this.props.key);
  	},
 
+ 	/*
+ 	 * Handle change to field settings.
+ 	 */
  	handleFieldSettingsChange: function(settings) {
  		var settings = this.refs['settings-' + this.props['data-key']].state;
+
  		this.setState({ settings: settings });
  	},
 
+ 	/*
+ 	 * Check the validity of this field.
+ 	 */
+ 	isValid: function() {
+ 		var valid = true;
+
+ 		// Field must have a name
+ 		if(this.state.name.length == 0) {
+ 			valid = false;
+ 		}
+
+ 		console.log(this.state.name + " has length " + this.state.name.length + " and therefore validity " + valid);
+
+ 		return valid;
+ 	},
+
+ 	/*
+ 	 * Display the field
+ 	 */
  	render: function() {
 
- 		var nameInputContainerClasses = "form-group" + (this.state.name.length == 0 ? " has-error" : "");
- 		var nameInputClasses = "form-control" + (this.state.name.length == 0 ? " form-control-error" : "");
-
  		var nameInput;
+
  		if(this.state.name.length == 0) {
  			nameInputGroup = (
  				<div className="form-group has-error">
  					<label className="form-control-label" for={"name-" + this.props['data-key']}>Name:</label>
- 					<input type="text" id={"name-" + this.props['data-key']} className="form-control form-control-error" placeholder="Field name" onChange={this.handleFieldNameChange} defaultValue={this.state.name} />
+ 					<input type="text" id={"name-" + this.props['data-key']} className="form-control form-control-error" placeholder="Field name" maxlength="30" onChange={this.handleFieldNameChange} defaultValue={this.state.name} />
  					<div className="alert alert-danger">
  						<strong>Heads up:</strong> all inputs require a name.
  					</div>
@@ -332,7 +385,7 @@ var FlowEditorFieldConfigurator = React.createClass({
  			nameInputGroup = (
  				<div className="form-group">
  					<label className="form-control-label" for={"name-" + this.props['data-key']}>Name:</label>
- 					<input type="text" id={"name-" + this.props['data-key']} className="form-control" placeholder="Field name" onChange={this.handleFieldNameChange} defaultValue={this.state.name} />	
+ 					<input type="text" id={"name-" + this.props['data-key']} className="form-control" placeholder="Field name" maxlength="30" onChange={this.handleFieldNameChange} defaultValue={this.state.name} />	
  				</div>	
  			);
  		}
@@ -373,7 +426,6 @@ var FlowEditorFieldConfigurator = React.createClass({
 
  				{ /* Configurator: settings */ }
 	            <div className="col-sm-8 col-xs-12">
-	            	<h5>Settings:</h5>
 	                <FlowEditorFieldConfiguratorSettingsDialog 
 	                	ref={'settings-' + this.props['data-key']}
 	                	field-key={this.props['data-key']}
@@ -401,31 +453,102 @@ var FlowEditorFieldConfigurator = React.createClass({
  */
 
 var FlowEditorFields = React.createClass({
+
+	/*
+	 * Initial container state: has no fields
+	 */
 	getInitialState: function() {
 		return {
-			fields: {}
+			fields: {},
+			fieldValidities: {},
+			invalidCount: 0,
+			isValid: true,
 		};
 	},
 
+	/*
+	 * Add prop fields to state before mount
+	 */
 	componentWillMount: function() {
-		this.setState({ fields: this.props.fields });
+		this.setState({ fields: this.props.fields }, function() {
+			this.checkContainerValidity();
+		}.bind(this));
 	},
 
+
+	/*
+	 * Add a new field to the container
+	 */
 	handleAddNewField: function() {
 		var fields = this.state.fields;
-			fields[new Date().getTime()] = { name: "", type: "text", settings: null };
-		this.setState({ fields: fields });
+		var fieldValidities = this.state.fieldValidities;
+		var key = new Date().getTime();
+
+		fields[key] = { name: "", type: "text", settings: null }; // Default settings for a new input
+		fieldValidities[key] = false; // Input defaults to invalid
+
+		this.setState({ fields: fields, fieldValidities: fieldValidities });
+
+		// Since we added a field, we should re-check validity of the container
+		this.checkContainerValidity();
 	},
 
+	/*
+	 * Remove a field from the container (requires key)
+	 */
  	handleRemoveField: function(key) {
 		var fields = this.state.fields;
+		var fieldValidities = this.state.fieldValidities;
+
 		if(fields.hasOwnProperty(key)) {
 			delete fields[key];
 		}
+		if(fieldValidities.hasOwnProperty(key)) {
+			delete fieldValidities[key];
+		}
 
-		this.setState({ fields: fields });
+		this.setState({ fields: fields, fieldValidities: fieldValidities });
+
+		// Since we removed a field, we should re-check validity of the container
+		this.checkContainerValidity();
  	},
 
+ 	/*
+ 	 * Check the validity of a field object
+ 	 */
+ 	checkFieldValidity: function(ref) {
+
+ 		console.log("Checking field validity for " + ref);
+
+ 		var fieldValidities = this.state.fieldValidities;
+ 			fieldValidities[ref] = this.refs[ref].isValid();
+
+ 			console.log(fieldValidities[ref]);
+
+ 		this.setState({ fieldValidities: fieldValidities });
+ 		this.checkContainerValidity();
+ 	},
+
+ 	/*
+ 	 * Check the validity of the container as a whole
+ 	 */
+ 	checkContainerValidity: function() {
+ 		var valid = true;
+ 		var invalidCount = 0;
+
+ 		for(var fieldKey in this.state.fieldValidities) {
+ 			if(this.state.fieldValidities[fieldKey] !== true) {
+ 				invalidCount++;
+ 				valid = false;
+ 			}
+ 		}
+
+ 		this.setState({ invalidCount: invalidCount, isValid: valid });
+ 	},
+
+ 	/*
+ 	 * Compile container data into one coherent object
+ 	 */
  	compileData: function() {
  		var data = {};
  		Object.keys(this.state.fields).map(function(key, i) {
@@ -435,18 +558,24 @@ var FlowEditorFields = React.createClass({
  		return data;
  	},
 
+ 	/*
+ 	 * Render the container
+ 	 */
 	render: function() {
 		var fields;
 
+		// Check if any fields are stored in state.
 		if(Object.keys(this.state.fields).length > 0) {
 			fields = Object.keys(this.state.fields).map(function(key, index) {
 				return (
-					<FlowEditorFieldConfigurator {...this.state.fields[key]} onRemove={this.handleRemoveField.bind(this, key)} key={key} data-key={key} ref={key} index={index} />
+					<FlowEditorFieldConfigurator {...this.state.fields[key]} onChange={this.checkFieldValidity.bind(this, key)} onRemove={this.handleRemoveField.bind(this, key)} key={key} data-key={key} ref={key} index={index} />
 				);
 			}.bind(this));
 		} else {
 			fields = (
-				<h5>No fields added. Choose "Add new field" below to get started!</h5>
+				<div className="alert alert-info">
+					No fields added &mdash; try <a className="alert-link" onClick={this.handleAddNewField}>adding a new one</a>.
+				</div>
 			);
 		}
 
@@ -454,7 +583,7 @@ var FlowEditorFields = React.createClass({
 			<div id="flow-editor-fields-contain">
 				{fields}       
 	            <button type="button" className="btn btn-primary btn-lg" onClick={this.handleAddNewField}>Add a new field</button>
-	            <button type="button" className="btn btn-success btn-lg" onClick={this.props.handleSubmit}>Submit changes &rarr;</button>
+	            <button type="button" className="btn btn-success btn-lg" onClick={this.props.handleSubmit} disabled={!this.state.isValid}>{this.state.isValid ? "Submit changes" : this.state.invalidCount + " field(s) need attention before submitting"}</button>
 			</div>
 		);
 	}

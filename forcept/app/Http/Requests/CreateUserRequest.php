@@ -14,7 +14,7 @@ class CreateUserRequest extends Request
      */
     public function authorize()
     {
-        return Auth::check();
+        return Auth::check() && Auth::user()->admin == true;
     }
 
     /**

@@ -90,11 +90,11 @@
 
 <div class="container-fluid" id="footer">
     <div class="col-sm-12">
-        <button type="button" class="btn btn-sm btn-success" id="forcept-launch-debug">Debug</button>
+        <button type="button" class="btn btn-sm btn-success hidden-sm-down" id="forcept-launch-debug">Debug</button>
         <h4 class="m-0 pull-right">
             forcept &nbsp; 
-            <span class='label label-info'>version: {{ env('APP_VERSION', '?') }}</span>
-            <span class="label label-info">env: {{ env('APP_ENV') }}</span>
+            <span class='label label-info hidden-sm-down'>version: {{ env('APP_VERSION', '?') }}</span>
+            <span class="label label-info hidden-sm-down">env: {{ env('APP_ENV') }}</span>
         </h4>
     </div>
 </div>

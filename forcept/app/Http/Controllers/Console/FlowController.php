@@ -92,9 +92,28 @@ class FlowController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function update(Request $request, $id)
+    public function update(UpdateStageRequest $request, $id)
     {
+        $stage = Stage::where('id', $id);
+        $response = {};
+
+        // Check if this stage exists
+        if($stage->count() > 0) {
+
+            // Get stage.
+            $stage = $stage->first();
+                $stage->name = $request->name;
+
+
+        } else {
+            $response = {
+                "status" => "failure",
+                "message" => "Stage with ID " . $id . " does not exist in the database."
+            };
+        }
+
         //
+        return response()->json($response);
     }
 
     /**
