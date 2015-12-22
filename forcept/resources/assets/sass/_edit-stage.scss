@@ -1,0 +1,33 @@
+/**
+ * _edit-stage.scss
+ */
+
+#cfg-contain.hidden {
+    display: none;
+}
+
+h4.field-title {
+    
+    span.title {
+        padding-left: $spacer-x;
+    }
+    
+}
+
+#flow-editor-fields-contain {
+    
+    padding-left: $spacer-x;
+    
+    .flow-editor-configurator-row {
+        border-bottom: lighten($gray-light, 10%) dashed 1px;
+        margin-bottom: $spacer-y * 2;
+        padding-bottom: $spacer-y * 2;
+    }
+}
+
+#cfg-submitting {
+    h4 {
+        display: inline-block;
+        padding-left: $spacer-x;
+    }
+}

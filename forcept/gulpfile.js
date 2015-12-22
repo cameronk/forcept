@@ -24,8 +24,9 @@ var react = require('gulp-react');
 
 gulp.task('sass', function () {
   gulp.src('./resources/assets/sass/**/*.scss')
-    .pipe(sass({ outputStyle: 'compressed' }).on('error', sass.logError))
+    .pipe(sass().on('error', sass.logError))
     .pipe(gulp.dest('./public/assets/css'));
+    // { outputStyle: 'compressed' }
 });
  
 gulp.task('react', function () {

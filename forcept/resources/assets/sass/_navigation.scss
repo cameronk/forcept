@@ -36,3 +36,11 @@
     }
 
 }
+
+#footer {
+    background: $component-active-bg;
+    color: $gray-lightest;
+//    text-align: right;
+    padding: $spacer * 2;
+    margin-top: $spacer-y * 2;
+}

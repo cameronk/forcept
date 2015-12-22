@@ -15,7 +15,8 @@
     
     <!--| Base scripts |-->
     <script type="text/javascript" src="{{ asset('/assets/js/jquery-2.1.4.min.js') }}"></script>
-    <script type="text/javascript" src="{{ asset('/assets/bootstrap/dist/js/bootstrap.min.js') }}"></script>   
+    <script type="text/javascript" src="{{ asset('/assets/bootstrap/dist/js/bootstrap.js') }}"></script>       
+    <script type="text/javascript" src="{{ asset('/assets/tether-1.1.1/dist/js/tether.js') }}"></script>  
     <script type="text/javascript" src="{{ asset('/assets/js/react.js') }}"></script>
     <script type="text/javascript" src="{{ asset('/assets/js/react-dom.js') }}"></script> 
     <script type="text/javascript" src="{{ asset('/assets/js/forcept.js') }}"></script>    
@@ -87,6 +88,36 @@
     
 @yield('content')
 
+<div class="container-fluid" id="footer">
+    <div class="col-sm-12">
+        <button type="button" class="btn btn-sm btn-success" id="forcept-launch-debug">Debug</button>
+        <h4 class="m-0 pull-right">
+            forcept &nbsp; 
+            <span class='label label-info'>version: {{ env('APP_VERSION', '?') }}</span>
+            <span class="label label-info">env: {{ env('APP_ENV') }}</span>
+        </h4>
+    </div>
+</div>
+
+<script>
+$(function() {
+    
+    // Initialize all tooltips
+    $('[data-toggle="tooltip"]').tooltip();
+    
+    // Show debug area
+    $("#forcept-launch-debug").on('click', function() {
+        $("#forcept-debug-content").toggleClass('hidden'); 
+    });
+});
+</script>
+    
+<div class="container-fluid hidden" id="forcept-debug-content">
+    <div class="col-sm-12 p-t">
+        <h1>Debug output</h1>
+        <pre><code></code></pre>
+    </div>
+</div>
 
 </body>
         

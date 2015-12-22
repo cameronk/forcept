@@ -11,15 +11,22 @@ $forcept-navbar-height:    4rem;
 
 
 /**
+ * Debug module
+ */
+#forcept-debug-content.hidden {
+    display: none;
+}
+
+
+/**
  * Control page content size based on viewport
  */
 @include media-breakpoint-up(xl) {
     #page-content {
-        max-width: 80%;
+        max-width: 90%;
         margin: 0 auto;
     }
 }
-
 
 
 /**
@@ -43,6 +50,10 @@ $forcept-navbar-height:    4rem;
 // Content
 @import "content";
 @import "signin";    
+
+// Console
+@import "console";
+@import "edit-stage";
 
 // Patient-related modules
 @import "patient";
