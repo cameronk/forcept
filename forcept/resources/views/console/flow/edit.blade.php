@@ -112,7 +112,9 @@
 
 <script type="text/javascript">
     
-    var configuration = <?php echo json_encode($stage->fields); ?>;
+    <?php
+    ?>
+    var configuration = <?php echo $stage->rawFields; ?>;
     
     console.log("Configuration:");
     console.log(configuration);
@@ -138,25 +140,33 @@
                             $("#stage-submit-success-modal").modal('show');
                             $("#cfg-contain").slideDown();
                             $("#cfg-submitting").fadeOut();
+                            
+                            FlowEditorFields.clearRemoved();
+                            $("#stage-submit-warning-modal #submit-changes-override").unbind("click");
                         },
                         error: function(data) {
-
+                            
                             var modalDOM = $("#stage-submit-error-modal");
                             var list = modalDOM.find("#removed-field-list");
 
                             list.empty();
-
-                            if(data.responseJSON.hasOwnProperty('status') && data.responseJSON.hasOwnProperty('message')) {
-                                // Manual error                                
-                                list.append("<li>" + data.responseJSON.message + "</li>");
-                            } else {
-                                // Laravel error
-                                for(var key in data.responseJSON) {
-                                    console.log(data.responseJSON[key]);
-                                    data.responseJSON[key].map(function(error, index) {
-                                        list.append("<li>" + error + "</li>");
-                                    });
+                            
+                            if(data.hasOwnProperty('responseJSON')) {
+                                if(data.responseJSON.hasOwnProperty('status') && data.responseJSON.hasOwnProperty('message')) {
+                                    // Manual error                                
+                                    list.append("<li>" + data.responseJSON.message + "</li>");
+                                } else {
+                                    // Laravel error
+                                    for(var key in data.responseJSON) {
+                                        console.log(data.responseJSON[key]);
+                                        data.responseJSON[key].map(function(error, index) {
+                                            list.append("<li>" + error + "</li>");
+                                        });
+                                    }
                                 }
+                            } else {
+                                console.log(data);
+                                list.append("<li>A fatal internal error occurred.</li>");
                             }
 
                             modalDOM.modal('show');

@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 class Stage extends Model
 {
     //
-    public $timestamps = false;
+    // public $timestamps = false;
 
     /*
      * Smart table name getters
@@ -26,7 +26,11 @@ class Stage extends Model
      * Fields getters/setters
      */
     public function getFieldsAttribute($value) {
-    	return json_decode($value);
+    	return json_decode($value, true);
+    }
+
+    public function getRawFieldsAttribute() {
+    	return json_encode($this->fields);
     }
 
     public function setFieldsAttribute($value) {

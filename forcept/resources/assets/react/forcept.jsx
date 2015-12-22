@@ -593,6 +593,13 @@ var FlowEditorFields = React.createClass({
  	},
 
  	/*
+ 	 * Clear removed fields from state
+ 	 */
+ 	clearRemoved: function() {
+ 		this.setState({ fieldsRemoved: [] });
+ 	},
+
+ 	/*
  	 * Render the container
  	 */
 	render: function() {
