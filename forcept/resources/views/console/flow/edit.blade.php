@@ -17,7 +17,7 @@
             <div class="modal-body">
                 <div class="alert alert-danger">
                     <strong>Uh oh!</strong> Some errors occurred.
-                    <ul></ul>
+                    <ul id="errors-list"></ul>
                 </div>
             </div>
             <div class="modal-footer">
@@ -112,113 +112,113 @@
 
 <script type="text/javascript">
     
-    <?php
-    ?>
-    var configuration = <?php echo $stage->rawFields; ?>;
-    
-    console.log("Configuration:");
-    console.log(configuration);
-    console.log("\n");
-    var FlowEditorFields = ReactDOM.render(
-        React.createElement(FlowEditorFields, {
-            fields: configuration,
-            handleSubmit: function() {
-                
-    
-                var submitAJAX = function() {
+var configuration = <?php echo $stage->rawFields; ?>;
 
-                    var data = {
-                        "_token": "{{ csrf_token() }}",
-                        name: $("#stage-name").val(),
-                        fields: FlowEditorFields.compileData()
-                    };
-                    $.ajax({
-                        type: "POST",
-                        url: "{{ url('console/flow/edit/' . $stage->id) }}",
-                        data: data,
-                        success: function(data) {
-                            $("#stage-submit-success-modal").modal('show');
-                            $("#cfg-contain").slideDown();
-                            $("#cfg-submitting").fadeOut();
-                            
-                            FlowEditorFields.clearRemoved();
-                            $("#stage-submit-warning-modal #submit-changes-override").unbind("click");
-                        },
-                        error: function(data) {
-                            
-                            var modalDOM = $("#stage-submit-error-modal");
-                            var list = modalDOM.find("#removed-field-list");
+console.log("Configuration:");
+console.log(configuration);
+console.log("\n");
+var FlowEditorFields = ReactDOM.render(
+    React.createElement(FlowEditorFields, {
+        fields: configuration,
+        handleSubmit: function() {
 
-                            list.empty();
-                            
-                            if(data.hasOwnProperty('responseJSON')) {
-                                if(data.responseJSON.hasOwnProperty('status') && data.responseJSON.hasOwnProperty('message')) {
-                                    // Manual error                                
-                                    list.append("<li>" + data.responseJSON.message + "</li>");
-                                } else {
-                                    // Laravel error
-                                    for(var key in data.responseJSON) {
-                                        console.log(data.responseJSON[key]);
-                                        data.responseJSON[key].map(function(error, index) {
-                                            list.append("<li>" + error + "</li>");
-                                        });
-                                    }
-                                }
+
+            var submitAJAX = function() {
+
+                var data = {
+                    "_token": "{{ csrf_token() }}",
+                    name: $("#stage-name").val(),
+                    fields: FlowEditorFields.compileData()
+                };
+                $.ajax({
+                    type: "POST",
+                    url: "{{ url('console/flow/edit/' . $stage->id) }}",
+                    data: data,
+                    success: function(data) {
+                        $("#stage-submit-success-modal").modal('show');
+                        $("#cfg-contain").slideDown();
+                        $("#cfg-submitting").fadeOut();
+
+                        FlowEditorFields.clearRemoved();
+                        $("#stage-submit-warning-modal #submit-changes-override").unbind("click");
+                    },
+                    error: function(data) {
+
+                        console.log(data);
+                        
+                        var modalDOM = $("#stage-submit-error-modal");
+                        var list = modalDOM.find("#errors-list");
+
+                        list.empty();
+
+                        if(data.hasOwnProperty('responseJSON')) {
+                            if(data.responseJSON.hasOwnProperty('status') && data.responseJSON.hasOwnProperty('message')) {
+                                // Manual error                                
+                                list.append("<li>" + data.responseJSON.message + "</li>");
                             } else {
-                                console.log(data);
-                                list.append("<li>A fatal internal error occurred.</li>");
+                                console.log("Laravel error");
+                                // Laravel error
+                                for(var key in data.responseJSON) {
+                                    console.log(data.responseJSON[key]);
+                                    (data.responseJSON[key]).map(function(error, index) {
+                                        list.append("<li>" + error + "</li>");
+                                    });
+                                }
                             }
-
-                            modalDOM.modal('show');
-                            $("#cfg-contain").slideDown();
-                            $("#cfg-submitting").fadeOut();
+                        } else {
+                            console.log(data);
+                            list.append("<li>A fatal internal error occurred.</li>");
                         }
-                    });
-                }
-    
-                $("#cfg-contain").slideUp();
-                $("#cfg-submitting").fadeIn();
-                
-                // Send AJAX request
-                if(FlowEditorFields.state.fieldsRemoved.length > 0) {
-                    // Give warning  
-                    
-                    var warningModal = $("#stage-submit-warning-modal");
-                    var list = warningModal.find('#removed-field-list');                    
-                    var count = warningModal.find('#removal-count');
-                    var override = warningModal.find("#submit-changes-override");
-                    
-                    list.empty();
-                    count.empty();
-                    
-                    override.on('click', function() {
-                        warningModal.modal('hide');
-                        submitAJAX();
-                    });
-                    
-                    FlowEditorFields.state.fieldsRemoved.map(function(field, index) {
-                        list.append("<li>" + field + "</li>"); 
-                    });
-                    count.html(FlowEditorFields.state.fieldsRemoved.length);
-                    
-                    warningModal.modal('show');
-                    
-                    
-                } else {
-                    submitAJAX();
-                }
-                
+
+                        modalDOM.modal('show');
+                        $("#cfg-contain").slideDown();
+                        $("#cfg-submitting").fadeOut();
+                    }
+                });
             }
-        }),
-        document.getElementById("cfg-contain")
-    );
-           
-    setInterval(function() {
-        var data = FlowEditorFields.compileData();
-        var state = FlowEditorFields.state;
+
+            $("#cfg-contain").slideUp();
+            $("#cfg-submitting").fadeIn();
+
+            // Send AJAX request
+            if(FlowEditorFields.state.fieldsRemoved.length > 0) {
+                // Give warning  
+
+                var warningModal = $("#stage-submit-warning-modal");
+                var list = warningModal.find('#removed-field-list');                    
+                var count = warningModal.find('#removal-count');
+                var override = warningModal.find("#submit-changes-override");
+
+                list.empty();
+                count.empty();
+
+                override.on('click', function() {
+                    warningModal.modal('hide');
+                    submitAJAX();
+                });
+
+                FlowEditorFields.state.fieldsRemoved.map(function(field, index) {
+                    list.append("<li>" + field + "</li>"); 
+                });
+                count.html(FlowEditorFields.state.fieldsRemoved.length);
+
+                warningModal.modal('show');
+
+            } else {
+                submitAJAX();
+            }
+
+        }
+    }),
+    document.getElementById("cfg-contain")
+);
+
+setInterval(function() {
+    var data = FlowEditorFields.compileData();
+    var state = FlowEditorFields.state;
 //            delete state['fields'];
-        __debug(data, state["fieldsRemoved"]);
-    }, 1000);
+    __debug(data, state["fieldsRemoved"]);
+}, 1000);
     
 </script>
 

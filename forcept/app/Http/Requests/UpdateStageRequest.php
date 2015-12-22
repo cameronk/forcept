@@ -29,4 +29,16 @@ class UpdateStageRequest extends Request
             'fields' => 'required'
         ];
     }
+
+    /**
+     * Return custom messages
+     * 
+     * @return array
+     */
+    public function messages()
+    {
+        return [
+            'fields.required' => 'A stage must have at least one field.',
+        ];
+    }
 }

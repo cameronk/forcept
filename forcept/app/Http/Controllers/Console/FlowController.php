@@ -69,7 +69,7 @@ class FlowController extends Controller
         $stage = new Stage;
             $stage->name = $request->name;
             $stage->type = $request->type;
-            $stage->fields = "{}";
+            $stage->fields = [];
 
             // Save stage model
             if($stage->save()) {
@@ -163,6 +163,23 @@ class FlowController extends Controller
                 \Log::debug("New fields: " . json_encode($newFields));
                 \Log::debug("Typeof new fields: " . gettype($newFields));
 
+                // Name changes:
+                $nameChanges = [];
+                foreach($newFields as $key => $data) {
+                    // Check if cachedfields has this field key
+                    if(array_key_exists($key, $cachedFields)) {
+                        // If NEW name is different than OLD name
+                        if($data['name'] !== $cachedFields[$key]['name']) {
+
+                            $nameChanges[$key] = [
+                                "old" => $cachedFields[$key]['name'], 
+                                "new" => $data['name'] 
+                            ];
+                            \Log::debug("Adding " + $key + " as a name change");
+                        }
+                    }
+                }
+
                 // Additions:
                 $additions = [];
                 foreach($newFields as $key => $data) {
@@ -181,8 +198,7 @@ class FlowController extends Controller
                         \Log::debug("DELETION: gettype data = " . gettype($data) );
                         $deletions[$key] = $data;
                         $deletions[$key]["_destination"] = $key . "_" . str_slug($data['name']) . "_" . time() . "_backup";
-                        $deletions[$key]["_datatype"] = $this->determineDataType($data['type']);
-                        // . str_slug($data['name']) . "_" . time();
+                        // $deletions[$key]["_datatype"] = $this->determineDataType($data['type']);
 
                         \Log::debug("Adding " + $key + " as a deletion with destination " + $deletions[$key]["_destination"]);
                     }
@@ -190,12 +206,21 @@ class FlowController extends Controller
 
 
                 // Handle schema modifications for additions:
-                Schema::table($stage->tableName, function(Blueprint $table) use ($stage, $additions, $deletions) {
+                Schema::table($stage->tableName, function(Blueprint $table) use ($stage, $nameChanges, $additions, $deletions) {
 
-                    \Log::debug("Running Schema::table - additions count = " . count($additions) . ", deletions count = " . count($deletions));
+                    \Log::debug("Running Schema::table -  name changes count = " . count($nameChanges) . ", additions count = " . count($additions) . ", deletions count = " . count($deletions));
+                    \Log::debug("Name changes: " . json_encode($nameChanges));
                     \Log::debug("Additions: " . json_encode($additions));
                     \Log::debug("Deletions: " . json_encode($deletions));
                     \Log::debug("===");
+
+                    // Run name changes
+                    foreach($nameChanges as $columnName => $data) {
+                        \Log::debug("-> renaming " . $columnName);
+                        $table
+                            ->renameColumn(sprintf("`%s`", $columnName), sprintf("`%s`", $columnName))
+                            ->comment( sprintf("Renamed column %s to %s at %s", $data['old'], $data['new'], date('r')) );
+                    }
 
                     // Run deletions
                     foreach($deletions as $columnName => $data) {
@@ -203,20 +228,25 @@ class FlowController extends Controller
                         // slight hack: had to add back-ticks because apparently this lib didnt do that
                         $table
                             ->renameColumn("`" . $columnName . "`", "`" . $data["_destination"] . "`")
-                            ->comment( sprintf("Backing up column %s @ %s". $columnName, $data['destination']) );
+                            ->comment( sprintf("Backing up column %s @ %s", $columnName, $data["_destination"]) );
                     }
 
                     // Run additions
                     foreach($additions as $columnName => $data) {
                         \Log::debug("-> adding " . $columnName . ": " . json_encode(($data)));
-                        switch($data['type']) {
-                            case "integer":
-                                $table->integer($columnName)->default($data['settings']["default"]);
-                                break;
-                            default:
-                                $table->string($columnName)->comment('Column created ' . date('r') . ' w/ name ' . $data['name']);
-                                break;
-                        }
+
+                        // Create column w/ type string (all columns are stored as VARCHAR(255))
+                        $table
+                            ->string($columnName)
+                            ->comment('Column created ' . date('r') . ' w/ name ' . $data['name']);
+
+                        // switch($data['type']) {
+                        //     case "integer":
+                        //         $table->integer($columnName)->default($data['settings']["default"]);
+                        //         break;
+                        //     default:
+                        //         break;
+                        // }
                     }
 
                 });
