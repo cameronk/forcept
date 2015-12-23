@@ -38,6 +38,7 @@
                 </ul>
             </div>
         </div>
+        
         <!--| Main content area |-->
         <div class="col-xs-12 col-sm-12 col-md-8 col-xl-9">
             

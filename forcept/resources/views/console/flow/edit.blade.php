@@ -79,24 +79,7 @@
     </div><!-- /.modal-dialog -->
 </div><!-- /.modal -->
 
-<!--| Warning modal |-->
-<div class="modal fade" id="stage-edit-relativity-information">
-    <div class="modal-dialog" role="document">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h4 class="modal-title">Field relativity</h4>
-            </div>
-            <div class="modal-body">
-                Field relativity denotes how a field should relate to a certain patient.<br/><hr/>
-                Choosing <strong>"Patient Information"</strong> means this field will be treated as biographical information of the patient &mdash; think name, age, or hometown.<br/><br/>
-                Choosing <strong>"Visit Information"</strong> denotes this field as visit related. It will not be populated based on pre-existing data, if such data exists.
-            </div>
-            <div class="modal-footer">
-                <button class="btn btn-primary" data-dismiss="modal">Got it &raquo;</a>
-            </div>
-        </div><!-- /.modal-content -->
-    </div><!-- /.modal-dialog -->
-</div><!-- /.modal -->
+
 
 <h1 class="p-t">Edit stage "{{ $stage->name }}"</h1>
 <hr/>
@@ -122,7 +105,7 @@
 <div class="alert alert-info">
     <strong>Heads up!</strong>
     <p>This stage is the root stage, meaning it is where patients are paired with a new visit. During this process, patient data is either pulled from a pre-existing patient record for updating, or a new record is created from scratch.</p>
-    <p>As a result, this stage cannot be deleted. In addition, some fields (such as patient first and last name) may be immutable.</p>
+    <p>As a result, this stage cannot be deleted. In addition, some fields (such as patient first and last name) may be immutabl</p>
 </div>
 
 <!--| console::flow::create - input config |-->
@@ -133,118 +116,118 @@
     <img src="{{ asset('assets/img/loading.gif') }}" />
     <h5>One moment, Forcept is updating this stage...</h5>
 </div>
-         
 
+@endsection
+
+@section("scripts")
+<script type="text/javascript" src="{{ asset('assets/js/flowEditor.js') }}"></script>
 <script type="text/javascript">
+    var configuration = <?php echo $stage->rawFields; ?>;
+
+    console.log("Configuration:");
+    console.log(configuration);
+    console.log("\n");
     
-var configuration = <?php echo $stage->rawFields; ?>;
+    var FlowEditorFields = ReactDOM.render(
+        React.createElement(FlowEditorFields, {
+            fields: configuration,
+            handleSubmit: function() {
+                var submitAJAX = function() {
 
-console.log("Configuration:");
-console.log(configuration);
-console.log("\n");
-var FlowEditorFields = ReactDOM.render(
-    React.createElement(FlowEditorFields, {
-        fields: configuration,
-        handleSubmit: function() {
+                    var data = {
+                        "_token": "{{ csrf_token() }}",
+                        name: $("#stage-name").val(),
+                        fields: FlowEditorFields.compileData()
+                    };
+                    $.ajax({
+                        type: "POST",
+                        url: "{{ url('console/flow/edit/' . $stage->id) }}",
+                        data: data,
+                        success: function(data) {
+                            $("#stage-submit-success-modal").modal('show');
+                            $("#cfg-contain").slideDown();
+                            $("#cfg-submitting").fadeOut();
 
+                            FlowEditorFields.clearRemoved();
+                            $("#stage-submit-warning-modal #submit-changes-override").unbind("click");
+                        },
+                        error: function(data) {
 
-            var submitAJAX = function() {
-
-                var data = {
-                    "_token": "{{ csrf_token() }}",
-                    name: $("#stage-name").val(),
-                    fields: FlowEditorFields.compileData()
-                };
-                $.ajax({
-                    type: "POST",
-                    url: "{{ url('console/flow/edit/' . $stage->id) }}",
-                    data: data,
-                    success: function(data) {
-                        $("#stage-submit-success-modal").modal('show');
-                        $("#cfg-contain").slideDown();
-                        $("#cfg-submitting").fadeOut();
-
-                        FlowEditorFields.clearRemoved();
-                        $("#stage-submit-warning-modal #submit-changes-override").unbind("click");
-                    },
-                    error: function(data) {
-
-                        console.log(data);
-                        
-                        var modalDOM = $("#stage-submit-error-modal");
-                        var list = modalDOM.find("#errors-list");
-
-                        list.empty();
-
-                        if(data.hasOwnProperty('responseJSON')) {
-                            if(data.responseJSON.hasOwnProperty('status') && data.responseJSON.hasOwnProperty('message')) {
-                                // Manual error                                
-                                list.append("<li>" + data.responseJSON.message + "</li>");
-                            } else {
-                                console.log("Laravel error");
-                                // Laravel error
-                                for(var key in data.responseJSON) {
-                                    console.log(data.responseJSON[key]);
-                                    (data.responseJSON[key]).map(function(error, index) {
-                                        list.append("<li>" + error + "</li>");
-                                    });
-                                }
-                            }
-                        } else {
                             console.log(data);
-                            list.append("<li>A fatal internal error occurred.</li>");
+
+                            var modalDOM = $("#stage-submit-error-modal");
+                            var list = modalDOM.find("#errors-list");
+
+                            list.empty();
+
+                            if(data.hasOwnProperty('responseJSON')) {
+                                if(data.responseJSON.hasOwnProperty('status') && data.responseJSON.hasOwnProperty('message')) {
+                                    // Manual error                                
+                                    list.append("<li>" + data.responseJSON.message + "</li>");
+                                } else {
+                                    console.log("Laravel error");
+                                    // Laravel error
+                                    for(var key in data.responseJSON) {
+                                        console.log(data.responseJSON[key]);
+                                        (data.responseJSON[key]).map(function(error, index) {
+                                            list.append("<li>" + error + "</li>");
+                                        });
+                                    }
+                                }
+                            } else {
+                                console.log(data);
+                                list.append("<li>A fatal internal error occurred.</li>");
+                            }
+
+                            modalDOM.modal('show');
+                            $("#cfg-contain").slideDown();
+                            $("#cfg-submitting").fadeOut();
                         }
+                    });
+                }
 
-                        modalDOM.modal('show');
-                        $("#cfg-contain").slideDown();
-                        $("#cfg-submitting").fadeOut();
-                    }
-                });
-            }
+                $("#cfg-contain").slideUp();
+                $("#cfg-submitting").fadeIn();
 
-            $("#cfg-contain").slideUp();
-            $("#cfg-submitting").fadeIn();
+                // Send AJAX request
+                if(FlowEditorFields.state.fieldsRemoved.length > 0) {
+                    // Give warning  
 
-            // Send AJAX request
-            if(FlowEditorFields.state.fieldsRemoved.length > 0) {
-                // Give warning  
+                    var warningModal = $("#stage-submit-warning-modal");
+                    var list = warningModal.find('#removed-field-list');                    
+                    var count = warningModal.find('#removal-count');
+                    var override = warningModal.find("#submit-changes-override");
 
-                var warningModal = $("#stage-submit-warning-modal");
-                var list = warningModal.find('#removed-field-list');                    
-                var count = warningModal.find('#removal-count');
-                var override = warningModal.find("#submit-changes-override");
+                    list.empty();
+                    count.empty();
 
-                list.empty();
-                count.empty();
+                    override.on('click', function() {
+                        warningModal.modal('hide');
+                        submitAJAX();
+                    });
 
-                override.on('click', function() {
-                    warningModal.modal('hide');
+                    FlowEditorFields.state.fieldsRemoved.map(function(field, index) {
+                        list.append("<li>" + field + "</li>"); 
+                    });
+                    count.html(FlowEditorFields.state.fieldsRemoved.length);
+
+                    warningModal.modal('show');
+
+                } else {
                     submitAJAX();
-                });
+                }
 
-                FlowEditorFields.state.fieldsRemoved.map(function(field, index) {
-                    list.append("<li>" + field + "</li>"); 
-                });
-                count.html(FlowEditorFields.state.fieldsRemoved.length);
-
-                warningModal.modal('show');
-
-            } else {
-                submitAJAX();
             }
+        }),
+        document.getElementById("cfg-contain")
+    );
 
-        }
-    }),
-    document.getElementById("cfg-contain")
-);
-
-setInterval(function() {
-    var data = FlowEditorFields.compileData();
-    var state = FlowEditorFields.state;
-//            delete state['fields'];
-    __debug(data, state["fieldsRemoved"]);
-}, 1000);
+    setInterval(function() {
+        var data = FlowEditorFields.compileData();
+        var state = FlowEditorFields.state;
+    //            delete state['fields'];
+        __debug(data, state["fieldsRemoved"]);
+    }, 1000);
     
 </script>
-
 @endsection

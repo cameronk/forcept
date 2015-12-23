@@ -19,12 +19,11 @@
     <script type="text/javascript" src="{{ asset('/assets/tether-1.1.1/dist/js/tether.js') }}"></script>  
     <script type="text/javascript" src="{{ asset('/assets/js/react.js') }}"></script>
     <script type="text/javascript" src="{{ asset('/assets/js/react-dom.js') }}"></script> 
-    <script type="text/javascript" src="{{ asset('/assets/js/forcept.js') }}"></script>    
     
 </head>
 <body>
      
-    
+<!--| Header container |-->
 <div class="container-fluid p-a-0">
     
     <!--| Navigation: mobile |-->
@@ -70,9 +69,13 @@
     </nav>
     
 </div>
+
     
+<!--| Yield: content |-->
 @yield('content')
 
+    
+<!--| Footer |-->
 <div class="container-fluid" id="footer">
     <div class="col-sm-12">
         <button type="button" class="btn btn-sm btn-success hidden-sm-down" id="forcept-launch-debug">Debug</button>
@@ -84,9 +87,11 @@
     </div>
 </div>
 
+     
+<!--| Scripts |-->
+<script type="text/javascript" src="{{ asset('/assets/js/forcept.js') }}"></script>   
 <script>
 $(function() {
-    
     // Initialize all tooltips
     $('[data-toggle="tooltip"]').tooltip();
     
@@ -97,11 +102,14 @@ $(function() {
     
 });
 </script>
+@yield('scripts')
     
+    
+<!--| Debug container |-->
 <div class="container-fluid hidden" id="forcept-debug-content">
     <div class="col-sm-12 p-t">
         <h1>Debug output</h1>
-        <pre><code></code></pre>
+        <pre></pre>
     </div>
 </div>
 

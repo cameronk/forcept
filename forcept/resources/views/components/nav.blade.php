@@ -1,7 +1,7 @@
 @inject('stages', 'App\Stage')
 
 <li class="nav-item">
-    <a href="#" class="nav-link">&plus; New visit</a>
+    <a href="{{ route('visit::create') }}" class="nav-link">&plus; New visit</a>
 </li>
 
 @foreach($stages->where('root', '!=', '1')->get() as $stage)

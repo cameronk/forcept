@@ -11,8 +11,8 @@
         <!--| Sidebar |-->
         <div class="col-xs-12 col-sm-12 col-md-4 col-xl-3">
             
-            <!--| Patient card |-->
-            <div class="card" id="card-patient">
+            <!--| Settings card |-->
+            <div class="card">
                 
                 <div class="card-header">
                     <strong>Settings</strong>

@@ -21,6 +21,35 @@ Route::group(['middleware' => 'auth'], function () {
 		}
 	]);
 
+	/**
+	 * Visit
+	 */
+	Route::group([
+		'prefix' => 'visit',
+		'as' => 'visit::',
+		'namespace' => 'Visit',
+	], function() {
+
+		// Visits index
+		Route::get('/', [
+			'as' => 'index',
+			'uses' => 'VisitController@index'
+		]);
+
+		// Create visit
+		Route::get('new', [
+			'as' => 'create',
+			'uses' => 'VisitController@create'
+		]);
+
+		// Create patient
+		Route::post('create-patient', [
+			'as' => 'create-patient',
+			'uses' => 'PatientController@create'
+		]);
+
+	});
+
 	/** 
 	 * Console
 	 */
