@@ -75,8 +75,20 @@ var Visit = React.createClass({displayName: "Visit",
 			var patients = this.state.patients;
 				patients[patientID][fieldID] = event.target.value;
 
+				var fullName = null;
+				if(typeof patients[patientID]["first_name"] === "string" && typeof patients[patientID]["last_name"] === "string") {
+					fullName = patients[patientID]["first_name"] + " " + patients[patientID]["last_name"];
+				} else {
+					if(typeof patients[patientID]["first_name"] === "string") {
+						fullName = patients[patientID]["first_name"];
+					}
+					if(typeof patients[patientID]["last_name"] === "string") {
+						fullName = patients[patientID]["last_name"];
+					}
+				}
+
 				// Combine first and last name
-				patients[patientID]["full_name"] = (typeof patients[patientID]["first_name"] === "string" ? patients[patientID]["first_name"] : "") + " " + (typeof patients[patientID]["last_name"] === "string" ? patients[patientID]["last_name"] : "");
+				patients[patientID]["full_name"] = fullName;
 
 			this.setState({ patients: patients });
 
@@ -89,7 +101,7 @@ var Visit = React.createClass({displayName: "Visit",
 	 * Render Visit container
 	 */
 	render: function() {
-		__debug(this.props, this.state);
+		__debug(this.props, this.state); // 
 		return (
 			React.createElement("div", {className: "row"}, 
 				React.createElement(Visit.PatientsOverview, {
@@ -143,7 +155,7 @@ Visit.PatientsOverview = React.createClass({displayName: "PatientsOverview",
 				return (
 					React.createElement("div", {className: "card", key: patientID}, 
 		                React.createElement("div", {className: "card-header"}, 
-		                    React.createElement("span", {className: "label label-info"}, index + 1), 
+		                    React.createElement("span", {className: "label label-info"}, "#", index + 1), 
 		                    React.createElement("span", {className: "label label-default"}, patientID), 
 		                    "  ", React.createElement("strong", null, thisPatient['full_name'] !== null ? thisPatient['full_name'] : "Unnamed patient")
 		                ), 
@@ -152,7 +164,7 @@ Visit.PatientsOverview = React.createClass({displayName: "PatientsOverview",
 		                    	return (
 		                    		React.createElement("a", {className: "list-group-item", key: field + "-" + index}, 
 		                    			React.createElement("strong", null, iterableFields[field]["name"]), ":  ", 
-		                    			thisPatient.hasOwnProperty(field) && thisPatient['field'].length > 0 ? thisPatient['field'] : "No data"
+		                    			thisPatient.hasOwnProperty(field) && thisPatient[field].length > 0 ? thisPatient[field] : "No data"
 		                    		)
 		                    	);
 		                    })
@@ -342,7 +354,7 @@ Visit.Patient = React.createClass({displayName: "Patient",
 		return (
 			React.createElement("blockquote", {className: "blockquote"}, 
 				React.createElement("h3", null, 
-					React.createElement("span", {className: "label label-info"}, this.props.hasOwnProperty('index') ? this.props.index + 1 : "?"), 
+					React.createElement("span", {className: "label label-info"}, "#", this.props.hasOwnProperty('index') ? this.props.index + 1 : "?"), 
 		            React.createElement("span", {className: "label label-default"}, this.props.hasOwnProperty('id') ? this.props.id : "?"), "  ",  
 		            this.props['full_name'] !== null ? this.props['full_name'] : "Unnamed patient"
 		        ), 
@@ -354,17 +366,19 @@ Visit.Patient = React.createClass({displayName: "Patient",
 		        				React.createElement(Fields.Text, React.__spread({},  
 		        					this.props.fields[fieldID], 
 		        					{onChange: this.handleFieldChange, 
+		        					key: fieldID, 
 		        					id: fieldID}))
 		        			);
 		        			break;
-		     //    		case "select":
-							// return (
-		     //    				<Fields.Select 
-		     //    					{...this.props.fields[fieldID]} 
-		     //    					onChange={this.handleFieldChange}
-		     //    					id={fieldID} />
-		     //    			);
-		     //    			break;
+		        		case "select":
+							return (
+		        				React.createElement(Fields.Select, React.__spread({},  
+		        					this.props.fields[fieldID], 
+		        					{onChange: this.handleFieldChange, 
+		        					key: fieldID, 
+		        					id: fieldID}))
+		        			);
+		        			break;
 		        		default:
 		        			return (
 		        				React.createElement("div", {className: "alert alert-danger"}, 

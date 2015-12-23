@@ -75,8 +75,20 @@ var Visit = React.createClass({
 			var patients = this.state.patients;
 				patients[patientID][fieldID] = event.target.value;
 
+				var fullName = null;
+				if(typeof patients[patientID]["first_name"] === "string" && typeof patients[patientID]["last_name"] === "string") {
+					fullName = patients[patientID]["first_name"] + " " + patients[patientID]["last_name"];
+				} else {
+					if(typeof patients[patientID]["first_name"] === "string") {
+						fullName = patients[patientID]["first_name"];
+					}
+					if(typeof patients[patientID]["last_name"] === "string") {
+						fullName = patients[patientID]["last_name"];
+					}
+				}
+
 				// Combine first and last name
-				patients[patientID]["full_name"] = (typeof patients[patientID]["first_name"] === "string" ? patients[patientID]["first_name"] : "") + " " + (typeof patients[patientID]["last_name"] === "string" ? patients[patientID]["last_name"] : "");
+				patients[patientID]["full_name"] = fullName;
 
 			this.setState({ patients: patients });
 
@@ -89,7 +101,7 @@ var Visit = React.createClass({
 	 * Render Visit container
 	 */
 	render: function() {
-		__debug(this.props, this.state);
+		__debug(this.props, this.state); // 
 		return (
 			<div className="row">
 				<Visit.PatientsOverview 
@@ -143,7 +155,7 @@ Visit.PatientsOverview = React.createClass({
 				return (
 					<div className="card" key={patientID}>
 		                <div className="card-header">
-		                    <span className="label label-info">{index + 1}</span>
+		                    <span className="label label-info">#{index + 1}</span>
 		                    <span className="label label-default">{patientID}</span> 
 		                    &nbsp; <strong>{thisPatient['full_name'] !== null ? thisPatient['full_name'] : "Unnamed patient"}</strong>
 		                </div>
@@ -152,7 +164,7 @@ Visit.PatientsOverview = React.createClass({
 		                    	return (
 		                    		<a className="list-group-item" key={field + "-" + index}>
 		                    			<strong>{iterableFields[field]["name"]}</strong>: &nbsp;
-		                    			{thisPatient.hasOwnProperty(field) && thisPatient['field'].length > 0 ? thisPatient['field'] : "No data"}
+		                    			{thisPatient.hasOwnProperty(field) && thisPatient[field].length > 0 ? thisPatient[field] : "No data"}
 		                    		</a>
 		                    	);
 		                    })}
@@ -342,7 +354,7 @@ Visit.Patient = React.createClass({
 		return (
 			<blockquote className="blockquote">
 				<h3>
-					<span className="label label-info">{this.props.hasOwnProperty('index') ? this.props.index + 1 : "?"}</span>
+					<span className="label label-info">#{this.props.hasOwnProperty('index') ? this.props.index + 1 : "?"}</span>
 		            <span className="label label-default">{this.props.hasOwnProperty('id') ? this.props.id : "?"}</span> &nbsp; 
 		            {this.props['full_name'] !== null ? this.props['full_name'] : "Unnamed patient"}
 		        </h3>
@@ -354,17 +366,19 @@ Visit.Patient = React.createClass({
 		        				<Fields.Text 
 		        					{...this.props.fields[fieldID]} 
 		        					onChange={this.handleFieldChange}
+		        					key={fieldID}
 		        					id={fieldID} />
 		        			);
 		        			break;
-		     //    		case "select":
-							// return (
-		     //    				<Fields.Select 
-		     //    					{...this.props.fields[fieldID]} 
-		     //    					onChange={this.handleFieldChange}
-		     //    					id={fieldID} />
-		     //    			);
-		     //    			break;
+		        		case "select":
+							return (
+		        				<Fields.Select 
+		        					{...this.props.fields[fieldID]} 
+		        					onChange={this.handleFieldChange}
+		        					key={fieldID}
+		        					id={fieldID} />
+		        			);
+		        			break;
 		        		default:
 		        			return (
 		        				<div className="alert alert-danger">
