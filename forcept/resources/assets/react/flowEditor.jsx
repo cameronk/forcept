@@ -319,7 +319,7 @@ var FlowEditorFieldConfigurator = React.createClass({
  			// Required properties
  			name: this.props.name,
  			type: this.props.type,
- 			mutable: (this.props.mutable === "true"),
+ 			mutable: isTrue(this.props.mutable),
 
  			// Settings
  			settings: 

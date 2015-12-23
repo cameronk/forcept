@@ -102,11 +102,13 @@
     </div>
 </div>
 
-<div class="alert alert-info">
-    <strong>Heads up!</strong>
-    <p>This stage is the root stage, meaning it is where patients are paired with a new visit. During this process, patient data is either pulled from a pre-existing patient record for updating, or a new record is created from scratch.</p>
-    <p>As a result, this stage cannot be deleted. In addition, some fields (such as patient first and last name) may be immutabl</p>
-</div>
+@if($stage->root == 1)
+    <div class="alert alert-info">
+        <strong>Heads up!</strong>
+        <p>This stage is the root stage, meaning it is where patients are paired with a new visit. During this process, patient data is either pulled from a pre-existing patient record for updating, or a new record is created from scratch.</p>
+        <p>As a result, this stage cannot be deleted. In addition, some fields (such as patient first and last name) may be immutabl</p>
+    </div>
+@endif
 
 <!--| console::flow::create - input config |-->
 <h4 class="p-t">Field configuration</h4> 

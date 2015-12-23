@@ -12,6 +12,10 @@
  *  - _token: Laravel CSRF token
  *  - containerTitle: Title for the PatientContainer block
  *  - controlsType: Denote which set of controls should appear ["new-visit", "stage-visit"]
+ *
+ *  - stages: Array of stages (in order of 'order') for finish modal
+ *  - currentStage: ID of current stage
+ *
  *  - fields: Fields which should be mutable for EACH patient in the PatientContainer block.
  *  - patientFields: Fields which should have their data displayed in the PatientOverview block.
  */
@@ -36,9 +40,23 @@ var Visit = React.createClass({
 		if(this.props.hasOwnProperty("patients")) {
 			console.log("Pre-existing patients detected, loading into state:");
 			this.setState({ 
-				patients: this.props.patients 
+				patients: this.props.patients
 			});
 		}
+	},
+
+	/*
+	 *
+	 */
+	handleConfirmFinishVisit: function( destination ) {
+		console.log("handleCompleteVisit");
+		console.log(destination);
+		__debug(this.state);
+
+		$.ajax({
+			type: "POST",
+			url: "/visit/move"
+		});
 	},
 
 	/*
@@ -47,7 +65,7 @@ var Visit = React.createClass({
 	 * @arguments
 	 * - patient: Object of patient data as pulled from the patients database table
 	 */
-	handlePatientAdd: function(patient) {
+	handlePatientAdd: function( patient ) {
 		var patients = this.state.patients;
 
 		if(patients.hasOwnProperty(patient.id)) {
@@ -59,6 +77,19 @@ var Visit = React.createClass({
 		}
 	},
 
+	/*
+	 * Aggregate data
+	 */
+	handleFinishVisit: function( isDoneLoading ) {
+		console.log("Caught handleFinishVisit");
+		__debug(this.state.patients);
+
+		$("#visit-finish-modal")
+			.modal('show')
+			.on('hide.bs.modal', function(e) {
+				// isDoneLoading();
+			});
+	},
 
 	/*
 	 * 
@@ -76,13 +107,14 @@ var Visit = React.createClass({
 				patients[patientID][fieldID] = event.target.value;
 
 				var fullName = null;
-				if(typeof patients[patientID]["first_name"] === "string" && typeof patients[patientID]["last_name"] === "string") {
+				if((typeof patients[patientID]["first_name"] === "string" && typeof patients[patientID]["last_name"] === "string")
+					&& (patients[patientID]["first_name"].length > 0 && patients[patientID]["last_name"].length > 0)) {
 					fullName = patients[patientID]["first_name"] + " " + patients[patientID]["last_name"];
 				} else {
-					if(typeof patients[patientID]["first_name"] === "string") {
+					if(typeof patients[patientID]["first_name"] === "string" && patients[patientID]["first_name"].length > 0 ) {
 						fullName = patients[patientID]["first_name"];
 					}
-					if(typeof patients[patientID]["last_name"] === "string") {
+					if(typeof patients[patientID]["last_name"] === "string" && patients[patientID]["last_name"].length > 0) {
 						fullName = patients[patientID]["last_name"];
 					}
 				}
@@ -101,20 +133,22 @@ var Visit = React.createClass({
 	 * Render Visit container
 	 */
 	render: function() {
-		__debug(this.props, this.state); // 
+		// currentStage={this.props.currentStage} 
 		return (
 			<div className="row">
+				<Visit.FinishModal 
+					stages={this.props.stages}
+					onConfirmFinishVisit={this.handleConfirmFinishVisit} />
 				<Visit.PatientsOverview 
 					fields={this.props.patientFields}
 					patients={this.state.patients} />
-
 				<Visit.PatientsContainer
 					_token={this.props._token}
 					controlsType={this.props.controlsType}
 					containerTitle={this.props.containerTitle}
 					fields={this.props.fields}
 					patients={this.state.patients}
-
+					onFinishVisit={this.handleFinishVisit}
 					onPatientAdd={this.handlePatientAdd} 
 					onPatientDataChange={this.topLevelPatientStateChange}/>
 			</div>
@@ -192,21 +226,37 @@ Visit.PatientsOverview = React.createClass({
 /* 
  * Patients management (main content)
  *
- * @arguments
- *  - 
+ * Properties:
+ *  - _token: 			Laravel CSRF token
+ *  - controlsType: 	determine which controls set to use
+ *  - containerTitle: 	Title for patients container
+ *  - fields: 			All fields for this stage
+ *  - patients:  		All patients in this visit
+ *  - onFinishVisit:  	Bubble onFinishVisit event up to Visit container
+ *  - onPatientAdd: 	Bubble onPatientAdd event up to Visit container
+ *  - onPatientDataChange: Bubble onPatientDataChange event up to Visit container
  */
 Visit.PatientsContainer = React.createClass({
 
+	/*
+	 * Initially, the container isn't loading
+	 */
 	getInitialState: function() {
 		return {
 			isLoading: false
 		}
 	},
 
+	/*
+	 * Set state to loading
+	 */
 	isLoading: function() {
 		this.setState({ isLoading: true });
 	},
 
+	/* 
+	 * Set state to not loading
+	 */
 	isDoneLoading: function() {
 		this.setState({ isLoading: false });
 	},
@@ -214,8 +264,10 @@ Visit.PatientsContainer = React.createClass({
 	/*
 	 * Handle finishing the visit
 	 */
-	handleFinishVisit: function() {
-
+	onFinishVisit: function() {
+		console.log("PatientsContainer: onFinishVisit");
+		this.isLoading();
+		this.props.onFinishVisit(this.isDoneLoading());
 	},
 
 	/*
@@ -228,7 +280,7 @@ Visit.PatientsContainer = React.createClass({
 
 		$.ajax({
 			type: "POST",
-			url: "/visit/create-patient",
+			url: "/patients/create",
 			data: {
 				"_token": this.props._token
 			},
@@ -285,8 +337,9 @@ Visit.PatientsContainer = React.createClass({
 				// We're on the new visit page
 				controls = (
 					<Visit.NewVisitControls
-						isLoading={this.state.isLoading} 
-						onFinishVisit={this.handleFinishVisit}
+						isLoading={this.state.isLoading}
+
+						onFinishVisit={this.onFinishVisit}
 						onPatientAddFromScratch={this.handlePatientAddfromScratch} />
 				);
 				break;
@@ -321,13 +374,18 @@ Visit.PatientsContainer = React.createClass({
 Visit.NewVisitControls = React.createClass({
 
 	render: function() {
+
 		var loadingGifClasses = ("m-x" + (this.props.isLoading == false ? " invisible" : ""));
 
 		return (
-			<div className="btn-group btn-group-lg">
-	        	<button type="button" className="btn btn-primary" disabled={this.props.isLoading} onClick={this.props.onPatientAddFromScratch}>Create new patient record</button>
-	        	<button type="button" className="btn btn-success" disabled={this.props.isLoading} onClick={this.props.onFinishVisit}>Finish visit &raquo;</button>
-	        	<img src="/assets/img/loading.gif" className={loadingGifClasses} width="52" height="52" />
+			<div className="btn-toolbar" role="toolbar">
+				<div className="btn-group btn-group-lg">
+		        	<button type="button" className="btn btn-primary" disabled={this.props.isLoading} onClick={this.props.onPatientAddFromScratch}>Create new patient record</button>
+		        	<img src="/assets/img/loading.gif" className={loadingGifClasses} width="52" height="52" />
+		        </div>
+	        	<div className="btn-group btn-group-lg">
+	        		<button type="button" className="btn btn-success" disabled={this.props.isLoading} onClick={this.props.onFinishVisit}>Finish visit &raquo;</button>
+	        	</div>
 	        </div>
 	    );
 	}
@@ -370,6 +428,15 @@ Visit.Patient = React.createClass({
 		        					id={fieldID} />
 		        			);
 		        			break;
+		        		case "date":
+		        			return (
+		        				<Fields.Text 
+		        					{...this.props.fields[fieldID]} 
+		        					onChange={this.handleFieldChange}
+		        					key={fieldID}
+		        					id={fieldID} />
+		        			);
+		        			break;
 		        		case "select":
 							return (
 		        				<Fields.Select 
@@ -391,4 +458,97 @@ Visit.Patient = React.createClass({
 			</blockquote>
 		);
 	}
+
+});
+
+/*
+ * Modal that appears upon clicking "Finish visit"
+ *
+ * Properties
+ *   - stages: array of stage objects (in order of 'order')
+ *   - currentStage: current stage 'order'
+ *   - onConfirmFinishVisit: handler function for logic after moving patients
+ */
+Visit.FinishModal = React.createClass({
+
+	getInitialState: function() {
+		return {
+			destination: "__default__"
+		};
+	},
+
+	/*
+	 * onComplete
+	 */
+	onComplete: function() {
+		this.props.onConfirmFinishVisit(this.state.destination);
+	},
+
+	/*
+	 * Handle destination change
+	 */
+	handleDestinationChange: function(event) {
+		this.setState({ destination: event.target.value });
+	},
+
+	/*
+	 * Check if a default value is going to be set
+	 */
+	componentWillMount: function() {
+		
+	},
+
+	/*
+	 * Render the modal
+	 */
+	render: function() {
+		var destinations = "";
+
+		var stageNameKeyPairs = {};
+
+		if(this.props.hasOwnProperty('stages') && this.props.stages.length > 0) {
+			this.props.stages.map(function(stage, index) {
+				stageNameKeyPairs[stage['id']] = stage['name'];
+				destinations = (
+					<option value={stage['id']}>{stage['name']}</option>
+				);
+			}.bind(this));
+		}
+
+		return (
+			<div className="modal fade" id="visit-finish-modal">
+			    <div className="modal-dialog modal-sm" role="document">
+			        <div className="modal-content">
+			            <div className="modal-header">
+			                <button type="button" className="close" data-dismiss="modal" aria-label="Close">
+			                  <span aria-hidden="true">&times;</span>
+			                </button>
+			                <h4 className="modal-title">Complete visit</h4>
+			            </div>
+			            <div className="modal-body">
+			            	<label className="form-control-label">Destination:</label>
+			              	<select className="form-control" onChange={this.handleDestinationChange} defaultValue="__default__">
+			              		<option value="__default__" disabled>Choose an option...</option>
+			              		{destinations}
+			              		<option value="__checkout__">Check patient out</option>
+			              	</select>
+			            </div>
+			            <div className="modal-footer">
+			                <button type="button" className="btn btn-primary" disabled={this.state.destination == "__default__"} onClick={this.onComplete}>
+			                	{
+			                		this.state.destination == "__default__" 
+				                	? "Choose a destination" 
+				                	: (this.state.destination == "__checkout__" 
+				                		? "Check-out patients" 
+				                		: "Move patients to " + stageNameKeyPairs[this.state.destination]
+				                	)
+			                	}
+			                </button>
+			            </div>
+			        </div>
+			    </div>
+			</div>
+		);
+	}
+
 });

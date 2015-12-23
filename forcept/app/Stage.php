@@ -33,6 +33,9 @@ class Stage extends Model
     public function getRawFieldsAttribute() {
     	return json_encode($this->fields);
     }
+    public function getMutableFieldsAttribute() {
+    	// $remove = ["createdBy", "inVisitStage"]
+    }
 
     public function setFieldsAttribute($value) {
     	$this->attributes['fields'] = json_encode($value);

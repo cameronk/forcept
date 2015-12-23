@@ -46,13 +46,14 @@ Fields.Text = React.createClass({
 	render: function() {
 		return (
 			<div className="form-group row">
-				<label htmlFor={this.props.id} className="col-sm-2 form-control-label text-xs-right">{this.props.name}</label>
-				<div className="col-sm-10">
+				<label htmlFor={this.props.id} className="col-xl-2 col-lg-3 col-xs-4 form-control-label text-xs-right">{this.props.name}</label>
+				<div className="col-xl-10 col-lg-9 col-xs-8">
 					<input 
 						type="text" 
 						className="form-control" 
 						id={this.props.id} 
 						placeholder={this.props.name + " goes here"} 
+						autoComplete="off"
 						onChange={this.onTextInputChange} />
 				</div>
 			</div>
@@ -147,8 +148,8 @@ Fields.Select = React.createClass({
 
 		return (
 			<div className="form-group row">
-				<label htmlFor={this.props.id} className="col-sm-2 form-control-label text-xs-right">{this.props.name}</label>
-				<div className="col-sm-10">
+				<label htmlFor={this.props.id} className="col-xl-2 col-lg-3 col-xs-4 form-control-label text-xs-right">{this.props.name}</label>
+				<div className="col-xl-10 col-lg-9 col-xs-8">
 					{displaySelect}
 					{isTrue(this.state.isCustomDataOptionSelected) ? customDataInput : ""}
 				</div>
