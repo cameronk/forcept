@@ -13,7 +13,12 @@
 
 Route::group(['middleware' => 'auth'], function () {
 
-	
+	/*
+	 * Display the forcept index page
+	 * @returns View
+	 *
+	 * => index
+	 */
 	Route::get('/', [
 		'as' => 'index',
 		function() {
@@ -22,33 +27,63 @@ Route::group(['middleware' => 'auth'], function () {
 	]);
 
 	/**
-	 * Visit
+	 * Visits
+	 *
+	 * => visits::
 	 */
 	Route::group([
-		'prefix' => 'visit',
-		'as' => 'visit::',
-		'namespace' => 'Visit',
+		'prefix' => 'visits',
+		'as' => 'visits::',
 	], function() {
 
-		// Visits index
+		/**
+		 * Display the visit index page
+		 * @returns View
+		 *
+		 * => visits::index
+		 */
 		Route::get('/', [
 			'as' => 'index',
 			'uses' => 'VisitController@index'
 		]);
 
-		// Create visit
+		/**
+		 * Display the visit creation page
+		 * @returns View
+		 * 
+		 * => visits::create
+		 */
 		Route::get('new', [
 			'as' => 'create',
 			'uses' => 'VisitController@create'
 		]);
 
-		// Create patient
-		Route::post('create-patient', [
-			'as' => 'create-patient',
+	});
+
+	/**
+	 * Patients
+	 *
+	 * => patients::
+	 */
+	Route::group([
+		'prefix' => 'patients',
+		'as' => 'patients::'
+	], function() {
+
+		/**
+		 * Make a new patient record 
+		 * @returns JSON
+		 *
+		 * => patients::create
+		 */
+		Route::post('create', [
+			'as' => 'create',
 			'uses' => 'PatientController@create'
 		]);
 
+
 	});
+
 
 	/** 
 	 * Console
