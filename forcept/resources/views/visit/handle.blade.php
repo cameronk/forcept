@@ -1,16 +1,16 @@
 @extends("templates/main")
 
-@section("page-title", "New visit - Forcept")
+@section("page-title", "Handle visit / " . $stage->name . " - Forcept")
 
 @section("content")
 
-<!--| new visit container |-->
+<!--| visit container |-->
 <div class="container-fluid" id="page-content">
     
 </div>
 
 @endsection
-                     
+
 @section("scripts")
 <script type="text/javascript" src="{{ asset('assets/js/visit.js') }}"></script>
 <script type="text/javascript">
@@ -19,13 +19,14 @@ var NewVisit = ReactDOM.render(
     React.createElement(Visit, {
         
         "_token": "{{ csrf_token() }}",
-        "containerTitle" : "Create a new visit",
-        "controlsType": "new-visit",
-        
-        "visitID": null,
-        "patients": null,
+        "containerTitle" : "Handle visit #{{ $visit->id }} in {{ $stage->name }}",
+        "controlsType": "stage-visit",
+        "redirectOnFinish": "{{ url('visits/stage/' . $stage->id . '-'. str_slug($stage->name)) }}",
+                        
+        "visitID": {{ $visit->id }},
+        "patients": <?php echo $patients; ?>,
         "stages": <?php echo $stages; ?>,
-        "currentStage": 1,
+        "currentStage": {{ $stage->id }},
         
         "mutableFields": <?php echo $mutableFields ?>, 
         "allFields": <?php echo $allFields ?>,

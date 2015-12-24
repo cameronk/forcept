@@ -7,7 +7,7 @@
 @foreach($stages->where('root', '!=', '1')->get() as $stage)
     @if(count($stage->fields) > 0)
         <li class="nav-item">
-            <a href="#" class="nav-link">{{ $stage->name }}</a>
+            <a href="{{ url('visits/stage/' . $stage->id . '-'. str_slug($stage->name)) }}" class="nav-link">{{ $stage->name }}</a>
         </li>
     @else
         <li class="nav-item">

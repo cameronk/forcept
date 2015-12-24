@@ -22,6 +22,7 @@ class DatabaseSeeder extends Seeder
             'admin' => true
         ]);
 
+
         DB::table('stages')->insert([
             'type' => 'basic',
             'name' => 'Check-in',
@@ -38,6 +39,19 @@ class DatabaseSeeder extends Seeder
                     "name" => "Last name",
                     "mutable" => false,
                     "settings" => null,
+                ],
+                "priority" => [
+                    "type" => "select",
+                    "name" => "Priority",
+                    "mutable" => false,
+                    "settings" => [
+                        "options" => [
+                            "Normal",
+                            "High",
+                            "Urgent"
+                        ],
+                        "allowCustomData" => false
+                    ]
                 ]
             ])
         ]);

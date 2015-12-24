@@ -32,7 +32,7 @@ class PatientController extends Controller
         //
         $patient = new Patient;
             $patient->createdBy = Auth::user()->id;
-            $patient->inVisitStage = true;
+            $patient->concrete = false;
 
         if($patient->save()) {
 

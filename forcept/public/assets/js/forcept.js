@@ -34,7 +34,11 @@ function isTrue(statement) {
 
 /* ========================================= */
 
-var Fields = {};
+var Fields = {
+
+	labelColumnClasses: "col-xl-2 col-lg-3 col-sm-5 col-xs-12",
+	inputColumnClasses: "col-xl-10 col-lg-9 col-sm-7 col-xs-12"
+};
 
 Fields.Text = React.createClass({displayName: "Text",
 	onTextInputChange: function(event) {
@@ -46,8 +50,8 @@ Fields.Text = React.createClass({displayName: "Text",
 	render: function() {
 		return (
 			React.createElement("div", {className: "form-group row"}, 
-				React.createElement("label", {htmlFor: this.props.id, className: "col-xl-2 col-lg-3 col-xs-4 form-control-label text-xs-right"}, this.props.name), 
-				React.createElement("div", {className: "col-xl-10 col-lg-9 col-xs-8"}, 
+				React.createElement("label", {htmlFor: this.props.id, className: Fields.labelColumnClasses + " form-control-label"}, this.props.name), 
+				React.createElement("div", {className: Fields.inputColumnClasses}, 
 					React.createElement("input", {
 						type: "text", 
 						className: "form-control", 
@@ -148,8 +152,8 @@ Fields.Select = React.createClass({displayName: "Select",
 
 		return (
 			React.createElement("div", {className: "form-group row"}, 
-				React.createElement("label", {htmlFor: this.props.id, className: "col-xl-2 col-lg-3 col-xs-4 form-control-label text-xs-right"}, this.props.name), 
-				React.createElement("div", {className: "col-xl-10 col-lg-9 col-xs-8"}, 
+				React.createElement("label", {htmlFor: this.props.id, className: Fields.labelColumnClasses + " form-control-label"}, this.props.name), 
+				React.createElement("div", {className: Fields.inputColumnClasses}, 
 					displaySelect, 
 					isTrue(this.state.isCustomDataOptionSelected) ? customDataInput : ""
 				)

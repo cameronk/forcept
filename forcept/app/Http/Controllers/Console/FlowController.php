@@ -74,9 +74,15 @@ class FlowController extends Controller
             // Save stage model
             if($stage->save()) {
 
-                // Create schema
+                // Add the order 
+                $stage->order = $stage->id;
+                $stage->save();
+
+                // Create table schema
                 Schema::create($stage->tableName, function(Blueprint $table) {
                     $table->increments('id');
+                    $table->integer('visit_id');
+                    $table->integer('patient_id');
                 });
 
                 return redirect()->route('console::flow::index')->with('alert', [ 'type' => 'success', 'message' => 'Stage created. Choose "Edit" below to get started.' ]);

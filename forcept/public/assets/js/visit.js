@@ -12,12 +12,16 @@
  *  - _token: Laravel CSRF token
  *  - containerTitle: Title for the PatientContainer block
  *  - controlsType: Denote which set of controls should appear ["new-visit", "stage-visit"]
+ *  - redirectOnFinish: URL to redirect to on complete
  *
+ *  - visitID: ID of the current visit being modified (null if new visit setup)
+ *  - patients: Patients object with fieldID => data setup
  *  - stages: Array of stages (in order of 'order') for finish modal
  *  - currentStage: ID of current stage
  *
- *  - fields: Fields which should be mutable for EACH patient in the PatientContainer block.
- *  - patientFields: Fields which should have their data displayed in the PatientOverview block.
+ *  - mutablefields: Fields which should be mutable for EACH patient in the PatientContainer block.
+ *  - allFields: Fields which should have their data displayed in the PatientOverview block.
+ *				 CONTAINS ALL FIELDS FOR ALL STAGES UP TO  currentStage
  */
 var Visit = React.createClass({displayName: "Visit",
 
@@ -26,6 +30,7 @@ var Visit = React.createClass({displayName: "Visit",
 	 */
 	getInitialState: function() {
 		return {
+			confirmFinishVisitResponse: null,
 			patients: {},
 		}
 	},
@@ -37,7 +42,7 @@ var Visit = React.createClass({displayName: "Visit",
 		console.log("Preparing to mount Visit with properties:");
 		console.log(this.props);
 
-		if(this.props.hasOwnProperty("patients")) {
+		if(this.props.hasOwnProperty("patients") && this.props.patients !== null) {
 			console.log("Pre-existing patients detected, loading into state:");
 			this.setState({ 
 				patients: this.props.patients
@@ -48,14 +53,42 @@ var Visit = React.createClass({displayName: "Visit",
 	/*
 	 *
 	 */
-	handleConfirmFinishVisit: function( destination ) {
-		console.log("handleCompleteVisit");
-		console.log(destination);
-		__debug(this.state);
-
+	handleConfirmFinishVisit: function( destination, modalObject ) {
 		$.ajax({
 			type: "POST",
-			url: "/visit/move"
+			url: "/visits/store",
+			data: {
+				"_token": this.props._token,
+				visit: this.props.visitID,
+				patients: this.state.patients,
+				stage: this.props.currentStage,
+				destination: destination
+			},
+			success: function(resp) {
+				this.setState({ patients: {} });
+			}.bind(this),
+			error: function(resp) {
+
+			},
+			complete: function(resp) {
+				console.log("Complete:");
+				console.log(resp);
+				if(this.props.controlsType == "new-visit") {
+					this.setState({ 
+						confirmFinishVisitResponse: resp.responseJSON 
+					});
+					$("#visit-finish-modal")
+						.modal('hide')
+						.on('hidden.bs.modal', function(e) {
+							console.log("Modal hidden");
+							modalObject.setState(modalObject.getInitialState());
+							modalObject.forceUpdate();
+						});
+
+				} else {
+					window.location = this.props.redirectOnFinish;
+				}
+			}.bind(this)
 		});
 	},
 
@@ -73,7 +106,10 @@ var Visit = React.createClass({displayName: "Visit",
 		} else {
 			// Update state with new patient
 			patients[patient.id] = patient;
-			this.setState({ patients: patients });
+			this.setState({ 
+				confirmFinishVisitResponse: null, 
+				patients: patients 
+			});
 		}
 	},
 
@@ -81,14 +117,8 @@ var Visit = React.createClass({displayName: "Visit",
 	 * Aggregate data
 	 */
 	handleFinishVisit: function( isDoneLoading ) {
-		console.log("Caught handleFinishVisit");
-		__debug(this.state.patients);
-
 		$("#visit-finish-modal")
-			.modal('show')
-			.on('hide.bs.modal', function(e) {
-				// isDoneLoading();
-			});
+			.modal('show');
 	},
 
 	/*
@@ -133,21 +163,25 @@ var Visit = React.createClass({displayName: "Visit",
 	 * Render Visit container
 	 */
 	render: function() {
-		// currentStage={this.props.currentStage} 
 		return (
 			React.createElement("div", {className: "row"}, 
 				React.createElement(Visit.FinishModal, {
 					stages: this.props.stages, 
 					onConfirmFinishVisit: this.handleConfirmFinishVisit}), 
+
 				React.createElement(Visit.PatientsOverview, {
-					fields: this.props.patientFields, 
+					fields: this.props.allFields, 
 					patients: this.state.patients}), 
+
 				React.createElement(Visit.PatientsContainer, {
 					_token: this.props._token, 
 					controlsType: this.props.controlsType, 
 					containerTitle: this.props.containerTitle, 
-					fields: this.props.fields, 
+
+					fields: this.props.mutableFields, 
 					patients: this.state.patients, 
+					confirmFinishVisitResponse: this.state.confirmFinishVisitResponse, 
+
 					onFinishVisit: this.handleFinishVisit, 
 					onPatientAdd: this.handlePatientAdd, 
 					onPatientDataChange: this.topLevelPatientStateChange})
@@ -161,7 +195,7 @@ var Visit = React.createClass({displayName: "Visit",
  * Patients overview (left sidebar)
  *
  * Accepted properties:
- * - fields: Object of patient data fields for displaying patient metadata
+ * - fields: Object of ALL fields for ALL stages up to THIS CURRENT STAGE for displaying patient metadata
  * - patients: Object of patients w/ data as pulled from database
  */
 Visit.PatientsOverview = React.createClass({displayName: "PatientsOverview",
@@ -182,6 +216,8 @@ Visit.PatientsOverview = React.createClass({displayName: "PatientsOverview",
 			delete iterableFields["first_name"];
 			delete iterableFields["last_name"];
 
+		console.log(iterableFields);
+
 		// If there are patients in the props object
 		if(Object.keys(this.props.patients).length > 0) {
 			patientOverviews = Object.keys(this.props.patients).map(function(patientID, index) {
@@ -195,10 +231,18 @@ Visit.PatientsOverview = React.createClass({displayName: "PatientsOverview",
 		                ), 
 		                React.createElement("div", {className: "list-group list-group-flush"}, 
 		                    Object.keys(iterableFields).map(function(field, index) {
+		                    	console.log("Field: " + field);
+		                    	console.log(thisPatient[field]);
 		                    	return (
 		                    		React.createElement("a", {className: "list-group-item", key: field + "-" + index}, 
 		                    			React.createElement("strong", null, iterableFields[field]["name"]), ":  ", 
-		                    			thisPatient.hasOwnProperty(field) && thisPatient[field].length > 0 ? thisPatient[field] : "No data"
+		                    			
+		                    				thisPatient.hasOwnProperty(field) 
+		                    				&& thisPatient[field] !== null
+		                    				&& thisPatient[field].length > 0 
+		                    				 ? thisPatient[field] 
+		                    				 : "No data"
+		                    			
 		                    		)
 		                    	);
 		                    })
@@ -345,14 +389,46 @@ Visit.PatientsContainer = React.createClass({displayName: "PatientsContainer",
 				break;
 			case "stage-visit":
 				// We're on some sort of stage page
+				controls = (
+					React.createElement(Visit.StageVisitControls, {
+						isLoading: this.state.isLoading, 
 
+						onFinishVisit: this.onFinishVisit})
+				);
 				break;
 		}
 
+		// Add messages as necessary
+		var message;
+		if(this.props.confirmFinishVisitResponse !== null) {
+			var response = this.props.confirmFinishVisitResponse;
+			if(response.status == "success") {
+				message = (
+					React.createElement("div", {className: "alert alert-success"}, 
+						React.createElement("strong", null, "Awesome!"), " ", response.message
+					)
+				);
+			} else {
+				var errorListItems = response.errors.map(function(error, index) {
+					return (
+						React.createElement("li", {key: index}, error)
+					);
+				});
+				message = (
+					React.createElement("div", {className: "alert alert-danger"}, 
+						React.createElement("strong", null, "An error occurred:"), " ", response.message, 
+						React.createElement("ul", null, errorListItems)
+					)
+				);
+			}
+		}
+
+
 		return (
 			React.createElement("div", {className: "col-xs-12 col-sm-12 col-md-8 col-xl-9"}, 
-	            React.createElement("h1", {className: "p-t"}, this.props.containerTitle), 
+	            React.createElement("h1", {className: "p-t text-xs-center"}, this.props.containerTitle), 
 	            React.createElement("hr", null), 
+	            message, 
 	            patients, 
 	            React.createElement("hr", null), 
 	            controls
@@ -363,7 +439,7 @@ Visit.PatientsContainer = React.createClass({displayName: "PatientsContainer",
 
 
 /*
- * Display the controls for the visit/new page
+ * Display the controls for the new visit page
  *
  * Properties:
  *  - isLoading: boolean, is the container engaged in some sort of loading / modal process
@@ -391,6 +467,34 @@ Visit.NewVisitControls = React.createClass({displayName: "NewVisitControls",
 	}
 
 });
+
+
+/*
+ * Display the controls for the stage page
+ *
+ * Properties:
+ *  - isLoading: boolean, is the container engaged in some sort of loading / modal process
+ *
+ *  - onFinishVisit: callback for finishing visit
+ */
+Visit.StageVisitControls = React.createClass({displayName: "StageVisitControls",
+
+	render: function() {
+
+		var loadingGifClasses = ("m-x" + (this.props.isLoading == false ? " invisible" : ""));
+
+		return (
+			React.createElement("div", {className: "btn-toolbar", role: "toolbar"}, 
+				React.createElement("div", {className: "btn-group btn-group-lg"}, 
+		        	React.createElement("img", {src: "/assets/img/loading.gif", className: loadingGifClasses, width: "52", height: "52"}), 
+	        		React.createElement("button", {type: "button", className: "btn btn-success", disabled: this.props.isLoading, onClick: this.props.onFinishVisit}, "Finish visit »")
+		        )
+	        )
+	    );
+	}
+
+});
+
 
 
 /*
@@ -466,14 +570,15 @@ Visit.Patient = React.createClass({displayName: "Patient",
  *
  * Properties
  *   - stages: array of stage objects (in order of 'order')
- *   - currentStage: current stage 'order'
+ *   - currentStage: current stage id
  *   - onConfirmFinishVisit: handler function for logic after moving patients
  */
 Visit.FinishModal = React.createClass({displayName: "FinishModal",
 
 	getInitialState: function() {
 		return {
-			destination: "__default__"
+			isSubmitting: false,
+			destination: null
 		};
 	},
 
@@ -481,7 +586,8 @@ Visit.FinishModal = React.createClass({displayName: "FinishModal",
 	 * onComplete
 	 */
 	onComplete: function() {
-		this.props.onConfirmFinishVisit(this.state.destination);
+		this.setState({ isSubmitting: true });
+		this.props.onConfirmFinishVisit(this.state.destination, this);
 	},
 
 	/*
@@ -495,24 +601,40 @@ Visit.FinishModal = React.createClass({displayName: "FinishModal",
 	 * Check if a default value is going to be set
 	 */
 	componentWillMount: function() {
-		
+		// Set default value as the first stage in the array (the next stage in order above the current one)
+		this.setState({ destination: this.props.stages[0].id });
 	},
 
 	/*
 	 * Render the modal
 	 */
 	render: function() {
-		var destinations = "";
 
-		var stageNameKeyPairs = {};
+		var destinations,
+			buttonText,
+			defaultValue,
+			stageNameKeyPairs = {};
 
+		// Check if stages are defined, use them as destinations
+		// NOTE: stages are in order of ORDER, not ID
 		if(this.props.hasOwnProperty('stages') && this.props.stages.length > 0) {
-			this.props.stages.map(function(stage, index) {
+			destinations = this.props.stages.map(function(stage, index) {
 				stageNameKeyPairs[stage['id']] = stage['name'];
-				destinations = (
+				return (
 					React.createElement("option", {value: stage['id']}, stage['name'])
 				);
 			}.bind(this));
+		}
+
+		// Change button text based on modal state
+		if(this.state.isSubmitting == true) {
+			buttonText = "Working...";
+		} else {
+			if(this.state.destination == "__checkout__") {
+				buttonText = "Check-out patients";
+			} else {
+				buttonText = "Move patients to " + (this.state.destination !== null ? stageNameKeyPairs[this.state.destination] : stageNameKeyPairs[defaultValue]);
+			}
 		}
 
 		return (
@@ -527,22 +649,14 @@ Visit.FinishModal = React.createClass({displayName: "FinishModal",
 			            ), 
 			            React.createElement("div", {className: "modal-body"}, 
 			            	React.createElement("label", {className: "form-control-label"}, "Destination:"), 
-			              	React.createElement("select", {className: "form-control", onChange: this.handleDestinationChange, defaultValue: "__default__"}, 
-			              		React.createElement("option", {value: "__default__", disabled: true}, "Choose an option..."), 
+			              	React.createElement("select", {className: "form-control", onChange: this.handleDestinationChange, disabled: this.state.isSubmitting}, 
 			              		destinations, 
 			              		React.createElement("option", {value: "__checkout__"}, "Check patient out")
 			              	)
 			            ), 
 			            React.createElement("div", {className: "modal-footer"}, 
-			                React.createElement("button", {type: "button", className: "btn btn-primary", disabled: this.state.destination == "__default__", onClick: this.onComplete}, 
-			                	
-			                		this.state.destination == "__default__" 
-				                	? "Choose a destination" 
-				                	: (this.state.destination == "__checkout__" 
-				                		? "Check-out patients" 
-				                		: "Move patients to " + stageNameKeyPairs[this.state.destination]
-				                	)
-			                	
+			                React.createElement("button", {type: "button", className: "btn btn-primary", disabled: this.state.isSubmitting == true, onClick: this.onComplete}, 
+			                	buttonText
 			                )
 			            )
 			        )

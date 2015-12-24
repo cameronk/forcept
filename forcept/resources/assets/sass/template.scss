@@ -44,6 +44,10 @@ $forcept-navbar-height:    4rem;
     line-height: $input-height-lg;
 }
 
+/**
+ * Imports
+ */
+
 // Navigation
 @import "navigation";
 
@@ -54,6 +58,9 @@ $forcept-navbar-height:    4rem;
 // Console
 @import "console";
 @import "edit-stage";
+
+// Stage visits viewer
+@import "stage-visits";
 
 // Patient-related modules
 @import "patient";

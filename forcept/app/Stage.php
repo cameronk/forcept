@@ -20,7 +20,7 @@ class Stage extends Model
 
     public function getTableNameAttribute()
     {
-    	return $this->root == false ? 'stage_' . $this->id : 'patients';
+    	return 'stage_' . $this->id;
     }
 
     /*
@@ -32,9 +32,6 @@ class Stage extends Model
 
     public function getRawFieldsAttribute() {
     	return json_encode($this->fields);
-    }
-    public function getMutableFieldsAttribute() {
-    	// $remove = ["createdBy", "inVisitStage"]
     }
 
     public function setFieldsAttribute($value) {

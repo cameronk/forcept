@@ -58,6 +58,54 @@ Route::group(['middleware' => 'auth'], function () {
 			'uses' => 'VisitController@create'
 		]);
 
+		/**
+		 * Handle visit creation/updating as necessary
+		 * @returns JSON 
+		 *
+		 * => visits::handle
+		 */
+		Route::post('store', [
+			'as' => 'store',
+			'uses' => 'VisitController@store'
+		]);
+
+		/**
+		 * Get visits for a specified stage ID
+		 * @returns JSON
+		 *
+		 * => visits::get
+		 */
+		Route::get('fetch/{stage}', [
+			'as' => 'fetch',
+			'uses' => 'VisitController@fetch'
+		]);
+
+		/**
+		 * Stage
+		 *
+		 * => visits::stage::
+		 */
+		Route::group([
+			'prefix' => 'stage',
+			'as' => 'stage::'
+		], function() {
+
+			/**
+			 * Display all visits under this stage.
+			 */
+			Route::get('{stage}', [
+				'uses' => 'VisitController@stage'
+			]);
+
+			/**
+			 * Displays visit editor with stage fields.
+			 */
+			Route::get('{stage}/handle/{visit}', [
+				'uses' => 'VisitController@handle'
+			]);
+			
+		});
+
 	});
 
 	/**

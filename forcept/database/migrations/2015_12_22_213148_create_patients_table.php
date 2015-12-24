@@ -13,18 +13,25 @@ class CreatePatientsTable extends Migration
     public function up()
     {
         //
-        Schema::create('patients', function (Blueprint $table) {
+        Schema::create('stage_1', function (Blueprint $table) {
             $table->increments('id');
+
+            // Immutable base properties
             $table->string('first_name')->nullable();
             $table->string('last_name')->nullable();
+            $table->string('priority')->nullable();
+
+            // Metadata
             $table->integer('createdBy');
-            $table->boolean('inVisitStage')->default(false)->comment("Patient created but data not yet gathered from NewVisit");
+            $table->boolean('concrete')->default(false)->comment("Patient created but data not yet gathered from NewVisit");
+            
+            // Timestamps
             $table->timestamps();
             $table->softDeletes();
         });
 
         // Set-up default auto increment value
-        DB::statement("ALTER TABLE `patients` AUTO_INCREMENT = 100000");
+        DB::statement("ALTER TABLE `stage_1` AUTO_INCREMENT = 100000");
     }
 
     /**
@@ -35,6 +42,6 @@ class CreatePatientsTable extends Migration
     public function down()
     {
         //
-        Schema::dropIfExists('patients');
+        Schema::dropIfExists('stage_1');
     }
 }

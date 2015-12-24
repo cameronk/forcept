@@ -1,0 +1,18 @@
+/**
+ * _stage-visits.scss
+ */
+
+.forcept-patient-summary-card {
+    
+    .card-block {
+        padding: ($spacer-y / 2) ($spacer-x);
+    }
+    
+    .card-title {
+        margin-top: ($spacer-y / 1.5);
+        
+        span.title-content {
+            padding-right: 5px;   
+        }
+    }
+}

@@ -4476,6 +4476,9 @@ a.bg-danger:focus, a.bg-danger:hover {
   line-height: 3.29167rem; }
 
 /**
+ * Imports
+ */
+/**
  * _navigation.scss
  */
 #navbar-mobile .nav-link, #navbar-desktop .nav-link {
@@ -4530,6 +4533,17 @@ h4.field-title span.title {
 #cfg-submitting h5 {
   display: inline-block;
   padding-left: 1rem; }
+
+/**
+ * _stage-visits.scss
+ */
+.forcept-patient-summary-card .card-block {
+  padding: 0.5rem 1rem; }
+
+.forcept-patient-summary-card .card-title {
+  margin-top: 0.66667rem; }
+  .forcept-patient-summary-card .card-title span.title-content {
+    padding-right: 5px; }
 
 /**
  * _patient.scss
