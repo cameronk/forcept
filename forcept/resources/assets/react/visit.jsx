@@ -126,17 +126,17 @@ var Visit = React.createClass({
 	/*
 	 * 
 	 */
-	topLevelPatientStateChange: function(patientID, fieldID, event) {
+	topLevelPatientStateChange: function(patientID, fieldID, value) {
 		console.log("Top level patient state change");
 		console.log("Patient ID: " + patientID);
 		console.log("Field ID: " + fieldID);
-		console.log("Event: " + event);
+		console.log("Value: " + value);
 
 		// Check if patient is in our patients array
 		if(this.state.patients.hasOwnProperty(patientID)) {
 
 			var patients = this.state.patients;
-				patients[patientID][fieldID] = event.target.value;
+				patients[patientID][fieldID] = value;
 
 				var fullName = null;
 				if((typeof patients[patientID]["first_name"] === "string" && typeof patients[patientID]["last_name"] === "string")
@@ -233,18 +233,44 @@ Visit.PatientsOverview = React.createClass({
 		                </div>
 		                <div className="list-group list-group-flush">
 		                    {Object.keys(iterableFields).map(function(field, index) {
-		                    	console.log("Field: " + field);
-		                    	console.log(thisPatient[field]);
+
+		                    	var value = "No data";
+
+		                    	if(thisPatient.hasOwnProperty(field) 	// If this field exists in the patient data
+		                    		&& thisPatient[field] !== null 		// If the data for this field is null, show "No data"
+		                    		&& thisPatient[field].length > 0) 	// If string length == 0 or array length == 0, show "No data"
+		                    	{
+		                    		if( ["string", "number"].indexOf(typeof thisPatient[field]) !== -1 ) // If the field is a string or number
+		                    		{
+
+		                    			// We might need to mutate the data
+		                    			switch(iterableFields[field].type) {
+		                    				case "multiselect":
+		                    					// Convert from JSON array to nice string
+		                    					var arr = JSON.parse(thisPatient[field]);
+		                    					if(Array.isArray(arr) && arr.length > 0) {
+		                    						value = arr.join(", ");
+		                    					}
+		                    					break;
+		                    				default:
+		                    					value = thisPatient[field].toString();
+		                    					break;
+		                    			}
+		                    		} else {
+		                    			if( Array.isArray(thisPatient[field]) ) // If the data is an array
+		                    			{
+		                    				value = thisPatient[field].join(", ");
+		                    			} else {
+		                    				// WTF is it?
+		                    				console.log("WARNING: unknown field data type for field " + field);
+		                    			}
+		                    		}
+		                    	}
+
 		                    	return (
 		                    		<a className="list-group-item" key={field + "-" + index}>
 		                    			<strong>{iterableFields[field]["name"]}</strong>: &nbsp;
-		                    			{
-		                    				thisPatient.hasOwnProperty(field) 
-		                    				&& thisPatient[field] !== null
-		                    				&& thisPatient[field].length > 0 
-		                    				 ? thisPatient[field] 
-		                    				 : "No data"
-		                    			}
+		                    			{value}
 		                    		</a>
 		                    	);
 		                    })}
@@ -708,10 +734,10 @@ Visit.StageVisitControls = React.createClass({
  */
 Visit.Patient = React.createClass({
 
-	handleFieldChange: function(fieldID, event) {
+	handleFieldChange: function(fieldID, value) {
 		// Continue bubbling event from Fields.whatever to top-level Visit container
 		// (this element passes along the patient ID to modify)
-		this.props.onPatientDataChange(this.props.id, fieldID, event);
+		this.props.onPatientDataChange(this.props.id, fieldID, value);
 	},
 
 	render: function() {
@@ -730,6 +756,16 @@ Visit.Patient = React.createClass({
 		        		case "text":
 		        			return (
 		        				<Fields.Text 
+		        					{...this.props.fields[fieldID]} 
+		        					defaultValue={this.props.hasOwnProperty(fieldID) ? this.props[fieldID] : null}
+		        					onChange={this.handleFieldChange}
+		        					key={fieldID}
+		        					id={fieldID} />
+		        			);
+		        			break;
+		        		case "number":
+		        			return (
+		        				<Fields.Number
 		        					{...this.props.fields[fieldID]} 
 		        					defaultValue={this.props.hasOwnProperty(fieldID) ? this.props[fieldID] : null}
 		        					onChange={this.handleFieldChange}

@@ -35,7 +35,6 @@ function isTrue(statement) {
 /* ========================================= */
 
 var Fields = {
-
 	labelColumnClasses: "col-xl-2 col-lg-3 col-sm-5 col-xs-12",
 	inputColumnClasses: "col-xl-10 col-lg-9 col-sm-7 col-xs-12"
 };
@@ -44,7 +43,7 @@ Fields.Text = React.createClass({
 	onTextInputChange: function(event) {
 		// Bubble event up to handler passed from Visit
 		// (pass field ID and event)
-		this.props.onChange(this.props.id, event);
+		this.props.onChange(this.props.id, event.target.value);
 	},
 
 	render: function() {
@@ -66,6 +65,32 @@ Fields.Text = React.createClass({
 	}
 });
 
+Fields.Number = React.createClass({
+	onNumberInputChange: function(event) {
+		// Bubble event up to handler passed from Visit
+		// (pass field ID and event)
+		this.props.onChange(this.props.id, event.target.value);
+	},
+
+	render: function() {
+		return (
+			<div className="form-group row">
+				<label htmlFor={this.props.id} className={Fields.labelColumnClasses + " form-control-label"}>{this.props.name}</label>
+				<div className={Fields.inputColumnClasses}>
+					<input 
+						type="number" 
+						className="form-control" 
+						id={this.props.id} 
+						placeholder={this.props.name + " goes here"} 
+						autoComplete="off"
+						defaultValue={this.props.defaultValue !== null ? this.props.defaultValue : null}
+						onChange={this.onNumberInputChange} />
+				</div>
+			</div>
+		);
+	}
+});
+
 Fields.Select = React.createClass({
 
 	getInitialState: function() {
@@ -81,24 +106,24 @@ Fields.Select = React.createClass({
 			case "__default__":
 				// Spoof event target value
 				this.setState({ isCustomDataOptionSelected: false });
-				this.props.onChange(this.props.id, { target: { value: "" } });
+				this.props.onChange(this.props.id, "");
 				break;
 			case "__custom__":
 				// Set top-level state value to nothing (so it says "No data")
 				this.setState({ isCustomDataOptionSelected: true });
-				this.props.onChange(this.props.id, { target: { value: "" } });
+				this.props.onChange(this.props.id, "");
 				break;
 			default:
 				// Bubble event up to handler passed from Visit
 				// (pass field ID and event)
 				this.setState({ isCustomDataOptionSelected: false });
-				this.props.onChange(this.props.id, event);
+				this.props.onChange(this.props.id, event.target.value);
 				break;
 		}
 	},
 
 	onCustomDataInputChange: function(event) {
-		this.props.onChange(this.props.id, event);
+		this.props.onChange(this.props.id, event.target.value);
 	},
 
 	render: function() {
@@ -157,6 +182,70 @@ Fields.Select = React.createClass({
 				<div className={Fields.inputColumnClasses}>
 					{displaySelect}
 					{isTrue(this.state.isCustomDataOptionSelected) ? customDataInput : ""}
+				</div>
+			</div>
+		);
+	}
+});
+
+Fields.MultiSelect = React.createClass({
+
+	getInitialState: function() {
+		return {};
+	},
+
+	onSelectInputChange: function(event) {
+		var options = event.target.options;
+		var values = [];
+
+		for(var i = 0; i < options.length; i++) {
+			if(options[i].selected) {
+				values.push(options[i].value);
+			}
+		}
+
+		this.props.onChange(this.props.id, values);
+	},
+
+	render: function() {
+
+		var options,
+			displaySelect;
+
+		// Was there an error with options?
+		var optionsError = false;
+
+		// Load options if they are present, otherwise error
+		if(this.props.settings.hasOwnProperty('options') && Array.isArray(this.props.settings.options)) {
+			options = this.props.settings.options.map(function(option, index) {
+				return (
+					<option value={option} key={this.props.id + "-option-" + index}>{option}</option>
+				);
+			}.bind(this));
+		} else {
+			optionsError = true;
+		}
+
+		// If no error, build select input. Otherwise, display an error message.
+		if(!optionsError) {
+			displaySelect = (
+				<select className="form-control" onChange={this.onSelectInputChange} multiple={true}>
+					{options}
+				</select>
+			);
+		} else {
+			displaySelect = (
+				<div className="alert alert-danger">
+					<strong>Warning:</strong> no options defined for select input {this.props.id}
+				</div>
+			);
+		}
+
+		return (
+			<div className="form-group row">
+				<label htmlFor={this.props.id} className={Fields.labelColumnClasses + " form-control-label"}>{this.props.name}</label>
+				<div className={Fields.inputColumnClasses}>
+					{displaySelect}
 				</div>
 			</div>
 		);

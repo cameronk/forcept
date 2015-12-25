@@ -174,7 +174,18 @@ class VisitController extends Controller
             // Make sure all the values in the patientData array are valid stage columns
             foreach($patientData as $key => $value) {
                 if(array_key_exists($key, $stage->fields)) {
-                    $data[$key] = $value;
+
+                    // Check if we should mutate the data (i.e. multiselect)
+                    switch($stage->fields[$key]["type"]) {
+                        case "multiselect":
+                            // Value is an array, convert to string
+                            $data[$key] = json_encode($value);
+                            break;
+                        default: 
+                            $data[$key] = $value;
+                            break;
+                    }
+                    
                 } else {
                     \Log::debug(
                         sprintf('Attemped to update stage [%s], column [%s], but this column is not valid', $stage->id, $key)

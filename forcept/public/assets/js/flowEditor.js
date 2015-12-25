@@ -358,6 +358,7 @@ FlowEditor.Field = React.createClass({displayName: "Field",
  						React.createElement("label", {className: "form-control-label"}, "Type:"), 
 	 					React.createElement("select", {className: "form-control", disabled: !this.state.mutable, onChange: this.handleFieldTypeChange, defaultValue: this.state.type}, 
 	 						React.createElement("option", {value: "text"}, "Text input"), 
+	 						React.createElement("option", {value: "number"}, "Number input"), 
 	 						React.createElement("option", {value: "date"}, "Date input"), 
 	 						React.createElement("option", {value: "select"}, "Select input with options"), 
 	 						React.createElement("option", {value: "multiselect"}, "Multi-select input with options")
@@ -395,6 +396,7 @@ FlowEditor.Field.Settings = React.createClass({displayName: "Settings",
 
 			case "text":
 			case "date":
+			case "number":
 				// Do nothing for these types
 				console.log("\t| Dialog is for text/date field, skipping.");
 				return {};
@@ -435,6 +437,7 @@ FlowEditor.Field.Settings = React.createClass({displayName: "Settings",
 		switch(this.props.type) {
 			case "text":
 			case "date":
+			case "number":
 				// Do nothing for these types
 				break;
 			case "select":
@@ -593,6 +596,7 @@ FlowEditor.Field.Settings = React.createClass({displayName: "Settings",
 		switch(this.props.type) {
 			case "text":
 			case "date":
+			case "number":
 				return (
 					React.createElement("div", null, 
 						React.createElement("div", {className: "alert alert-info m-t"}, 
@@ -725,109 +729,5 @@ FlowEditor.Field.Settings = React.createClass({displayName: "Settings",
 				);
 				break;
 		}
-
-		/*
-		// Check what type of input this dialog is for
-		if(this.props.type == "text" || this.props.type == "date") {
-
-			return (
-				<div>
-					<div className="alert alert-info m-t">
-						No configuration is required for {this.props.type} inputs.
-					</div>
-					{mutabilityMessage}
-				</div>
-			);
-
-		} else if(this.props.type == "select") {
-
-			var optionInputs,
-				customDataCheckbox;
-
-			// If there are options in the state
-			if(this.state.hasOwnProperty('options') && this.state.options.length > 0) {
-
-				// Map option input containers to one variable
-				optionInputs = this.state.options.map(function(value, index) {
-					return (
-						<div className="field-select-option form-group row" key={index}>
-							<div className="col-sm-12">
-								<div className="input-group">
-									<input type="text" placeholder="Enter an option" className="form-control" defaultValue={value} onChange={this.handleChangeOptionText(index)} />
-									<span className="input-group-btn">
-										<button type="button" onClick={this.handleRemoveOption.bind(this, index)} className="btn btn-danger">
-										  	<span>&times;</span>
-										</button>
-									</span>
-								</div>
-							</div>
-						</div>
-					);
-				}.bind(this));
-
-				// Add a checkbox at the end
-				customDataCheckbox = (
-					<div className="col-sm-12">
-						<div className="checkbox m-t">
-							<label>
-								<input type="checkbox" 
-									checked={this.state.allowCustomData == true} 
-									onChange={this.handleAllowCustomDataChange} />
-									Allow users to enter custom data for this field
-							</label>
-						</div>
-					</div>
-				);
-			} else {
-
-				// No options available, show info message
-				optionInputs = (
-					<div className="alert alert-info">
-						No options have been defined &mdash; try <a className="alert-link" onClick={this.handleAddOption}>adding one</a>. 
-					</div>
-				);
-				customDataCheckbox = (
-					<span></span>
-				);
-			}
-
-
-		} else if(this.props.type == "multiselect") {
-
-			// Map option input containers to one variable
-			optionInputs = this.state.options.map(function(value, index) {
-				return (
-					<div className="field-select-option form-group row" key={index}>
-						<div className="col-sm-12">
-							<div className="input-group">
-								<input type="text" placeholder="Enter an option" className="form-control" defaultValue={value} onChange={this.handleChangeOptionText(index)} />
-								<span className="input-group-btn">
-									<button type="button" onClick={this.handleRemoveOption.bind(this, index)} className="btn btn-danger">
-									  	<span>&times;</span>
-									</button>
-								</span>
-							</div>
-						</div>
-					</div>
-				);
-			}.bind(this));
-
-			customDataCheckbox = (
-				<span></span>
-			);
-
-		}
-		*/
-		// // Ta-da!
-		// return (
-		// 	<div className="field-select-options-contain">
-  //           	<h5>Options ({ this.state.hasOwnProperty('options') ? this.state.options.length : 0 })</h5>
-		// 		{optionInputs}
-		// 		{customDataCheckbox}
-		// 		{mutabilityMessage}
-		// 		<button type="button" className="btn btn-primary-outline" onClick={this.handleAddOption}>Add another option</button>
-		// 	</div>
-		// );
-		
 	}
 });
