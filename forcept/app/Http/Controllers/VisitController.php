@@ -168,6 +168,7 @@ class VisitController extends Controller
         // Loop through patients, add a new row to the respective Stage for each patient
         foreach($request->patients as $patientID => $patientData) {
 
+            // Setup data array
             $data = array();
 
             // Make sure all the values in the patientData array are valid stage columns
@@ -176,16 +177,69 @@ class VisitController extends Controller
                     $data[$key] = $value;
                 } else {
                     \Log::debug(
-                        sprintf('Attemped to update stage [%s], column [%s], with value [%s], but this column does not exist', $stage->id, $key, $value)
+                        sprintf('Attemped to update stage [%s], column [%s], but this column is not valid', $stage->id, $key)
                     );
                 }
             }
+
+
+            // Make sure this patient record exists
+            $patient = Patient::where('id', '=', $patientID);
+
+            // If the patient exists...
+            if($patient->count() > 0) {
+
+                // Grab patient record
+                $patient = $patient->first();
+
+                // Update patient record as necessary
+                if($stage->root) {
+
+                    // All data is relative to Patient record
+                    $data['concrete'] = true; 
+                    $data['current_visit'] = $visit->id;
+
+                    // Add this visit ID to patient all-time visits array
+                    // (we're at the root stage so this hasnt been done yet)
+                    $thisPatientVisits = $patient->visits;
+                        $thisPatientVisits[] = $visit->id;
+                    $data['visits'] = $thisPatientVisits;
+
+                    \Log::debug("Updating patient record at root stage with data:");
+                    \Log::debug($data);
+
+                    // Update patient record.
+                    $patient->update($data);
+
+                } else {
+                    // Set visit_id and patient_id for reference in this stage
+                    $data["visit_id"] = $visit->id;
+                    $data["patient_id"] = $patientID;
+
+                    // Insert data into this stage's table
+                    DB::table($stage->tableName)->insert($data);
+                }
+
+                // If the destination is checkout, remove "current visit" from patient
+                if($request->destination == "__checkout__") {
+                    \Log::debug("Destination for patient " . $patient->id . " in visit " . $visit->id . " is " . $request->destination);
+                    $patient->current_visit = null;
+                    $patient->priority = null;
+                    $patient->save();
+                }
+
+            } else {
+                $error = sprintf("Could not locate patient record [id: %s]", $patientID);
+                $errors[] = $error;
+                \Log::debug($error);
+            }
+
 
             // If this is the root stage (Check-in), we want to update
             // patient data instead of creating a new record. Also, do not
             // set visit_id or patient_id parameters, as these are respective
             // to non-root stages.
-            if($stage->root) {
+            /*if($stage->root) {
                 $patient = Patient::where('id', '=', $patientID);
 
                 // Check if this patient record exists
@@ -193,7 +247,14 @@ class VisitController extends Controller
                     $patient = $patient->first();
 
                     // Set patient concrete = true now that we've update their data
-                    $data['concrete'] = true;
+                    $data['concrete'] = true; 
+
+                    // If the destination is checkout, remove current_visit ID
+                    if($request->destination == "__checkout__") {
+
+                    } else {
+                        $data['current_visit'] = $visi
+                    }
 
                     // Update patient record.
                     $patient->update($data);
@@ -211,7 +272,7 @@ class VisitController extends Controller
 
                 // Insert data into this stage's table
                 DB::table($stage->tableName)->insert($data);
-            }
+            }*/
         }
 
         // Patient data has been stored, update Visit record
@@ -234,7 +295,6 @@ class VisitController extends Controller
 
     /**
      * Fetch visits for specified stage ID
-     *
      */
     public function fetch(Stage $stage) 
     {

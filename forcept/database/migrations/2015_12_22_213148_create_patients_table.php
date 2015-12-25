@@ -19,10 +19,15 @@ class CreatePatientsTable extends Migration
             // Immutable base properties
             $table->string('first_name')->nullable();
             $table->string('last_name')->nullable();
+            //$table->string('full_name')->nullable(); // Not shown as a property in the admin panel, used for searching
             $table->string('priority')->nullable();
 
+            // Visit data
+            $table->integer('current_visit')->nullable();
+            $table->json('visits')->nullable();
+
             // Metadata
-            $table->integer('createdBy');
+            $table->integer('created_by');
             $table->boolean('concrete')->default(false)->comment("Patient created but data not yet gathered from NewVisit");
             
             // Timestamps

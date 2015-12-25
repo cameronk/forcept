@@ -131,7 +131,7 @@
     console.log("\n");
     
     var FlowEditorFields = ReactDOM.render(
-        React.createElement(FlowEditorFields, {
+        React.createElement(FlowEditor, {
             fields: configuration,
             handleSubmit: function() {
                 var submitAJAX = function() {

@@ -82,11 +82,11 @@ var Visit = React.createClass({displayName: "Visit",
 						.on('hidden.bs.modal', function(e) {
 							console.log("Modal hidden");
 							modalObject.setState(modalObject.getInitialState());
-							modalObject.forceUpdate();
+							modalObject.resetSelectState();
 						});
 
 				} else {
-					window.location = this.props.redirectOnFinish;
+					// window.location = this.props.redirectOnFinish;
 				}
 			}.bind(this)
 		});
@@ -110,6 +110,8 @@ var Visit = React.createClass({displayName: "Visit",
 				confirmFinishVisitResponse: null, 
 				patients: patients 
 			});
+
+			__debug(this.state);
 		}
 	},
 
@@ -267,6 +269,7 @@ Visit.PatientsOverview = React.createClass({displayName: "PatientsOverview",
 
 });
 
+
 /* 
  * Patients management (main content)
  *
@@ -274,8 +277,10 @@ Visit.PatientsOverview = React.createClass({displayName: "PatientsOverview",
  *  - _token: 			Laravel CSRF token
  *  - controlsType: 	determine which controls set to use
  *  - containerTitle: 	Title for patients container
+ *
  *  - fields: 			All fields for this stage
  *  - patients:  		All patients in this visit
+ * 
  *  - onFinishVisit:  	Bubble onFinishVisit event up to Visit container
  *  - onPatientAdd: 	Bubble onPatientAdd event up to Visit container
  *  - onPatientDataChange: Bubble onPatientDataChange event up to Visit container
@@ -287,6 +292,7 @@ Visit.PatientsContainer = React.createClass({displayName: "PatientsContainer",
 	 */
 	getInitialState: function() {
 		return {
+			showImportBlock: false,
 			isLoading: false
 		}
 	},
@@ -345,12 +351,20 @@ Visit.PatientsContainer = React.createClass({displayName: "PatientsContainer",
 
 	},
 
+	handleShowImportBlock: function() {
+		this.setState({ showImportBlock: true });
+	},
+	handleCloseImportBlock: function() {
+		this.setState({ showImportBlock: false });
+	},
+
 	render: function() {
 
 		console.log("Rendering patients container with patients " + Object.keys(this.props.patients).length);
 		console.log(this.props.patients);
 		
 		var patients,
+			importBlock,
 			controls;
 
 		// Set up patients block
@@ -375,6 +389,17 @@ Visit.PatientsContainer = React.createClass({displayName: "PatientsContainer",
 			);
 		}
 
+		// Set up import block
+		if(this.state.showImportBlock) {
+			importBlock = (
+				React.createElement(Visit.ImportBlock, {
+					_token: this.props._token, 
+
+					onPatientAdd: this.props.onPatientAdd, 
+					onClose: this.handleCloseImportBlock})
+			);
+		}
+
 		// Set up controls block
 		switch(this.props.controlsType) {
 			case "new-visit":
@@ -382,9 +407,11 @@ Visit.PatientsContainer = React.createClass({displayName: "PatientsContainer",
 				controls = (
 					React.createElement(Visit.NewVisitControls, {
 						isLoading: this.state.isLoading, 
+						isImportBlockVisible: this.state.showImportBlock, 
 
 						onFinishVisit: this.onFinishVisit, 
-						onPatientAddFromScratch: this.handlePatientAddfromScratch})
+						onPatientAddFromScratch: this.handlePatientAddfromScratch, 
+						onShowImportBlock: this.handleShowImportBlock})
 				);
 				break;
 			case "stage-visit":
@@ -428,11 +455,186 @@ Visit.PatientsContainer = React.createClass({displayName: "PatientsContainer",
 			React.createElement("div", {className: "col-xs-12 col-sm-12 col-md-8 col-xl-9"}, 
 	            React.createElement("h1", {className: "p-t text-xs-center"}, this.props.containerTitle), 
 	            React.createElement("hr", null), 
-	            message, 
-	            patients, 
+	            	message, 
+	            	patients, 
 	            React.createElement("hr", null), 
+	            	importBlock, 
 	            controls
 	        )
+		);
+	}
+});
+
+
+Visit.ImportBlock = React.createClass({displayName: "ImportBlock",
+
+	getInitialState: function() {
+		return {
+			display: 'form',
+			patientsFound: [],
+
+			name: null,
+			forceptID: null,
+			fieldNumber: null,
+		}
+	},
+
+	handleInputChange: function(input) {
+		return function(event) {
+			var state = this.state;
+				state[input] = event.target.value;
+			this.setState(state);
+		}.bind(this);
+	},
+	handleSearch: function(type) {
+		console.log("Handling click" + type);
+		this.setState({ display: 'searching' });
+
+		$.ajax({
+			type: "POST",
+			url: "/patients/search",
+			data: {
+				_token: this.props._token,
+				by: type,
+				for: this.state[type]
+			},
+			success: function(resp) {
+				this.setState({ 
+					display: 'results', 
+					patientsFound: resp.patients 
+				});
+			}.bind(this),
+			error: function(resp) {
+
+			},
+			complete: function(resp) {
+
+			}
+		});
+	},
+	handlePatientAdd: function(patient) {
+		return function(event) {
+			// console.log("Caught handlePatientAdd for ID " + patientID);
+			this.props.onPatientAdd(patient);
+			this.resetDisplay();
+		}.bind(this);
+	},
+
+	resetDisplay: function() {
+		this.setState(this.getInitialState());
+	},
+
+	doSearchName: function() {
+		this.handleSearch("name");
+	},
+	doSearchForceptID: function() {
+		this.handleSearch("forceptID");
+	},
+	doSearchFieldNumber: function() {
+		this.handleSearch("fieldNumber");
+	},
+
+	render: function() {
+
+		var display;
+
+		switch(this.state.display) {
+			case "form":
+				display = (
+					React.createElement("fieldset", {className: "form-group"}, 
+						React.createElement("label", {className: "form-control-label hidden-sm-up"}, "...by field number:"), 
+						React.createElement("div", {className: "input-group input-group-lg m-b"}, 
+	      					React.createElement("input", {type: "number", className: "form-control", placeholder: "Search for a patient by field number...", value: this.state.fieldNumber, onChange: this.handleInputChange("fieldNumber")}), 
+							React.createElement("span", {className: "input-group-btn"}, 
+								React.createElement("button", {className: "btn btn-secondary", type: "button", disabled: this.state.fieldNumber == null, onClick: this.doSearchFieldNumber}, "Search")
+							)
+						), 
+						React.createElement("label", {className: "form-control-label hidden-sm-up"}, "...by Forcept ID:"), 
+						React.createElement("div", {className: "input-group input-group-lg m-b"}, 
+	      					React.createElement("input", {type: "number", className: "form-control", placeholder: "Search for a patient by Forcept ID...", min: "100000", value: this.state.forceptID, onChange: this.handleInputChange("forceptID")}), 
+							React.createElement("span", {className: "input-group-btn"}, 
+								React.createElement("button", {className: "btn btn-secondary", type: "button", disabled: this.state.forceptID == null, onClick: this.doSearchForceptID}, "Search")
+							)
+						), 
+						React.createElement("label", {className: "form-control-label hidden-sm-up"}, "...by first or last name:"), 
+						React.createElement("div", {className: "input-group input-group-lg"}, 
+	      					React.createElement("input", {type: "text", className: "form-control", placeholder: "Search for a patient by first or last name...", value: this.state.name, onChange: this.handleInputChange("name")}), 
+							React.createElement("span", {className: "input-group-btn"}, 
+								React.createElement("button", {className: "btn btn-secondary", type: "button", disabled: this.state.name == null || this.state.name.length == 0, onClick: this.doSearchName}, "Search")
+							)
+						)
+					)
+				);
+				break;
+			case "searching":
+				display = (
+					React.createElement("h2", null, 
+						React.createElement("img", {src: "/assets/img/loading.gif", className: "m-r"}), 
+						"One moment, searching patients.."
+					) 
+				);
+				break;
+			case "results":
+
+				if(this.state.patientsFound.length == 0) {
+					display = (
+						React.createElement("div", {className: "alert alert-info"}, 
+							"No patients found. ", React.createElement("a", {className: "alert-link", onClick: this.resetDisplay}, "Try again?")
+						)
+					)
+				} else {
+					display = (
+						React.createElement("div", {className: "row"}, 
+							this.state.patientsFound.map(function(patient, index) {
+								var currentVisit;
+								if(patient['current_visit'] !== null) {
+									currentVisit = (
+										React.createElement("li", {className: "list-group-item bg-danger"}, "Patient currently in a visit!")
+									);
+								}
+								return (
+									React.createElement("div", {className: "col-xs-12 col-sm-6", key: "patients-found-" + index}, 
+										React.createElement("div", {className: "card"}, 
+											React.createElement("div", {className: "card-header"}, 
+												React.createElement("h5", {className: "card-title"}, 
+													React.createElement("span", {className: "label label-default pull-right"}, patient['id']), 
+													React.createElement("span", {className: "label label-primary pull-right"}, "#", index + 1), 
+													React.createElement("span", {className: "title-content"}, (patient["full_name"] !== null && patient["full_name"].length > 0) ? patient["full_name"] : "Unnamed patient")
+												)
+											), 
+											React.createElement("ul", {className: "list-group list-group-flush"}, 
+												currentVisit
+											), 
+											React.createElement("div", {className: "card-block"}, 
+												React.createElement("button", {type: "button", className: "btn btn-block btn-secondary", disabled: patient['current_visit'] !== null, onClick: this.handlePatientAdd(patient)}, 
+													'\u002b', " Add"
+												)
+											)
+										)
+									)
+								);
+							}.bind(this))
+						)
+					);
+				}
+
+				break;
+			default:
+				break;
+		}
+
+
+		return (
+			React.createElement("blockquote", {className: "blockquote"}, 
+				React.createElement("h3", null, 
+					'\u21af', " Import a patient", 
+					React.createElement("button", {type: "button", className: "close pull-right", "aria-label": "Close", onClick: this.props.onClose}, 
+					    React.createElement("span", {"aria-hidden": "true"}, "×")
+					 )
+				), 
+				React.createElement("hr", null), 
+				display
+			)
 		);
 	}
 });
@@ -443,12 +645,13 @@ Visit.PatientsContainer = React.createClass({displayName: "PatientsContainer",
  *
  * Properties:
  *  - isLoading: boolean, is the container engaged in some sort of loading / modal process
- *
+ *  - isImportBlockVisible: if the import block is visible, disable the button
+ * 
  *  - onFinishVisit: callback for finishing visit
  *  - onPatientAddFromScratch: callback for clicking "Create new patient record"
+ *  - onShowImportBlock: callback for showing the import block within PatientsContainer
  */
 Visit.NewVisitControls = React.createClass({displayName: "NewVisitControls",
-
 	render: function() {
 
 		var loadingGifClasses = ("m-x" + (this.props.isLoading == false ? " invisible" : ""));
@@ -456,11 +659,12 @@ Visit.NewVisitControls = React.createClass({displayName: "NewVisitControls",
 		return (
 			React.createElement("div", {className: "btn-toolbar", role: "toolbar"}, 
 				React.createElement("div", {className: "btn-group btn-group-lg"}, 
-		        	React.createElement("button", {type: "button", className: "btn btn-primary", disabled: this.props.isLoading, onClick: this.props.onPatientAddFromScratch}, "Create new patient record"), 
+		        	React.createElement("button", {type: "button", className: "btn btn-primary", disabled: this.props.isLoading, onClick: this.props.onPatientAddFromScratch}, '\u002b', " New"), 
+		        	React.createElement("button", {type: "button", className: "btn btn-default", disabled: this.props.isLoading || this.props.isImportBlockVisible, onClick: this.props.onShowImportBlock}, '\u21af', " Import"), 
 		        	React.createElement("img", {src: "/assets/img/loading.gif", className: loadingGifClasses, width: "52", height: "52"})
 		        ), 
 	        	React.createElement("div", {className: "btn-group btn-group-lg"}, 
-	        		React.createElement("button", {type: "button", className: "btn btn-success", disabled: this.props.isLoading, onClick: this.props.onFinishVisit}, "Finish visit »")
+	        		React.createElement("button", {type: "button", className: "btn btn-success", disabled: this.props.isLoading, onClick: this.props.onFinishVisit}, '\u2713', " Finish visit")
 	        	)
 	        )
 	    );
@@ -527,7 +731,8 @@ Visit.Patient = React.createClass({displayName: "Patient",
 		        			return (
 		        				React.createElement(Fields.Text, React.__spread({},  
 		        					this.props.fields[fieldID], 
-		        					{onChange: this.handleFieldChange, 
+		        					{defaultValue: this.props.hasOwnProperty(fieldID) ? this.props[fieldID] : null, 
+		        					onChange: this.handleFieldChange, 
 		        					key: fieldID, 
 		        					id: fieldID}))
 		        			);
@@ -536,7 +741,8 @@ Visit.Patient = React.createClass({displayName: "Patient",
 		        			return (
 		        				React.createElement(Fields.Text, React.__spread({},  
 		        					this.props.fields[fieldID], 
-		        					{onChange: this.handleFieldChange, 
+		        					{defaultValue: this.props.hasOwnProperty(fieldID) ? this.props[fieldID] : null, 
+		        					onChange: this.handleFieldChange, 
 		        					key: fieldID, 
 		        					id: fieldID}))
 		        			);
@@ -545,7 +751,18 @@ Visit.Patient = React.createClass({displayName: "Patient",
 							return (
 		        				React.createElement(Fields.Select, React.__spread({},  
 		        					this.props.fields[fieldID], 
-		        					{onChange: this.handleFieldChange, 
+		        					{defaultValue: this.props.hasOwnProperty(fieldID) ? this.props[fieldID] : null, 
+		        					onChange: this.handleFieldChange, 
+		        					key: fieldID, 
+		        					id: fieldID}))
+		        			);
+		        			break;
+		        		case "multiselect":
+		        			return (
+		        				React.createElement(Fields.MultiSelect, React.__spread({},  
+		        					this.props.fields[fieldID], 
+		        					{defaultValue: this.props.hasOwnProperty(fieldID) ? this.props[fieldID] : null, 
+		        					onChange: this.handleFieldChange, 
 		        					key: fieldID, 
 		        					id: fieldID}))
 		        			);
@@ -578,7 +795,6 @@ Visit.FinishModal = React.createClass({displayName: "FinishModal",
 	getInitialState: function() {
 		return {
 			isSubmitting: false,
-			destination: null
 		};
 	},
 
@@ -586,23 +802,37 @@ Visit.FinishModal = React.createClass({displayName: "FinishModal",
 	 * onComplete
 	 */
 	onComplete: function() {
-		this.setState({ isSubmitting: true });
+		this.setState({ 
+			isSubmitting: true 
+		});
 		this.props.onConfirmFinishVisit(this.state.destination, this);
 	},
 
 	/*
 	 * Handle destination change
 	 */
-	handleDestinationChange: function(event) {
-		this.setState({ destination: event.target.value });
+	handleDestinationChange: function(destination) {
+		return function(event) {
+			console.log("Changing destination to ");
+			console.log(destination);
+			this.setState({ destination: destination });
+		}.bind(this);
 	},
 
 	/*
 	 * Check if a default value is going to be set
 	 */
 	componentWillMount: function() {
+		this.resetSelectState();
+	},
+
+	resetSelectState: function() {
 		// Set default value as the first stage in the array (the next stage in order above the current one)
-		this.setState({ destination: this.props.stages[0].id });
+		if(this.props.hasOwnProperty('stages') && this.props.stages !== null && this.props.stages.length > 0) {
+			this.setState({ destination: this.props.stages[0].id });
+		} else {
+			this.setState({ destination: "__checkout__" });
+		}
 	},
 
 	/*
@@ -621,7 +851,10 @@ Visit.FinishModal = React.createClass({displayName: "FinishModal",
 			destinations = this.props.stages.map(function(stage, index) {
 				stageNameKeyPairs[stage['id']] = stage['name'];
 				return (
-					React.createElement("option", {value: stage['id']}, stage['name'])
+					React.createElement("label", {className: "btn btn-secondary btn-block" + (stage['id'] == this.state.destination ? " active" : ""), key: "finish-modal-option" + index, onClick: this.handleDestinationChange(stage['id'])}, 
+						React.createElement("input", {type: "radio", name: "destination", defaultChecked: stage['id'] == this.state.destination}), 
+						stage['id'] == this.state.destination ? "\u2713" : "", " ", stage['name']
+					)
 				);
 			}.bind(this));
 		}
@@ -645,17 +878,19 @@ Visit.FinishModal = React.createClass({displayName: "FinishModal",
 			                React.createElement("button", {type: "button", className: "close", "data-dismiss": "modal", "aria-label": "Close"}, 
 			                  React.createElement("span", {"aria-hidden": "true"}, "×")
 			                ), 
-			                React.createElement("h4", {className: "modal-title"}, "Complete visit")
+			                React.createElement("h4", {className: "modal-title"}, "Move visit to...")
 			            ), 
 			            React.createElement("div", {className: "modal-body"}, 
-			            	React.createElement("label", {className: "form-control-label"}, "Destination:"), 
-			              	React.createElement("select", {className: "form-control", onChange: this.handleDestinationChange, disabled: this.state.isSubmitting}, 
-			              		destinations, 
-			              		React.createElement("option", {value: "__checkout__"}, "Check patient out")
-			              	)
+			            	React.createElement("div", {className: "btn-group-vertical btn-group-lg", style: {display: "block"}, "data-toggle": "buttons"}, 
+			            		destinations, 
+								React.createElement("label", {className: "btn btn-secondary btn-block" + ("__checkout__" == this.state.destination ? " active" : ""), onClick: this.handleDestinationChange("__checkout__")}, 
+									React.createElement("input", {type: "radio", name: "destination", defaultChecked: "__checkout__" == this.state.destination}), 
+									"__checkout__" == this.state.destination ? "\u2713" : "", " Check-out"
+								)
+			            	)
 			            ), 
 			            React.createElement("div", {className: "modal-footer"}, 
-			                React.createElement("button", {type: "button", className: "btn btn-primary", disabled: this.state.isSubmitting == true, onClick: this.onComplete}, 
+			                React.createElement("button", {type: "button", className: "btn btn-success", disabled: this.state.isSubmitting == true, onClick: this.onComplete}, 
 			                	buttonText
 			                )
 			            )

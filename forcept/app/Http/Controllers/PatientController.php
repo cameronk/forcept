@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use App\Http\Requests;
 use App\Http\Controllers\Controller;
 
+use App\Http\Requests\SearchPatientsRequest;
 use App\Patient;
 use Auth;
 
@@ -23,15 +24,15 @@ class PatientController extends Controller
     }
 
     /**
-     * Show the form for creating a new resource.
+     * Create a new patient record.
      *
-     * @return \Illuminate\Http\Response
+     * @return JSON
      */
     public function create()
     {
         //
         $patient = new Patient;
-            $patient->createdBy = Auth::user()->id;
+            $patient->created_by = Auth::user()->id;
             $patient->concrete = false;
 
         if($patient->save()) {
@@ -47,8 +48,48 @@ class PatientController extends Controller
                 "message" => "Couldn't save new patient record."
             ], 422);
         }
-
     }
+
+
+    /**
+     * Search existing patient records.
+     *
+     * @return JSON
+     */
+    public function search(SearchPatientsRequest $request)
+    {
+        switch($request->by) {
+            case "name":
+                return response()->json([ 
+                    "status" => "success",
+                    "patients" => Patient::where('first_name', 'LIKE', '%' . $request->for . '%')
+                                ->orWhere('last_name', 'LIKE', '%' . $request->for . '%')
+                                ->get()->toArray() 
+                ]);
+
+                break;
+
+            case "forceptID":
+                return response()->json([
+                    "status" => "success",
+                    "patients" =>  Patient::where('id', '=', $request->for)->where('concrete', '=', 1)->get()->toArray()
+                ]);
+                break;
+
+            case "fieldNumber":
+                // return response()->json( Patient::where('') )
+                break;
+            default:
+                return response()->json([
+                    "status" => "failure",
+                    "message" => sprintf("Searching by %s is not supported.", $request->by),
+                    "patients" => []
+                ], 422);
+                break;
+        }
+    }
+
+
 
     /**
      * Store a newly created resource in storage.

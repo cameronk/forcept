@@ -58,6 +58,7 @@ Fields.Text = React.createClass({
 						id={this.props.id} 
 						placeholder={this.props.name + " goes here"} 
 						autoComplete="off"
+						defaultValue={this.props.defaultValue !== null ? this.props.defaultValue : null}
 						onChange={this.onTextInputChange} />
 				</div>
 			</div>

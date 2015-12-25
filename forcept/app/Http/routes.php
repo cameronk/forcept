@@ -130,6 +130,17 @@ Route::group(['middleware' => 'auth'], function () {
 		]);
 
 
+		/**
+		 * Search for an existing patient record
+		 * @returns JSON
+		 *
+		 * => patients::search
+		 */
+		Route::post('search', [
+			'as' => 'search',
+			'uses' => 'PatientController@search'
+		]);
+
 	});
 
 

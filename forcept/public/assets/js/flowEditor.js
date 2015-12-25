@@ -4,7 +4,7 @@
 
 /* =================================================== */
 
-var flowEditor_CustomizableFields = ["select"];
+var flowEditor_CustomizableFields = ["select", "multiselect"];
 var flowEditor_DefaultFieldState = {
 	name: "",
 	type: "text",
@@ -12,272 +12,177 @@ var flowEditor_DefaultFieldState = {
 	settings: null,
 };
 
-var FlowEditorFieldConfiguratorSettingsDialog = React.createClass({displayName: "FlowEditorFieldConfiguratorSettingsDialog",
+
+/**
+ * Heirarchy
+ *
+ * > FlowEditorFields (houses all field containers and form controls)
+ * | Passes down: 
+ * |   field object, onRemove handler for the configurator, key (time-based input key), index (index in fields object)
+ * ==> FlowEditorFieldConfigurator (single field configuration control area)
+ *   | Passes down:
+ *   |   field type, onChange handler
+ *   ==> FlowEditorFieldConfiguratorSettingsDialog
+ */
+
+var FlowEditor = React.createClass({displayName: "FlowEditor",
 
 	/*
-
-	 * Return initial state based on property type
+	 * Initial container state: has no fields
 	 */
 	getInitialState: function() {
-		console.log("Caught getInitialState for field settings dialog with type " + this.props.type);
-		switch(this.props.type) {
-			case "text":
-			case "date":
-				// Do nothing for these types
-				console.log("\t| Dialog is for text/date field, skipping.");
-				return {};
-				break;
-			case "select":
-				console.log("\t| Dialog is for select field, returning initial select options.");
-				return {
-					options: [],
-					allowCustomData: false,
-				};
-				break;
-			default:
-				console.log("\t| Field not recognized, skipping.");
-				return {};
-				break;
-		}
+		return {
+			fields: {},
+			fieldValidities: {},
+			invalidCount: 0,
+			isValid: true,
+			fieldsRemoved: [],
+		};
 	},
 
 	/*
-	 * Prepare component for mounting
+	 * Add prop fields to state before mount
 	 */
 	componentWillMount: function() {
- 		
- 		console.log("");
- 		console.log("--[mount: " + this.props['field-key'] + "]--")
-		console.log("Mounting options dialog for '" + this.props.type + "' input with props:");
-		console.log(this.props);
+		this.setState({ fields: this.props.fields }, function() {
+			this.checkContainerValidity();
+		}.bind(this));
+	},
 
-		switch(this.props.type) {
-			case "text":
-			case "date":
-				// Do nothing for these types
-				console.log("\t| Input is " + this.props.type + ", no custom settings.");
-				break;
-			case "select":
 
-				// If there's already an options array...
-				if(this.props.hasOwnProperty('settings') && this.props.settings !== null) {
-					console.log("\t| CURRENT state is: " + JSON.stringify(this.state));
-					console.log("\t| Input has pre-defined settings, checking individual sections...");
+	/*
+	 * Add a new field to the container
+	 */
+	handleAddNewField: function() {
+		var fields = this.state.fields;
+		var fieldValidities = this.state.fieldValidities;
+		var key = new Date().getTime();
 
-					// Settings array exists. Check for each setting data point
-					if(this.props.settings.hasOwnProperty("options")) {
-						console.log("\t\t| Input has options [" + this.props.settings.options + "], pushing to state.");
-						this.setState({ options: this.props.settings.options });
-					}
+		fields[key] = flowEditor_DefaultFieldState; // Default settings for a new input
+		fieldValidities[key] = false; // Input defaults to invalid
 
-					// If there's a set value for allowing custom data...
-					if(this.props.settings.hasOwnProperty("allowCustomData") && this.props.settings.allowCustomData == "true") {
-						console.log("\t\t| Input has allowCustomData [" + this.props.settings.allowCustomData + "], pushing to state.");
-						this.setState({ allowCustomData: (this.props.settings.allowCustomData == "true") });
-					}
+		this.setState({ fields: fields, fieldValidities: fieldValidities });
 
-				} else {
-					console.log("\t| Input DOES NOT have pre-defined settings");
-				}
+		// Since we added a field, we should re-check validity of the container
+		this.checkContainerValidity();
+	},
 
-				break;
+	/*
+	 * Remove a field from the container (requires key)
+	 */
+ 	handleRemoveField: function(key) {
+		var fields = this.state.fields;
+		var fieldValidities = this.state.fieldValidities;
+		var fieldsRemoved = this.state.fieldsRemoved;
+
+		if(fields.hasOwnProperty(key)) {
+			fieldsRemoved.push( (this.refs[key].state.name.length > 0 ? this.refs[key].state.name : '<em>Untitled field</em>' ) + " &nbsp; <span class='label label-default'>" + key + "</span>");
+			delete fields[key];
 		}
-	},
+		if(fieldValidities.hasOwnProperty(key)) {
+			delete fieldValidities[key];
+		}
 
-	/*
-	 * Component completed mounting
-	 */
-	componentDidMount: function() {
-		console.log("Component 'FlowEditorFieldConfiguratorSettingsDialog' mounted, state is now:");
-		console.log(this.state);
- 		console.log("--[/mount: " + this.props['field-key'] + "]--");
- 		console.log("");
-	},
+		this.setState({ fields: fields, fieldValidities: fieldValidities, fieldsRemoved: fieldsRemoved });
 
-	/*
-	 * Handle adding of a new option (SELECT type)
-	 */
-	handleAddOption: function() {
+		// Since we removed a field, we should re-check validity of the container
+		this.checkContainerValidity();
+ 	},
 
-		console.log("");
-		console.log("--[add option: " + this.props['field-key'] + "]--");
+ 	/*
+ 	 * Check the validity of a field object
+ 	 */
+ 	checkFieldValidity: function(ref) {
 
+ 		console.log("Checking field validity for " + ref);
 
-		var push = function() {
-			var options = this.state.options;
-				options.push("");
-			this.setState({ options: options });
+ 		var fieldValidities = this.state.fieldValidities;
+ 			fieldValidities[ref] = this.refs[ref].isValid();
 
-			// Bump changes to parent element for aggregation
-			this.props.onChange(this.state);
+ 			console.log(fieldValidities[ref]);
 
-			console.log("--[/add option: " + this.props['field-key'] + "]--");
-			console.log("");
-		}.bind(this);
+ 		this.setState({ fieldValidities: fieldValidities });
+ 		this.checkContainerValidity();
+ 	},
 
-		if(!this.state.hasOwnProperty('options')) {
-			// No options yet (type was probably just changed to select), add one.
-			// Make sure to set other initial state values first
-			console.log("\t| Missing options property, returning component to initial state and continuing...");
-			this.setState(this.getInitialState(), function() {
-				push();
+ 	/*
+ 	 * Check the validity of the container as a whole
+ 	 */
+ 	checkContainerValidity: function() {
+ 		var valid = true;
+ 		var invalidCount = 0;
+
+ 		for(var fieldKey in this.state.fieldValidities) {
+ 			if(this.state.fieldValidities[fieldKey] !== true) {
+ 				invalidCount++;
+ 				valid = false;
+ 			}
+ 		}
+
+ 		this.setState({ invalidCount: invalidCount, isValid: valid });
+ 	},
+
+ 	/*
+ 	 * Compile container data into one coherent object
+ 	 */
+ 	compileData: function() {
+ 		var data = {};
+ 		Object.keys(this.state.fields).map(function(key, i) {
+ 			data[key] = this.refs[key].state;
+ 		}.bind(this));
+
+ 		return data;
+ 	},
+
+ 	/*
+ 	 * Clear removed fields from state
+ 	 */
+ 	clearRemoved: function() {
+ 		this.setState({ fieldsRemoved: [] });
+ 	},
+
+ 	/*
+ 	 * Render the container
+ 	 */
+	render: function() {
+		var fields;
+
+		// Check if any fields are stored in state.
+		if(Object.keys(this.state.fields).length > 0) {
+			fields = Object.keys(this.state.fields).map(function(key, index) {
+				console.log(" => Creating field " + key + " (" + this.state.fields[key].name + ", " + this.state.fields[key].type + ")");
+				console.log(this.state.fields[key]);
+				return (
+					React.createElement(FlowEditor.Field, React.__spread({}, 
+						this.state.fields[key], 
+						{onChange: this.checkFieldValidity.bind(this, key), 
+						onRemove: this.handleRemoveField.bind(this, key), 
+						key: key, 
+						"data-key": key, 
+						ref: key, 
+						index: index}))
+				);
 			}.bind(this));
 		} else {
-			console.log("\t| Options array exists, pushing...");
-			push();
-		}
-
-	},
-
-	/*
-	 * Handle removing of an option (SELECT type)
-	 */
-	handleRemoveOption: function(index) {
-		var options = this.state.options;
-			options.splice(index, 1);
-		this.setState({ options: options });
-
-		// Bump changes to parent element for aggregation
-		this.props.onChange(this.state);
-	},
-
-	/*
-	 * Handle change of option text (SELECT type)
-	 */
-	handleChangeOptionText: function(index) {
-		return function(event) {
-			var options = this.state.options;
-				options[index] = event.target.value;
-			this.setState({ options: options });
-
-			// Bump changes to parent element for aggregation
-			this.props.onChange(this.state);
-		}.bind(this);
-	},
-
-	/*
-	 * Handle change of allow custom data checkbox (SELECT type)
-	 */
-	handleAllowCustomDataChange: function() {
-		console.log("");
-		console.log("--[handleAllowCustomDataChange]--");
-		console.log("\t| for: " + this.props['field-key']);
-		console.log("\t| State before custom data change:");
-		console.log(this.state);
-
-		var newStatus = !this.state.allowCustomData;
-		this.setState({ allowCustomData: newStatus }, function() {
-			console.log("\t| New state:");
-			console.log(this.state);
-
-			// Bump changes to parent element for aggregation
-			this.props.onChange(this.state);
-
-			console.log("--[/handleAllowCustomDataChange]--");
-			console.log("");
-		});
-
-	},
-
-	/*
-	 * Render the settings dialog
-	 */
-	render: function() {
-
-		var mutabilityMessage;
-
-		// Add a message if this field is immutable
-		if(this.props.mutable == false) {
-			mutabilityMessage = (
-				React.createElement("div", {className: "alert alert-danger"}, 
-					React.createElement("strong", null, "Notice:"), " This field is protected. Only the display name and type-based settings can be modified."
+			fields = (
+				React.createElement("div", {className: "alert alert-info"}, 
+					"No fields added — try ", React.createElement("a", {className: "alert-link", onClick: this.handleAddNewField}, "adding a new one"), "."
 				)
-			);
-		} else {
-			mutabilityMessage = (
-				React.createElement("span", null)
 			);
 		}
 
-		// Check what type of input this dialog is for
-		if(this.props.type == "text" || this.props.type == "date") {
-
-			return (
-				React.createElement("div", null, 
-					React.createElement("div", {className: "alert alert-info m-t"}, 
-						"No configuration is required for ", this.props.type, " inputs."
-					), 
-					mutabilityMessage
-				)
-			);
-
-		} else if(this.props.type == "select") {
-
-			var optionInputs,
-				customDataCheckbox;
-
-			// If there are options in the state
-			if(this.state.hasOwnProperty('options') && this.state.options.length > 0) {
-
-				console.log("render config, allowCustomData:" + typeof this.state.allowCustomData);
-
-				// Map option input containers to one variable
-				optionInputs = this.state.options.map(function(value, index) {
-					return (
-						React.createElement("div", {className: "field-select-option form-group row", key: index}, 
-							React.createElement("div", {className: "col-sm-12"}, 
-								React.createElement("div", {className: "input-group"}, 
-									React.createElement("input", {type: "text", placeholder: "Enter an option", className: "form-control", defaultValue: value, onChange: this.handleChangeOptionText(index)}), 
-									React.createElement("span", {className: "input-group-btn"}, 
-										React.createElement("button", {type: "button", onClick: this.handleRemoveOption.bind(this, index), className: "btn btn-danger"}, 
-										  	React.createElement("span", null, "×")
-										)
-									)
-								)
-							)
-						)
-					);
-				}.bind(this));
-
-				// Add a checkbox at the end
-				customDataCheckbox = (
-					React.createElement("div", {className: "col-sm-12"}, 
-						React.createElement("div", {className: "checkbox m-t"}, 
-							React.createElement("label", null, 
-								React.createElement("input", {type: "checkbox", 
-									checked: this.state.allowCustomData == true, 
-									onChange: this.handleAllowCustomDataChange}), 
-									"Allow users to enter custom data for this field"
-							)
-						)
-					)
-				);
-			} else {
-
-				// No options available, show info message
-				optionInputs = (
-					React.createElement("div", {className: "alert alert-info"}, 
-						"No options have been defined — try ", React.createElement("a", {className: "alert-link", onClick: this.handleAddOption}, "adding one"), "." 
-					)
-				);
-				customDataCheckbox = (
-					React.createElement("span", null)
-				);
-			}
-
-			// Ta-da!
-			return (
-				React.createElement("div", {className: "field-select-options-contain"}, 
-	            	React.createElement("h5", null, "Options (",  this.state.hasOwnProperty('options') ? this.state.options.length : 0, ")"), 
-					optionInputs, 
-					customDataCheckbox, 
-					mutabilityMessage, 
-					React.createElement("button", {type: "button", className: "btn btn-primary-outline", onClick: this.handleAddOption}, "Add another option")
-				)
-			);
-		} 
+		return (
+			React.createElement("div", {id: "flow-editor-fields-contain"}, 
+				fields, 
+	            React.createElement("button", {type: "button", className: "btn btn-primary btn-lg", onClick: this.handleAddNewField}, "Add a new field"), 
+	            React.createElement("button", {type: "button", className: "btn btn-success btn-lg", onClick: this.props.handleSubmit, disabled: !this.state.isValid}, this.state.isValid ? "Submit changes" : this.state.invalidCount + " field(s) need attention before submitting")
+			)
+		);
 	}
+
 });
+
+
 
 
 /**
@@ -302,7 +207,7 @@ var FlowEditorFieldConfiguratorSettingsDialog = React.createClass({displayName: 
 
 */
 
-var FlowEditorFieldConfigurator = React.createClass({displayName: "FlowEditorFieldConfigurator",
+FlowEditor.Field = React.createClass({displayName: "Field",
 
 	/*
 	 * Initial state for a field
@@ -454,14 +359,15 @@ var FlowEditorFieldConfigurator = React.createClass({displayName: "FlowEditorFie
 	 					React.createElement("select", {className: "form-control", disabled: !this.state.mutable, onChange: this.handleFieldTypeChange, defaultValue: this.state.type}, 
 	 						React.createElement("option", {value: "text"}, "Text input"), 
 	 						React.createElement("option", {value: "date"}, "Date input"), 
-	 						React.createElement("option", {value: "select"}, "Select input with options")
+	 						React.createElement("option", {value: "select"}, "Select input with options"), 
+	 						React.createElement("option", {value: "multiselect"}, "Multi-select input with options")
 	 					)
 	 				)
  				), 
 
  				/* Configurator: settings */ 
 	            React.createElement("div", {className: "col-sm-8 col-xs-12"}, 
-	                React.createElement(FlowEditorFieldConfiguratorSettingsDialog, {
+	                React.createElement(FlowEditor.Field.Settings, {
 	                	ref: 'settings-' + this.props['data-key'], 
 	                	"field-key": this.props['data-key'], 
 	                	type: this.state.type, 
@@ -476,171 +382,452 @@ var FlowEditorFieldConfigurator = React.createClass({displayName: "FlowEditorFie
 
  });
 
-/**
- * Heirarchy
- *
- * > FlowEditorFields (houses all field containers and form controls)
- * | Passes down: 
- * |   field object, onRemove handler for the configurator, key (time-based input key), index (index in fields object)
- * ==> FlowEditorFieldConfigurator (single field configuration control area)
- *   | Passes down:
- *   |   field type, onChange handler
- *   ==> FlowEditorFieldConfiguratorSettingsDialog
- */
 
-var FlowEditorFields = React.createClass({displayName: "FlowEditorFields",
+FlowEditor.Field.Settings = React.createClass({displayName: "Settings",
 
 	/*
-	 * Initial container state: has no fields
+
+	 * Return initial state based on property type
 	 */
 	getInitialState: function() {
-		return {
-			fields: {},
-			fieldValidities: {},
-			invalidCount: 0,
-			isValid: true,
-			fieldsRemoved: [],
-		};
+		console.log("Caught getInitialState for field settings dialog with type " + this.props.type);
+		switch(this.props.type) {
+
+			case "text":
+			case "date":
+				// Do nothing for these types
+				console.log("\t| Dialog is for text/date field, skipping.");
+				return {};
+				break;
+
+			case "select":
+				console.log("\t| Dialog is for select field, returning initial select options.");
+				return {
+					options: [],
+					allowCustomData: false,
+				};
+				break;
+
+			case "multiselect":
+				console.log("\t| Dialog is for multiselect field, returning initial select options.");
+				return {
+					options: [],
+				};
+				break;
+
+			default:
+				console.log("\t| Field not recognized, skipping.");
+				return {};
+				break;
+		}
 	},
 
 	/*
-	 * Add prop fields to state before mount
+	 * Prepare component for mounting
 	 */
 	componentWillMount: function() {
-		this.setState({ fields: this.props.fields }, function() {
-			this.checkContainerValidity();
-		}.bind(this));
+ 		
+ 		console.log("");
+ 		console.log("--[mount: " + this.props['field-key'] + "]--")
+		console.log("Mounting options dialog for '" + this.props.type + "' input with props:");
+		console.log(this.props);
+
+		switch(this.props.type) {
+			case "text":
+			case "date":
+				// Do nothing for these types
+				break;
+			case "select":
+
+				// If there's already an options array...
+				if(this.props.hasOwnProperty('settings') && this.props.settings !== null) {
+
+					// Settings array exists. Check for each setting data point
+					if(this.props.settings.hasOwnProperty("options")) {
+						this.setState({ options: this.props.settings.options });
+					}
+
+					// If there's a set value for allowing custom data...
+					if(this.props.settings.hasOwnProperty("allowCustomData") && this.props.settings.allowCustomData == "true") {
+						this.setState({ allowCustomData: (this.props.settings.allowCustomData == "true") });
+					}
+
+				} else {
+					console.log("\t| Input DOES NOT have pre-defined settings");
+				}
+
+				break;
+			case "multiselect":
+
+				// If there's already an options array...
+				if(this.props.hasOwnProperty('settings') && this.props.settings !== null) {
+
+					// Settings array exists. Check for each setting data point
+					if(this.props.settings.hasOwnProperty("options")) {
+						this.setState({ options: this.props.settings.options });
+					}
+
+				} else {
+					console.log("\t| Input DOES NOT have pre-defined settings");
+				}
+
+				break;
+		}
 	},
 
-
 	/*
-	 * Add a new field to the container
+	 * Component completed mounting
 	 */
-	handleAddNewField: function() {
-		var fields = this.state.fields;
-		var fieldValidities = this.state.fieldValidities;
-		var key = new Date().getTime();
-
-		fields[key] = flowEditor_DefaultFieldState; // Default settings for a new input
-		fieldValidities[key] = false; // Input defaults to invalid
-
-		this.setState({ fields: fields, fieldValidities: fieldValidities });
-
-		// Since we added a field, we should re-check validity of the container
-		this.checkContainerValidity();
+	componentDidMount: function() {
+		console.log("Component 'FlowEditorFieldConfiguratorSettingsDialog' mounted, state is now:");
+		console.log(this.state);
+ 		console.log("--[/mount: " + this.props['field-key'] + "]--");
+ 		console.log("");
 	},
 
 	/*
-	 * Remove a field from the container (requires key)
+	 * Handle adding of a new option (SELECT type)
 	 */
- 	handleRemoveField: function(key) {
-		var fields = this.state.fields;
-		var fieldValidities = this.state.fieldValidities;
-		var fieldsRemoved = this.state.fieldsRemoved;
+	handleAddOption: function() {
 
-		if(fields.hasOwnProperty(key)) {
-			fieldsRemoved.push( (this.refs[key].state.name.length > 0 ? this.refs[key].state.name : '<em>Untitled field</em>' ) + " &nbsp; <span class='label label-default'>" + key + "</span>");
-			delete fields[key];
-		}
-		if(fieldValidities.hasOwnProperty(key)) {
-			delete fieldValidities[key];
-		}
+		console.log("");
+		console.log("--[add option: " + this.props['field-key'] + "]--");
 
-		this.setState({ fields: fields, fieldValidities: fieldValidities, fieldsRemoved: fieldsRemoved });
 
-		// Since we removed a field, we should re-check validity of the container
-		this.checkContainerValidity();
- 	},
+		var push = function() {
+			var options = this.state.options;
+				options.push("");
+			this.setState({ options: options });
 
- 	/*
- 	 * Check the validity of a field object
- 	 */
- 	checkFieldValidity: function(ref) {
+			// Bump changes to parent element for aggregation
+			this.props.onChange(this.state);
 
- 		console.log("Checking field validity for " + ref);
+			console.log("--[/add option: " + this.props['field-key'] + "]--");
+			console.log("");
+		}.bind(this);
 
- 		var fieldValidities = this.state.fieldValidities;
- 			fieldValidities[ref] = this.refs[ref].isValid();
-
- 			console.log(fieldValidities[ref]);
-
- 		this.setState({ fieldValidities: fieldValidities });
- 		this.checkContainerValidity();
- 	},
-
- 	/*
- 	 * Check the validity of the container as a whole
- 	 */
- 	checkContainerValidity: function() {
- 		var valid = true;
- 		var invalidCount = 0;
-
- 		for(var fieldKey in this.state.fieldValidities) {
- 			if(this.state.fieldValidities[fieldKey] !== true) {
- 				invalidCount++;
- 				valid = false;
- 			}
- 		}
-
- 		this.setState({ invalidCount: invalidCount, isValid: valid });
- 	},
-
- 	/*
- 	 * Compile container data into one coherent object
- 	 */
- 	compileData: function() {
- 		var data = {};
- 		Object.keys(this.state.fields).map(function(key, i) {
- 			data[key] = this.refs[key].state;
- 		}.bind(this));
-
- 		return data;
- 	},
-
- 	/*
- 	 * Clear removed fields from state
- 	 */
- 	clearRemoved: function() {
- 		this.setState({ fieldsRemoved: [] });
- 	},
-
- 	/*
- 	 * Render the container
- 	 */
-	render: function() {
-		var fields;
-
-		// Check if any fields are stored in state.
-		if(Object.keys(this.state.fields).length > 0) {
-			fields = Object.keys(this.state.fields).map(function(key, index) {
-				console.log(" => Creating field " + key + " (" + this.state.fields[key].name + ", " + this.state.fields[key].type + ")");
-				console.log(this.state.fields[key]);
-				return (
-					React.createElement(FlowEditorFieldConfigurator, React.__spread({},  
-						this.state.fields[key], 
-						{onChange: this.checkFieldValidity.bind(this, key), 
-						onRemove: this.handleRemoveField.bind(this, key), 
-						key: key, 
-						"data-key": key, 
-						ref: key, 
-						index: index}))
-				);
+		if(!this.state.hasOwnProperty('options')) {
+			// No options yet (type was probably just changed to select), add one.
+			// Make sure to set other initial state values first
+			console.log("\t| Missing options property, returning component to initial state and continuing...");
+			this.setState(this.getInitialState(), function() {
+				push();
 			}.bind(this));
 		} else {
-			fields = (
-				React.createElement("div", {className: "alert alert-info"}, 
-					"No fields added — try ", React.createElement("a", {className: "alert-link", onClick: this.handleAddNewField}, "adding a new one"), "."
+			console.log("\t| Options array exists, pushing...");
+			push();
+		}
+
+	},
+
+	/*
+	 * Handle removing of an option (SELECT type)
+	 */
+	handleRemoveOption: function(index) {
+		var options = this.state.options;
+			options.splice(index, 1);
+		this.setState({ options: options });
+
+		// Bump changes to parent element for aggregation
+		this.props.onChange(this.state);
+	},
+
+	/*
+	 * Handle change of option text (SELECT type)
+	 */
+	handleChangeOptionText: function(index) {
+		return function(event) {
+			var options = this.state.options;
+				options[index] = event.target.value;
+			this.setState({ options: options });
+
+			// Bump changes to parent element for aggregation
+			this.props.onChange(this.state);
+		}.bind(this);
+	},
+
+	/*
+	 * Handle change of allow custom data checkbox (SELECT type)
+	 */
+	handleAllowCustomDataChange: function() {
+		console.log("");
+		console.log("--[handleAllowCustomDataChange]--");
+		console.log("\t| for: " + this.props['field-key']);
+		console.log("\t| State before custom data change:");
+		console.log(this.state);
+
+		var newStatus = !this.state.allowCustomData;
+		this.setState({ allowCustomData: newStatus }, function() {
+			console.log("\t| New state:");
+			console.log(this.state);
+
+			// Bump changes to parent element for aggregation
+			this.props.onChange(this.state);
+
+			console.log("--[/handleAllowCustomDataChange]--");
+			console.log("");
+		});
+
+	},
+
+	/*
+	 * Render the settings dialog
+	 */
+	render: function() {
+
+		var mutabilityMessage;
+
+		// Add a message if this field is immutable
+		if(this.props.mutable == false) {
+			mutabilityMessage = (
+				React.createElement("div", {className: "alert alert-danger"}, 
+					React.createElement("strong", null, "Notice:"), " This field is protected. Only the display name and type-based settings can be modified."
 				)
+			);
+		} else {
+			mutabilityMessage = (
+				React.createElement("span", null)
 			);
 		}
 
-		return (
-			React.createElement("div", {id: "flow-editor-fields-contain"}, 
-				fields, 
-	            React.createElement("button", {type: "button", className: "btn btn-primary btn-lg", onClick: this.handleAddNewField}, "Add a new field"), 
-	            React.createElement("button", {type: "button", className: "btn btn-success btn-lg", onClick: this.props.handleSubmit, disabled: !this.state.isValid}, this.state.isValid ? "Submit changes" : this.state.invalidCount + " field(s) need attention before submitting")
-			)
-		);
-	}
+		switch(this.props.type) {
+			case "text":
+			case "date":
+				return (
+					React.createElement("div", null, 
+						React.createElement("div", {className: "alert alert-info m-t"}, 
+							"No configuration is required for ", this.props.type, " inputs."
+						), 
+						mutabilityMessage
+					)
+				);
+				break;
+			case "select":
 
+				var optionInputs,
+					customDataCheckbox;
+
+				// If there are options in the state
+				if(this.state.hasOwnProperty('options') && this.state.options.length > 0) {
+
+					// Map option input containers to one variable
+					optionInputs = this.state.options.map(function(value, index) {
+						return (
+							React.createElement("div", {className: "field-select-option form-group row", key: index}, 
+								React.createElement("div", {className: "col-sm-12"}, 
+									React.createElement("div", {className: "input-group"}, 
+										React.createElement("input", {type: "text", placeholder: "Enter an option", className: "form-control", defaultValue: value, onChange: this.handleChangeOptionText(index)}), 
+										React.createElement("span", {className: "input-group-btn"}, 
+											React.createElement("button", {type: "button", onClick: this.handleRemoveOption.bind(this, index), className: "btn btn-danger"}, 
+											  	React.createElement("span", null, "×")
+											)
+										)
+									)
+								)
+							)
+						);
+					}.bind(this));
+
+					// Add a checkbox at the end
+					customDataCheckbox = (
+						React.createElement("div", {className: "col-sm-12"}, 
+							React.createElement("div", {className: "checkbox m-t"}, 
+								React.createElement("label", null, 
+									React.createElement("input", {type: "checkbox", 
+										checked: this.state.allowCustomData == true, 
+										onChange: this.handleAllowCustomDataChange}), 
+										"Allow users to enter custom data for this field"
+								)
+							)
+						)
+					);
+				} else {
+
+					// No options available, show info message
+					optionInputs = (
+						React.createElement("div", {className: "alert alert-info"}, 
+							"No options have been defined — try ", React.createElement("a", {className: "alert-link", onClick: this.handleAddOption}, "adding one"), "." 
+						)
+					);
+					customDataCheckbox = (
+						React.createElement("span", null)
+					);
+				}
+
+				return (
+					React.createElement("div", {className: "field-select-options-contain"}, 
+		            	React.createElement("h5", null, "Options (",  this.state.hasOwnProperty('options') ? this.state.options.length : 0, ")"), 
+						optionInputs, 
+						customDataCheckbox, 
+						mutabilityMessage, 
+						React.createElement("button", {type: "button", className: "btn btn-primary-outline", onClick: this.handleAddOption}, "Add another option")
+					)
+				);
+
+				break;
+
+			case "multiselect":
+
+				var optionInputs;
+
+				// If there are options in the state
+				if(this.state.hasOwnProperty('options') && this.state.options.length > 0) {
+
+					// Map option input containers to one variable
+					optionInputs = this.state.options.map(function(value, index) {
+						return (
+							React.createElement("div", {className: "field-select-option form-group row", key: index}, 
+								React.createElement("div", {className: "col-sm-12"}, 
+									React.createElement("div", {className: "input-group"}, 
+										React.createElement("input", {type: "text", placeholder: "Enter an option", className: "form-control", defaultValue: value, onChange: this.handleChangeOptionText(index)}), 
+										React.createElement("span", {className: "input-group-btn"}, 
+											React.createElement("button", {type: "button", onClick: this.handleRemoveOption.bind(this, index), className: "btn btn-danger"}, 
+											  	React.createElement("span", null, "×")
+											)
+										)
+									)
+								)
+							)
+						);
+					}.bind(this));
+
+				} else {
+
+					// No options available, show info message
+					optionInputs = (
+						React.createElement("div", {className: "alert alert-info"}, 
+							"No options have been defined — try ", React.createElement("a", {className: "alert-link", onClick: this.handleAddOption}, "adding one"), "." 
+						)
+					);
+					customDataCheckbox = (
+						React.createElement("span", null)
+					);
+				}
+
+				return (
+					React.createElement("div", {className: "field-select-options-contain"}, 
+		            	React.createElement("h5", null, "Options (",  this.state.hasOwnProperty('options') ? this.state.options.length : 0, ")"), 
+						optionInputs, 
+						mutabilityMessage, 
+						React.createElement("button", {type: "button", className: "btn btn-primary-outline", onClick: this.handleAddOption}, "Add another option")
+					)
+				);
+
+				break;
+			default:
+				return (
+					React.createElement("div", null, 
+						React.createElement("div", {className: "alert alert-danger m-t"}, 
+							"Unrecognized input type \"", this.props.type, "\""
+						), 
+						mutabilityMessage
+					)
+				);
+				break;
+		}
+
+		/*
+		// Check what type of input this dialog is for
+		if(this.props.type == "text" || this.props.type == "date") {
+
+			return (
+				<div>
+					<div className="alert alert-info m-t">
+						No configuration is required for {this.props.type} inputs.
+					</div>
+					{mutabilityMessage}
+				</div>
+			);
+
+		} else if(this.props.type == "select") {
+
+			var optionInputs,
+				customDataCheckbox;
+
+			// If there are options in the state
+			if(this.state.hasOwnProperty('options') && this.state.options.length > 0) {
+
+				// Map option input containers to one variable
+				optionInputs = this.state.options.map(function(value, index) {
+					return (
+						<div className="field-select-option form-group row" key={index}>
+							<div className="col-sm-12">
+								<div className="input-group">
+									<input type="text" placeholder="Enter an option" className="form-control" defaultValue={value} onChange={this.handleChangeOptionText(index)} />
+									<span className="input-group-btn">
+										<button type="button" onClick={this.handleRemoveOption.bind(this, index)} className="btn btn-danger">
+										  	<span>&times;</span>
+										</button>
+									</span>
+								</div>
+							</div>
+						</div>
+					);
+				}.bind(this));
+
+				// Add a checkbox at the end
+				customDataCheckbox = (
+					<div className="col-sm-12">
+						<div className="checkbox m-t">
+							<label>
+								<input type="checkbox" 
+									checked={this.state.allowCustomData == true} 
+									onChange={this.handleAllowCustomDataChange} />
+									Allow users to enter custom data for this field
+							</label>
+						</div>
+					</div>
+				);
+			} else {
+
+				// No options available, show info message
+				optionInputs = (
+					<div className="alert alert-info">
+						No options have been defined &mdash; try <a className="alert-link" onClick={this.handleAddOption}>adding one</a>. 
+					</div>
+				);
+				customDataCheckbox = (
+					<span></span>
+				);
+			}
+
+
+		} else if(this.props.type == "multiselect") {
+
+			// Map option input containers to one variable
+			optionInputs = this.state.options.map(function(value, index) {
+				return (
+					<div className="field-select-option form-group row" key={index}>
+						<div className="col-sm-12">
+							<div className="input-group">
+								<input type="text" placeholder="Enter an option" className="form-control" defaultValue={value} onChange={this.handleChangeOptionText(index)} />
+								<span className="input-group-btn">
+									<button type="button" onClick={this.handleRemoveOption.bind(this, index)} className="btn btn-danger">
+									  	<span>&times;</span>
+									</button>
+								</span>
+							</div>
+						</div>
+					</div>
+				);
+			}.bind(this));
+
+			customDataCheckbox = (
+				<span></span>
+			);
+
+		}
+		*/
+		// // Ta-da!
+		// return (
+		// 	<div className="field-select-options-contain">
+  //           	<h5>Options ({ this.state.hasOwnProperty('options') ? this.state.options.length : 0 })</h5>
+		// 		{optionInputs}
+		// 		{customDataCheckbox}
+		// 		{mutabilityMessage}
+		// 		<button type="button" className="btn btn-primary-outline" onClick={this.handleAddOption}>Add another option</button>
+		// 	</div>
+		// );
+		
+	}
 });

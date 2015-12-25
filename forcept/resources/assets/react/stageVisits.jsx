@@ -27,7 +27,11 @@ var StageVisits = React.createClass({
 			success: function(resp) {
 				console.log(resp);
 				if(resp.hasOwnProperty('visits')) {
+					console.log("fetchVisits returned visits");
 					this.setState({ visits: resp.visits });
+				} else {
+					console.log("fetchVisits returned NO visits");
+					this.setState({ visits: [] });
 				}
 			}.bind(this),
 			complete: function(resp) {
@@ -39,7 +43,6 @@ var StageVisits = React.createClass({
 	render: function() {
 
 		var visits;
-		console.log(this.visits);
 		if(this.state.visits.length > 0) {
 
 			// Show visits

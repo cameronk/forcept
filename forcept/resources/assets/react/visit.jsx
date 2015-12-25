@@ -82,11 +82,11 @@ var Visit = React.createClass({
 						.on('hidden.bs.modal', function(e) {
 							console.log("Modal hidden");
 							modalObject.setState(modalObject.getInitialState());
-							modalObject.forceUpdate();
+							modalObject.resetSelectState();
 						});
 
 				} else {
-					window.location = this.props.redirectOnFinish;
+					// window.location = this.props.redirectOnFinish;
 				}
 			}.bind(this)
 		});
@@ -110,6 +110,8 @@ var Visit = React.createClass({
 				confirmFinishVisitResponse: null, 
 				patients: patients 
 			});
+
+			__debug(this.state);
 		}
 	},
 
@@ -267,6 +269,7 @@ Visit.PatientsOverview = React.createClass({
 
 });
 
+
 /* 
  * Patients management (main content)
  *
@@ -274,8 +277,10 @@ Visit.PatientsOverview = React.createClass({
  *  - _token: 			Laravel CSRF token
  *  - controlsType: 	determine which controls set to use
  *  - containerTitle: 	Title for patients container
+ *
  *  - fields: 			All fields for this stage
  *  - patients:  		All patients in this visit
+ * 
  *  - onFinishVisit:  	Bubble onFinishVisit event up to Visit container
  *  - onPatientAdd: 	Bubble onPatientAdd event up to Visit container
  *  - onPatientDataChange: Bubble onPatientDataChange event up to Visit container
@@ -287,6 +292,7 @@ Visit.PatientsContainer = React.createClass({
 	 */
 	getInitialState: function() {
 		return {
+			showImportBlock: false,
 			isLoading: false
 		}
 	},
@@ -345,12 +351,20 @@ Visit.PatientsContainer = React.createClass({
 
 	},
 
+	handleShowImportBlock: function() {
+		this.setState({ showImportBlock: true });
+	},
+	handleCloseImportBlock: function() {
+		this.setState({ showImportBlock: false });
+	},
+
 	render: function() {
 
 		console.log("Rendering patients container with patients " + Object.keys(this.props.patients).length);
 		console.log(this.props.patients);
 		
 		var patients,
+			importBlock,
 			controls;
 
 		// Set up patients block
@@ -375,6 +389,17 @@ Visit.PatientsContainer = React.createClass({
 			);
 		}
 
+		// Set up import block
+		if(this.state.showImportBlock) {
+			importBlock = (
+				<Visit.ImportBlock 
+					_token={this.props._token} 
+
+					onPatientAdd={this.props.onPatientAdd}
+					onClose={this.handleCloseImportBlock} />
+			);
+		}
+
 		// Set up controls block
 		switch(this.props.controlsType) {
 			case "new-visit":
@@ -382,9 +407,11 @@ Visit.PatientsContainer = React.createClass({
 				controls = (
 					<Visit.NewVisitControls
 						isLoading={this.state.isLoading}
+						isImportBlockVisible={this.state.showImportBlock}
 
 						onFinishVisit={this.onFinishVisit}
-						onPatientAddFromScratch={this.handlePatientAddfromScratch} />
+						onPatientAddFromScratch={this.handlePatientAddfromScratch} 
+						onShowImportBlock={this.handleShowImportBlock} />
 				);
 				break;
 			case "stage-visit":
@@ -428,11 +455,186 @@ Visit.PatientsContainer = React.createClass({
 			<div className="col-xs-12 col-sm-12 col-md-8 col-xl-9">
 	            <h1 className="p-t text-xs-center">{this.props.containerTitle}</h1>
 	            <hr/>
-	            {message}
-	            {patients}
+	            	{message}
+	            	{patients}
 	            <hr/>
+	            	{importBlock}
 	            {controls}
 	        </div>
+		);
+	}
+});
+
+
+Visit.ImportBlock = React.createClass({
+
+	getInitialState: function() {
+		return {
+			display: 'form',
+			patientsFound: [],
+
+			name: null,
+			forceptID: null,
+			fieldNumber: null,
+		}
+	},
+
+	handleInputChange: function(input) {
+		return function(event) {
+			var state = this.state;
+				state[input] = event.target.value;
+			this.setState(state);
+		}.bind(this);
+	},
+	handleSearch: function(type) {
+		console.log("Handling click" + type);
+		this.setState({ display: 'searching' });
+
+		$.ajax({
+			type: "POST",
+			url: "/patients/search",
+			data: {
+				_token: this.props._token,
+				by: type,
+				for: this.state[type]
+			},
+			success: function(resp) {
+				this.setState({ 
+					display: 'results', 
+					patientsFound: resp.patients 
+				});
+			}.bind(this),
+			error: function(resp) {
+
+			},
+			complete: function(resp) {
+
+			}
+		});
+	},
+	handlePatientAdd: function(patient) {
+		return function(event) {
+			// console.log("Caught handlePatientAdd for ID " + patientID);
+			this.props.onPatientAdd(patient);
+			this.resetDisplay();
+		}.bind(this);
+	},
+
+	resetDisplay: function() {
+		this.setState(this.getInitialState());
+	},
+
+	doSearchName: function() {
+		this.handleSearch("name");
+	},
+	doSearchForceptID: function() {
+		this.handleSearch("forceptID");
+	},
+	doSearchFieldNumber: function() {
+		this.handleSearch("fieldNumber");
+	},
+
+	render: function() {
+
+		var display;
+
+		switch(this.state.display) {
+			case "form":
+				display = (
+					<fieldset className="form-group">
+						<label className="form-control-label hidden-sm-up">...by field number:</label>
+						<div className="input-group input-group-lg m-b">
+	      					<input type="number" className="form-control" placeholder="Search for a patient by field number..." value={this.state.fieldNumber} onChange={this.handleInputChange("fieldNumber")} />
+							<span className="input-group-btn">
+								<button className="btn btn-secondary" type="button" disabled={this.state.fieldNumber == null} onClick={this.doSearchFieldNumber}>Search</button>
+							</span>
+						</div>
+						<label className="form-control-label hidden-sm-up">...by Forcept ID:</label>
+						<div className="input-group input-group-lg m-b">
+	      					<input type="number" className="form-control" placeholder="Search for a patient by Forcept ID..." min="100000" value={this.state.forceptID} onChange={this.handleInputChange("forceptID")} />
+							<span className="input-group-btn">
+								<button className="btn btn-secondary" type="button" disabled={this.state.forceptID == null} onClick={this.doSearchForceptID}>Search</button>
+							</span>
+						</div>
+						<label className="form-control-label hidden-sm-up">...by first or last name:</label>
+						<div className="input-group input-group-lg">
+	      					<input type="text" className="form-control" placeholder="Search for a patient by first or last name..." value={this.state.name} onChange={this.handleInputChange("name")} />
+							<span className="input-group-btn">
+								<button className="btn btn-secondary" type="button" disabled={this.state.name == null || this.state.name.length == 0} onClick={this.doSearchName}>Search</button>
+							</span>
+						</div>
+					</fieldset>
+				);
+				break;
+			case "searching":
+				display = (
+					<h2>
+						<img src="/assets/img/loading.gif" className="m-r" />
+						One moment, searching patients..
+					</h2> 
+				);
+				break;
+			case "results":
+
+				if(this.state.patientsFound.length == 0) {
+					display = (
+						<div className="alert alert-info">
+							No patients found. <a className="alert-link" onClick={this.resetDisplay}>Try again?</a>
+						</div>
+					)
+				} else {
+					display = (
+						<div className="row">
+							{this.state.patientsFound.map(function(patient, index) {
+								var currentVisit;
+								if(patient['current_visit'] !== null) {
+									currentVisit = (
+										<li className="list-group-item bg-danger">Patient currently in a visit!</li>
+									);
+								}
+								return (
+									<div className="col-xs-12 col-sm-6" key={"patients-found-" + index}>
+										<div className="card">
+											<div className="card-header">
+												<h5 className="card-title">
+													<span className="label label-default pull-right">{patient['id']}</span>
+													<span className="label label-primary pull-right">#{index + 1}</span>
+													<span className="title-content">{(patient["full_name"] !== null && patient["full_name"].length > 0) ? patient["full_name"] : "Unnamed patient"}</span>
+												</h5>
+											</div>
+											<ul className="list-group list-group-flush">
+												{currentVisit}
+											</ul>
+											<div className="card-block">
+												<button type="button" className="btn btn-block btn-secondary" disabled={patient['current_visit'] !== null} onClick={this.handlePatientAdd(patient)}>
+													{'\u002b'} Add
+												</button>
+											</div>
+										</div>
+									</div>
+								);
+							}.bind(this))}
+						</div>
+					);
+				}
+
+				break;
+			default:
+				break;
+		}
+
+
+		return (
+			<blockquote className="blockquote">
+				<h3>
+					{'\u21af'} Import a patient
+					<button type="button" className="close pull-right" aria-label="Close" onClick={this.props.onClose}>
+					    <span aria-hidden="true">&times;</span>
+					 </button>
+				</h3>
+				<hr/>
+				{display}
+			</blockquote>
 		);
 	}
 });
@@ -443,12 +645,13 @@ Visit.PatientsContainer = React.createClass({
  *
  * Properties:
  *  - isLoading: boolean, is the container engaged in some sort of loading / modal process
- *
+ *  - isImportBlockVisible: if the import block is visible, disable the button
+ * 
  *  - onFinishVisit: callback for finishing visit
  *  - onPatientAddFromScratch: callback for clicking "Create new patient record"
+ *  - onShowImportBlock: callback for showing the import block within PatientsContainer
  */
 Visit.NewVisitControls = React.createClass({
-
 	render: function() {
 
 		var loadingGifClasses = ("m-x" + (this.props.isLoading == false ? " invisible" : ""));
@@ -456,11 +659,12 @@ Visit.NewVisitControls = React.createClass({
 		return (
 			<div className="btn-toolbar" role="toolbar">
 				<div className="btn-group btn-group-lg">
-		        	<button type="button" className="btn btn-primary" disabled={this.props.isLoading} onClick={this.props.onPatientAddFromScratch}>Create new patient record</button>
+		        	<button type="button" className="btn btn-primary" disabled={this.props.isLoading} onClick={this.props.onPatientAddFromScratch}>{'\u002b'} New</button>
+		        	<button type="button" className="btn btn-default" disabled={this.props.isLoading || this.props.isImportBlockVisible} onClick={this.props.onShowImportBlock}>{'\u21af'} Import</button>
 		        	<img src="/assets/img/loading.gif" className={loadingGifClasses} width="52" height="52" />
 		        </div>
 	        	<div className="btn-group btn-group-lg">
-	        		<button type="button" className="btn btn-success" disabled={this.props.isLoading} onClick={this.props.onFinishVisit}>Finish visit &raquo;</button>
+	        		<button type="button" className="btn btn-success" disabled={this.props.isLoading} onClick={this.props.onFinishVisit}>{'\u2713'} Finish visit</button>
 	        	</div>
 	        </div>
 	    );
@@ -527,6 +731,7 @@ Visit.Patient = React.createClass({
 		        			return (
 		        				<Fields.Text 
 		        					{...this.props.fields[fieldID]} 
+		        					defaultValue={this.props.hasOwnProperty(fieldID) ? this.props[fieldID] : null}
 		        					onChange={this.handleFieldChange}
 		        					key={fieldID}
 		        					id={fieldID} />
@@ -536,6 +741,7 @@ Visit.Patient = React.createClass({
 		        			return (
 		        				<Fields.Text 
 		        					{...this.props.fields[fieldID]} 
+		        					defaultValue={this.props.hasOwnProperty(fieldID) ? this.props[fieldID] : null}
 		        					onChange={this.handleFieldChange}
 		        					key={fieldID}
 		        					id={fieldID} />
@@ -545,6 +751,17 @@ Visit.Patient = React.createClass({
 							return (
 		        				<Fields.Select 
 		        					{...this.props.fields[fieldID]} 
+		        					defaultValue={this.props.hasOwnProperty(fieldID) ? this.props[fieldID] : null}
+		        					onChange={this.handleFieldChange}
+		        					key={fieldID}
+		        					id={fieldID} />
+		        			);
+		        			break;
+		        		case "multiselect":
+		        			return (
+		        				<Fields.MultiSelect 
+		        					{...this.props.fields[fieldID]} 
+		        					defaultValue={this.props.hasOwnProperty(fieldID) ? this.props[fieldID] : null}
 		        					onChange={this.handleFieldChange}
 		        					key={fieldID}
 		        					id={fieldID} />
@@ -578,7 +795,6 @@ Visit.FinishModal = React.createClass({
 	getInitialState: function() {
 		return {
 			isSubmitting: false,
-			destination: null
 		};
 	},
 
@@ -586,23 +802,37 @@ Visit.FinishModal = React.createClass({
 	 * onComplete
 	 */
 	onComplete: function() {
-		this.setState({ isSubmitting: true });
+		this.setState({ 
+			isSubmitting: true 
+		});
 		this.props.onConfirmFinishVisit(this.state.destination, this);
 	},
 
 	/*
 	 * Handle destination change
 	 */
-	handleDestinationChange: function(event) {
-		this.setState({ destination: event.target.value });
+	handleDestinationChange: function(destination) {
+		return function(event) {
+			console.log("Changing destination to ");
+			console.log(destination);
+			this.setState({ destination: destination });
+		}.bind(this);
 	},
 
 	/*
 	 * Check if a default value is going to be set
 	 */
 	componentWillMount: function() {
+		this.resetSelectState();
+	},
+
+	resetSelectState: function() {
 		// Set default value as the first stage in the array (the next stage in order above the current one)
-		this.setState({ destination: this.props.stages[0].id });
+		if(this.props.hasOwnProperty('stages') && this.props.stages !== null && this.props.stages.length > 0) {
+			this.setState({ destination: this.props.stages[0].id });
+		} else {
+			this.setState({ destination: "__checkout__" });
+		}
 	},
 
 	/*
@@ -621,7 +851,10 @@ Visit.FinishModal = React.createClass({
 			destinations = this.props.stages.map(function(stage, index) {
 				stageNameKeyPairs[stage['id']] = stage['name'];
 				return (
-					<option value={stage['id']}>{stage['name']}</option>
+					<label className={"btn btn-secondary btn-block" + (stage['id'] == this.state.destination ? " active" : "")} key={"finish-modal-option" + index} onClick={this.handleDestinationChange(stage['id'])}>
+						<input type="radio" name="destination" defaultChecked={stage['id'] == this.state.destination} />
+						{stage['id'] == this.state.destination ? "\u2713" : ""} {stage['name']}
+					</label>
 				);
 			}.bind(this));
 		}
@@ -645,17 +878,19 @@ Visit.FinishModal = React.createClass({
 			                <button type="button" className="close" data-dismiss="modal" aria-label="Close">
 			                  <span aria-hidden="true">&times;</span>
 			                </button>
-			                <h4 className="modal-title">Complete visit</h4>
+			                <h4 className="modal-title">Move visit to...</h4>
 			            </div>
 			            <div className="modal-body">
-			            	<label className="form-control-label">Destination:</label>
-			              	<select className="form-control" onChange={this.handleDestinationChange} disabled={this.state.isSubmitting}>
-			              		{destinations}
-			              		<option value="__checkout__">Check patient out</option>
-			              	</select>
+			            	<div className="btn-group-vertical btn-group-lg" style={{display: "block"}} data-toggle="buttons">
+			            		{destinations}
+								<label className={"btn btn-secondary btn-block" + ("__checkout__" == this.state.destination ? " active" : "")} onClick={this.handleDestinationChange("__checkout__")}>
+									<input type="radio" name="destination" defaultChecked={"__checkout__" == this.state.destination} />
+									{"__checkout__" == this.state.destination ? "\u2713" : ""} Check-out
+								</label>
+			            	</div>
 			            </div>
 			            <div className="modal-footer">
-			                <button type="button" className="btn btn-primary" disabled={this.state.isSubmitting == true} onClick={this.onComplete}>
+			                <button type="button" className="btn btn-success" disabled={this.state.isSubmitting == true} onClick={this.onComplete}>
 			                	{buttonText}
 			                </button>
 			            </div>
