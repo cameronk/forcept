@@ -44,6 +44,8 @@ $forcept-navbar-height:    4rem;
     line-height: $input-height-lg;
 }
 
+
+
 /**
  * Imports
  */
@@ -64,3 +66,6 @@ $forcept-navbar-height:    4rem;
 
 // Patient-related modules
 @import "patient";
+
+// Data display 
+@import "data-displays";

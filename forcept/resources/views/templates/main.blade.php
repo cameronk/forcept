@@ -10,15 +10,16 @@
     <title>@yield('page-title', 'Forcept')</title>
     
     <!--| Stylesheets |-->
-    <link href="{{ asset('/assets/css/template.css') }}" rel="stylesheet" />
+    <link href="{{ asset('/assets/css/template.css') }}" rel="stylesheet" />    
+
 
     
     <!--| Base scripts |-->
-    <script type="text/javascript" src="{{ asset('/assets/js/jquery-2.1.4.min.js') }}"></script>
+    <script type="text/javascript" src="{{ asset('/assets/jquery/jquery-2.1.4.min.js') }}"></script>   
     <script type="text/javascript" src="{{ asset('/assets/bootstrap/dist/js/bootstrap.js') }}"></script>       
     <script type="text/javascript" src="{{ asset('/assets/tether-1.1.1/dist/js/tether.js') }}"></script>  
-    <script type="text/javascript" src="{{ asset('/assets/js/react.js') }}"></script>
-    <script type="text/javascript" src="{{ asset('/assets/js/react-dom.js') }}"></script> 
+    <script type="text/javascript" src="{{ asset('/assets/react/react.js') }}"></script>
+    <script type="text/javascript" src="{{ asset('/assets/react/react-dom.js') }}"></script> 
     
 </head>
 <body>
@@ -34,6 +35,11 @@
             
             <!--| nav links | -->
             <ul class="nav nav-pills nav-stacked">
+                
+                <li class="nav-item">
+                    <a href="{{ route('index') }}" class="nav-link">Home</a>
+                </li>
+                
                 @include('components/nav')
             </ul>
             
@@ -45,7 +51,7 @@
     <!--| Navigation: desktop |-->
     <nav class="navbar navbar-fixed-top navbar-dark hidden-sm-down bg-primary p-a-0" id="navbar-desktop">
     
-        <a href="#" class="navbar-brand p-a">forcept</a>
+        <a href="{{ route('index') }}" class="navbar-brand p-a">forcept</a>
         
         <!--| nav links | -->
         <ul class="nav navbar-nav">
@@ -53,7 +59,7 @@
             @include('components/nav')
             
             <li class="nav-item pull-right dropdown">
-                <a href="#" class="nav-link dropdown-toggle" data-toggle="dropdown" href="#" role="button" aria-haspopup="true" aria-expanded="false"><span class="glyphicon glyphicon-user"></span> {{ Auth::user()->username }}</a>
+                <a class="nav-link dropdown-toggle" data-toggle="dropdown" href="#" role="button" aria-haspopup="true" aria-expanded="false"><span class="glyphicon glyphicon-user"></span> {{ Auth::user()->username }}</a>
                 <div class="dropdown-menu">
                     
                     @if(Auth::user()->admin == true)

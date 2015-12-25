@@ -22,9 +22,35 @@ Route::group(['middleware' => 'auth'], function () {
 	Route::get('/', [
 		'as' => 'index',
 		function() {
-			return view('index');
+			return view('index', [
+
+			]);
 		}
 	]);
+
+	/**
+	 * Data
+	 *
+	 * => data:;
+	 */
+	Route::group([
+		'prefix' => 'data',
+		'as' => 'data::'
+	], function() {
+
+		/**
+		 * 
+		 */
+		Route::get('visits/{method?}', [
+			'as' => 'visits',
+			'uses' => 'DataController@visits'
+		]);
+
+		/**
+		 *
+		 */
+
+	});
 
 	/**
 	 * Visits

@@ -10,6 +10,12 @@ class Visit extends Model
 
 	protected $appends = ['patient_models'];
 
+
+    public function stage()
+    {
+        return $this->hasOne('App\Stage', 'id', 'stage');
+    }
+
     //
 	public function getPatientsAttribute($value) {
     	return json_decode($value, true);

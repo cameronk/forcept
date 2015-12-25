@@ -1,0 +1,21 @@
+/**
+ * _data-displays.scss
+ */
+ 
+.label.label-rounded {
+    border-radius: 50px;
+}
+
+.date-range {
+    .input-group-addon {
+        padding-top: 18px;
+    }
+    h1 {
+        margin-top: -5px;
+    }
+    input {
+        font-size: 19px;
+//        letter-spacing: 3px;
+        text-align: center;
+    }
+}
