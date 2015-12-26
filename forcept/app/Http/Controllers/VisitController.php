@@ -64,6 +64,7 @@ class VisitController extends Controller
 
         // Make sure this visit is currently at this stage.
         if($visit->stage == $stage->id) {
+
             // Generate object full of all the fields up to this stage.
             $allFields = [];
             $stagesUpToCurrent = Stage::where('order', '<', $stage->order)->orderBy('order', 'asc')->get(['fields']);
@@ -76,26 +77,34 @@ class VisitController extends Controller
 
             }
 
-            // Get patient data from PATIENT table
+            // // Get patient data from PATIENT table
             $patients = $visit->patient_models;
 
-            // Loop through patients and add data for all stages up to current (skip root stage because that was queried in patient_models)
-            $stagesUpToCurrent = Stage::where('order', '<', $stage->order)->where('root', '!=', true)->orderBy('order', 'asc')->get(['id']);
-            foreach($stagesUpToCurrent as $thisStage) {
+            // // Loop through patients and add data for all stages up to current (skip root stage because that was queried in patient_models)
+            // $stagesUpToCurrent = Stage::where('order', '<', $stage->order)
+            //                     ->where('root', '!=', true)
+            //                     ->orderBy('order', 'asc')
+            //                     ->get(['id']);
 
-                // Query this stage's data table and get all data rows for this visit
-               $allPatientsDataForThisStage = DB::table($thisStage->tableName)
+
+            $stages = Stage::where('root', '!=', true)->where('order', '<', $stage->order)->orderBy('order', 'asc')->get()->keyBy("id");
+
+            $all = $stages->keys()->map(function($stageID) use($stages, $visit) {
+                $stage = $stages[$stageID];
+                return collect(DB::table($stage->tableName) 
                     ->where('visit_id', $visit->id)
-                    ->get();
-
-                // Loop through all patients data and distribute each patient's data to the $patients array
-                \Log::debug($allPatientsDataForThisStage);
-            }
+                    ->get(collect($stage->fields)->keys()->push('patient_id')->toArray()))
+                    ->keyBy('patient_id');
+            });
+            $all = $all[0];
+            $all = $all->keys()->map(function($patientID) use ($patients, $all) {
+                return collect($patients[$patientID])->merge($all[$patientID]);
+            });
 
             return view('visit/handle', [
                 'stage'         => $stage,
                 'visit'         => $visit,
-                'patients'      => json_encode($patients),
+                'patients'      => json_encode($all->keyBy('id')->toArray()),
                 'stages'        => Stage::where('root', '!=', true)->where('order', '>', $stage->order)->orderBy('order', 'asc')->get(['id', 'order', 'name'])->toJson(),
                 'mutableFields' => $stage->rawFields,
                 'allFields'     => json_encode($allFields)
@@ -185,7 +194,7 @@ class VisitController extends Controller
                             $data[$key] = $value;
                             break;
                     }
-                    
+
                 } else {
                     \Log::debug(
                         sprintf('Attemped to update stage [%s], column [%s], but this column is not valid', $stage->id, $key)

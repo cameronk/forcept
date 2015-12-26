@@ -218,10 +218,19 @@ Visit.PatientsOverview = React.createClass({displayName: "PatientsOverview",
 			delete iterableFields["first_name"];
 			delete iterableFields["last_name"];
 
+		console.log("Rendering PatientsOverview with iterableFields:");
+		console.log(iterableFields);
+		console.log("and patient properties:");
+		console.log(this.props.patients);
+
 		// If there are patients in the props object
 		if(Object.keys(this.props.patients).length > 0) {
 			patientOverviews = Object.keys(this.props.patients).map(function(patientID, index) {
 				var thisPatient = this.props.patients[patientID];
+
+				console.log("Rendering patient overview card - ID #" + patientID);
+				console.log(thisPatient);
+
 				return (
 					React.createElement("div", {className: "card", key: patientID}, 
 		                React.createElement("div", {className: "card-header"}, 
@@ -240,6 +249,8 @@ Visit.PatientsOverview = React.createClass({displayName: "PatientsOverview",
 		                    	{
 		                    		if( ["string", "number"].indexOf(typeof thisPatient[field]) !== -1 ) // If the field is a string or number
 		                    		{
+		                    			console.log(" | Field " + iterableFields[field]["name"] + " is string or number");
+		                    			console.log(" | -> type: " + iterableFields[field].type);
 
 		                    			// We might need to mutate the data
 		                    			switch(iterableFields[field].type) {
@@ -249,12 +260,15 @@ Visit.PatientsOverview = React.createClass({displayName: "PatientsOverview",
 		                    					if(Array.isArray(arr) && arr.length > 0) {
 		                    						value = arr.join(", ");
 		                    					}
+		                    					console.log("Multiselect value: " + value);
 		                    					break;
 		                    				default:
 		                    					value = thisPatient[field].toString();
 		                    					break;
 		                    			}
 		                    		} else {
+		                    			console.log(" | Field " + iterableFields[field]["name"] + " is NOT string or number");
+		                    			console.log(" | -> type: " + iterableFields[field].type);
 		                    			if( Array.isArray(thisPatient[field]) ) // If the data is an array
 		                    			{
 		                    				value = thisPatient[field].join(", ");
@@ -267,7 +281,7 @@ Visit.PatientsOverview = React.createClass({displayName: "PatientsOverview",
 
 		                    	return (
 		                    		React.createElement("a", {className: "list-group-item", key: field + "-" + index}, 
-		                    			React.createElement("strong", null, iterableFields[field]["name"]), ":  ", 
+		                    			React.createElement("strong", null, iterableFields[field].name), ":  ", 
 		                    			value
 		                    		)
 		                    	);
