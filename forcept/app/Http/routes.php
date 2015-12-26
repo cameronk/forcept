@@ -49,7 +49,10 @@ Route::group(['middleware' => 'auth'], function () {
 		/**
 		 *
 		 */
-
+		Route::get('patients/{method?}', [
+			'as' => 'visits',
+			'uses' => 'DataController@patients'
+		]);
 	});
 
 	/**

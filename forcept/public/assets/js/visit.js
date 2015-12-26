@@ -218,8 +218,6 @@ Visit.PatientsOverview = React.createClass({displayName: "PatientsOverview",
 			delete iterableFields["first_name"];
 			delete iterableFields["last_name"];
 
-		console.log(iterableFields);
-
 		// If there are patients in the props object
 		if(Object.keys(this.props.patients).length > 0) {
 			patientOverviews = Object.keys(this.props.patients).map(function(patientID, index) {

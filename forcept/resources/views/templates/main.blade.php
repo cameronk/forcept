@@ -15,7 +15,8 @@
 
     
     <!--| Base scripts |-->
-    <script type="text/javascript" src="{{ asset('/assets/jquery/jquery-2.1.4.min.js') }}"></script>   
+    <script type="text/javascript" src="{{ asset('/assets/jquery/jquery-2.1.4.min.js') }}"></script>    
+    <script type="text/javascript" src="{{ asset('/assets/highcharts/highcharts-custom.js') }}"></script>   
     <script type="text/javascript" src="{{ asset('/assets/bootstrap/dist/js/bootstrap.js') }}"></script>       
     <script type="text/javascript" src="{{ asset('/assets/tether-1.1.1/dist/js/tether.js') }}"></script>  
     <script type="text/javascript" src="{{ asset('/assets/react/react.js') }}"></script>

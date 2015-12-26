@@ -19,3 +19,39 @@
         text-align: center;
     }
 }
+
+.card-chart {
+ 
+    width: 100%;
+    
+    .card-chart-small {
+        height: 200px;
+    }
+    
+}
+
+.data-points-list {
+    
+    padding: 0;
+    
+    .list-unstyled {
+        
+        li.bg-secondary {
+            background: $gray-lightest; 
+            padding: ($spacer-y / 2) ($spacer-x);
+            border-bottom: $gray-lighter 1px solid;
+        }
+        
+        li.data-point-list-item {
+            font-size: 0.975rem;
+            padding-left: 9px;
+            padding-top: 9px;
+            padding-bottom: 9px;
+            
+            span.label {
+                font-size: 1rem;
+            }
+            
+        }
+    }
+}
