@@ -162,7 +162,7 @@ Fields.Select = React.createClass({
 		// If no error, build select input. Otherwise, display an error message.
 		if(!optionsError) {
 			displaySelect = (
-				<select className="form-control" onChange={this.onSelectInputChange} defaultValue="__default__">
+				<select className="form-control" onChange={this.onSelectInputChange} defaultValue={this.props.defaultValue !== null ? this.props.defaultValue : null}>
 					{defaultOption}
 					{options}
 					{isTrue(this.props.settings.allowCustomData) ? customDataOption : ""}
@@ -229,7 +229,7 @@ Fields.MultiSelect = React.createClass({
 		// If no error, build select input. Otherwise, display an error message.
 		if(!optionsError) {
 			displaySelect = (
-				<select className="form-control" onChange={this.onSelectInputChange} multiple={true}>
+				<select className="form-control" onChange={this.onSelectInputChange} multiple={true} defaultValue={this.props.defaultValue}>
 					{options}
 				</select>
 			);

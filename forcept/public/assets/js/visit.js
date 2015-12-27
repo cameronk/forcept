@@ -73,21 +73,17 @@ var Visit = React.createClass({displayName: "Visit",
 			complete: function(resp) {
 				console.log("Complete:");
 				console.log(resp);
-				if(this.props.controlsType == "new-visit") {
-					this.setState({ 
-						confirmFinishVisitResponse: resp.responseJSON 
+				this.setState({ 
+					confirmFinishVisitResponse: resp.responseJSON 
+				});
+				$("#visit-finish-modal")
+					.modal('hide')
+					.on('hidden.bs.modal', function(e) {
+						console.log("Modal hidden");
+						modalObject.setState(modalObject.getInitialState());
+						modalObject.resetSelectState();
 					});
-					$("#visit-finish-modal")
-						.modal('hide')
-						.on('hidden.bs.modal', function(e) {
-							console.log("Modal hidden");
-							modalObject.setState(modalObject.getInitialState());
-							modalObject.resetSelectState();
-						});
 
-				} else {
-					// window.location = this.props.redirectOnFinish;
-				}
 			}.bind(this)
 		});
 	},
@@ -409,14 +405,16 @@ Visit.PatientsContainer = React.createClass({displayName: "PatientsContainer",
 		if(Object.keys(this.props.patients).length > 0) {
 			patients = (Object.keys(this.props.patients)).map(function(patientID, index) {
 				return (
-					React.createElement(Visit.Patient, React.__spread({},  
-						this.props.patients[patientID], 
-						{fields: this.props.fields, 
-						id: patientID, 
-						index: index, 
-						key: patientID, 
+					React.createElement("div", {key: patientID}, 
+						React.createElement(Visit.Patient, React.__spread({},  
+							this.props.patients[patientID], 
+							{fields: this.props.fields, 
+							id: patientID, 
+							index: index, 
 
-						onPatientDataChange: this.props.onPatientDataChange}))
+							onPatientDataChange: this.props.onPatientDataChange})), 
+						React.createElement("hr", null)
+					)
 				);
 			}.bind(this));
 		} else {
@@ -495,9 +493,8 @@ Visit.PatientsContainer = React.createClass({displayName: "PatientsContainer",
 	            React.createElement("hr", null), 
 	            	message, 
 	            	patients, 
-	            React.createElement("hr", null), 
 	            	importBlock, 
-	            controls
+	            	controls
 	        )
 		);
 	}

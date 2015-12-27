@@ -62,6 +62,9 @@ class VisitController extends Controller
     public function handle(Stage $stage, Visit $visit)
     {
 
+
+        \Log::debug("Visit handle for visit [{$visit->id}], stage [{$stage->id}]");
+
         // Make sure this visit is currently at this stage.
         if($visit->stage == $stage->id) {
 
@@ -89,29 +92,60 @@ class VisitController extends Controller
 
             $stages = Stage::where('root', '!=', true)->where('order', '<', $stage->order)->orderBy('order', 'asc')->get()->keyBy("id");
 
-            $all = $stages->keys()->map(function($stageID) use($stages, $visit) {
-                $stage = $stages[$stageID];
-                return collect(DB::table($stage->tableName) 
+            foreach($stages as $stageID => $stageData) {
+
+                \Log::debug("Querying stage [{$stageID}] [table: {$stageData->tableName}]");
+
+                $fieldsToObtain = array_keys($stageData->fields);
+                $fieldsToObtain[] = "patient_id";
+
+                $visitPatientsDataInThisStage = DB::table($stageData->tableName)
                     ->where('visit_id', $visit->id)
-                    ->get(collect($stage->fields)->keys()->push('patient_id')->toArray()))
-                    ->keyBy('patient_id');
-            });
+                    ->get($fieldsToObtain);
 
-            \Log::debug($all);
+                \Log::debug($visitPatientsDataInThisStage);
 
-            if(count($all) > 0) {
-                $all = $all[0];
-                $all = $all->keys()->map(function($patientID) use ($patients, $all) {
-                    return collect($patients[$patientID])->merge($all[$patientID]);
-                })->keyBy('id')->toArray();
-            } else {
-                $all = $patients;
+                foreach($visitPatientsDataInThisStage as $patient) {
+                    \Log::debug("Patient:");
+                    \Log::debug($patient->patient_id);
+                    foreach($patient as $patientField => $patientFieldValue) {
+                        \Log::debug("Patient values:");
+                        \Log::debug($patientField);
+                        \Log::debug($patientFieldValue);
+                        $patients[$patient->patient_id][$patientField] = $patientFieldValue;
+                    }
+                    // $patients[$patient->patient_id] ;
+                }
+
             }
+
+            // $all = $stages->keys()->map(function($stageID) use($stages, $visit) {
+            //     $stage = $stages[$stageID];
+            //     return collect(DB::table($stage->tableName) 
+            //         ->where('visit_id', $visit->id)
+            //         ->get(collect($stage->fields)->keys()->push('patient_id')->toArray()))
+            //         ->keyBy('patient_id');
+            // });
+
+            // \Log::debug($all);
+            // \Log::debug($patients);
+
+            // if(count($all) > 0) {
+            //     \Log::debug("all count >  0 ");
+            //     $all = $all[0];
+            //     $all = $all->keys()->map(function($patientID) use ($patients, $all) {
+            //         return collect($patients[$patientID])->merge($all[$patientID]);
+            //     })->keyBy('id')->toArray();
+
+            //     \Log::debug($all);
+            // } else {
+            //     $all = $patients;
+            // }
 
             return view('visit/handle', [
                 'stage'         => $stage,
                 'visit'         => $visit,
-                'patients'      => json_encode($all),
+                'patients'      => json_encode($patients),
                 'stages'        => Stage::where('root', '!=', true)->where('order', '>', $stage->order)->orderBy('order', 'asc')->get(['id', 'order', 'name'])->toJson(),
                 'mutableFields' => $stage->rawFields,
                 'allFields'     => json_encode($allFields)
