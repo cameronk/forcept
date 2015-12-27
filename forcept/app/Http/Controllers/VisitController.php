@@ -96,15 +96,22 @@ class VisitController extends Controller
                     ->get(collect($stage->fields)->keys()->push('patient_id')->toArray()))
                     ->keyBy('patient_id');
             });
-            $all = $all[0];
-            $all = $all->keys()->map(function($patientID) use ($patients, $all) {
-                return collect($patients[$patientID])->merge($all[$patientID]);
-            });
+
+            \Log::debug($all);
+
+            if(count($all) > 0) {
+                $all = $all[0];
+                $all = $all->keys()->map(function($patientID) use ($patients, $all) {
+                    return collect($patients[$patientID])->merge($all[$patientID]);
+                })->keyBy('id')->toArray();
+            } else {
+                $all = $patients;
+            }
 
             return view('visit/handle', [
                 'stage'         => $stage,
                 'visit'         => $visit,
-                'patients'      => json_encode($all->keyBy('id')->toArray()),
+                'patients'      => json_encode($all),
                 'stages'        => Stage::where('root', '!=', true)->where('order', '>', $stage->order)->orderBy('order', 'asc')->get(['id', 'order', 'name'])->toJson(),
                 'mutableFields' => $stage->rawFields,
                 'allFields'     => json_encode($allFields)
