@@ -309,7 +309,8 @@ FlowEditor.Field = React.createClass({displayName: "Field",
  	 */
  	render: function() {
 
- 		var nameInput;
+ 		var nameInput,
+ 			multiSelectTypeChangeNotification;
 
  		if(this.state.name.length == 0) {
  			nameInputGroup = (
@@ -327,6 +328,15 @@ FlowEditor.Field = React.createClass({displayName: "Field",
  					React.createElement("label", {className: "form-control-label", for: "name-" + this.props['data-key']}, "Name:"), 
  					React.createElement("input", {type: "text", id: "name-" + this.props['data-key'], className: "form-control", placeholder: "Field name", maxLength: "30", onChange: this.handleFieldNameChange, defaultValue: this.state.name})	
  				)	
+ 			);
+ 		}
+
+
+ 		if(this.state.type == "multiselect") {
+ 			multiSelectTypeChangeNotification = (
+ 				React.createElement("div", {className: "alert alert-info"}, 
+ 					"Once created, the ", React.createElement("strong", null, "multiselect"), " field type cannot be changed to any other type."
+ 				)
  			);
  		}
 
@@ -356,13 +366,14 @@ FlowEditor.Field = React.createClass({displayName: "Field",
  					nameInputGroup, 
  					React.createElement("div", {className: "form-group"}, 
  						React.createElement("label", {className: "form-control-label"}, "Type:"), 
-	 					React.createElement("select", {className: "form-control", disabled: !this.state.mutable, onChange: this.handleFieldTypeChange, defaultValue: this.state.type}, 
+	 					React.createElement("select", {className: "form-control", disabled: !this.state.mutable || this.props.type == "multiselect", onChange: this.handleFieldTypeChange, defaultValue: this.state.type}, 
 	 						React.createElement("option", {value: "text"}, "Text input"), 
 	 						React.createElement("option", {value: "number"}, "Number input"), 
 	 						React.createElement("option", {value: "date"}, "Date input"), 
 	 						React.createElement("option", {value: "select"}, "Select input with options"), 
 	 						React.createElement("option", {value: "multiselect"}, "Multi-select input with options")
-	 					)
+	 					), 
+	 					multiSelectTypeChangeNotification
 	 				)
  				), 
 

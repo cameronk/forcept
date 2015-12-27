@@ -309,7 +309,8 @@ FlowEditor.Field = React.createClass({
  	 */
  	render: function() {
 
- 		var nameInput;
+ 		var nameInput,
+ 			multiSelectTypeChangeNotification;
 
  		if(this.state.name.length == 0) {
  			nameInputGroup = (
@@ -327,6 +328,15 @@ FlowEditor.Field = React.createClass({
  					<label className="form-control-label" for={"name-" + this.props['data-key']}>Name:</label>
  					<input type="text" id={"name-" + this.props['data-key']} className="form-control" placeholder="Field name" maxLength="30" onChange={this.handleFieldNameChange} defaultValue={this.state.name} />	
  				</div>	
+ 			);
+ 		}
+
+
+ 		if(this.state.type == "multiselect") {
+ 			multiSelectTypeChangeNotification = (
+ 				<div className="alert alert-info">
+ 					Once created, the <strong>multiselect</strong> field type cannot be changed to any other type.
+ 				</div>
  			);
  		}
 
@@ -356,13 +366,14 @@ FlowEditor.Field = React.createClass({
  					{nameInputGroup}
  					<div className="form-group">
  						<label className="form-control-label">Type:</label>
-	 					<select className="form-control" disabled={!this.state.mutable} onChange={this.handleFieldTypeChange} defaultValue={this.state.type}>
+	 					<select className="form-control" disabled={!this.state.mutable || this.props.type == "multiselect"} onChange={this.handleFieldTypeChange} defaultValue={this.state.type}>
 	 						<option value="text">Text input</option>
 	 						<option value="number">Number input</option>
 	 						<option value="date">Date input</option>
 	 						<option value="select">Select input with options</option>
 	 						<option value="multiselect">Multi-select input with options</option>
 	 					</select>
+	 					{multiSelectTypeChangeNotification}
 	 				</div>
  				</div>
 
