@@ -183,6 +183,7 @@ var FlowEditor = React.createClass({
 });
 
 
+FlowEditor.DisableTypeChanges = [ "multiselect", "file" ];
 
 
 /**
@@ -310,7 +311,7 @@ FlowEditor.Field = React.createClass({
  	render: function() {
 
  		var nameInput,
- 			multiSelectTypeChangeNotification;
+ 			disableTypeChangeNotification;
 
  		if(this.state.name.length == 0) {
  			nameInputGroup = (
@@ -331,11 +332,10 @@ FlowEditor.Field = React.createClass({
  			);
  		}
 
-
- 		if(this.state.type == "multiselect") {
- 			multiSelectTypeChangeNotification = (
+ 		if(FlowEditor.DisableTypeChanges.indexOf(this.state.type) !== -1) {
+ 			disableTypeChangeNotification = (
  				<div className="alert alert-info">
- 					Once created, the <strong>multiselect</strong> field type cannot be changed to any other type.
+ 					Once created, the <strong>{this.state.type}</strong> field type cannot be changed to any other type.
  				</div>
  			);
  		}
@@ -366,14 +366,14 @@ FlowEditor.Field = React.createClass({
  					{nameInputGroup}
  					<div className="form-group">
  						<label className="form-control-label">Type:</label>
-	 					<select className="form-control" disabled={!this.state.mutable || this.props.type == "multiselect"} onChange={this.handleFieldTypeChange} defaultValue={this.state.type}>
+	 					<select className="form-control" disabled={!this.state.mutable || FlowEditor.DisableTypeChanges.indexOf(this.state.type) !== -1} onChange={this.handleFieldTypeChange} defaultValue={this.state.type}>
 	 						<option value="text">Text input</option>
 	 						<option value="number">Number input</option>
 	 						<option value="date">Date input</option>
 	 						<option value="select">Select input with options</option>
 	 						<option value="multiselect">Multi-select input with options</option>
 	 					</select>
-	 					{multiSelectTypeChangeNotification}
+	 					{disableTypeChangeNotification}
 	 				</div>
  				</div>
 

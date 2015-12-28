@@ -183,6 +183,7 @@ var FlowEditor = React.createClass({displayName: "FlowEditor",
 });
 
 
+FlowEditor.DisableTypeChanges = [ "multiselect", "file" ];
 
 
 /**
@@ -310,7 +311,7 @@ FlowEditor.Field = React.createClass({displayName: "Field",
  	render: function() {
 
  		var nameInput,
- 			multiSelectTypeChangeNotification;
+ 			disableTypeChangeNotification;
 
  		if(this.state.name.length == 0) {
  			nameInputGroup = (
@@ -331,11 +332,10 @@ FlowEditor.Field = React.createClass({displayName: "Field",
  			);
  		}
 
-
- 		if(this.state.type == "multiselect") {
- 			multiSelectTypeChangeNotification = (
+ 		if(FlowEditor.DisableTypeChanges.indexOf(this.state.type) !== -1) {
+ 			disableTypeChangeNotification = (
  				React.createElement("div", {className: "alert alert-info"}, 
- 					"Once created, the ", React.createElement("strong", null, "multiselect"), " field type cannot be changed to any other type."
+ 					"Once created, the ", React.createElement("strong", null, this.state.type), " field type cannot be changed to any other type."
  				)
  			);
  		}
@@ -366,14 +366,14 @@ FlowEditor.Field = React.createClass({displayName: "Field",
  					nameInputGroup, 
  					React.createElement("div", {className: "form-group"}, 
  						React.createElement("label", {className: "form-control-label"}, "Type:"), 
-	 					React.createElement("select", {className: "form-control", disabled: !this.state.mutable || this.props.type == "multiselect", onChange: this.handleFieldTypeChange, defaultValue: this.state.type}, 
+	 					React.createElement("select", {className: "form-control", disabled: !this.state.mutable || FlowEditor.DisableTypeChanges.indexOf(this.state.type) !== -1, onChange: this.handleFieldTypeChange, defaultValue: this.state.type}, 
 	 						React.createElement("option", {value: "text"}, "Text input"), 
 	 						React.createElement("option", {value: "number"}, "Number input"), 
 	 						React.createElement("option", {value: "date"}, "Date input"), 
 	 						React.createElement("option", {value: "select"}, "Select input with options"), 
 	 						React.createElement("option", {value: "multiselect"}, "Multi-select input with options")
 	 					), 
-	 					multiSelectTypeChangeNotification
+	 					disableTypeChangeNotification
 	 				)
  				), 
 
