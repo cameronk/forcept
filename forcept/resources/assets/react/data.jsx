@@ -237,10 +237,12 @@ DataDisplays.PatientAggregate = React.createClass({
 	render: function() {
 
 		console.log(this.state);
-		return (
-			<blockquote className="blockquote">
-				<h2>Patient aggregate data by stage</h2>
-				<hr/>
+
+		var data;
+
+
+		if(this.state.stages.length > 0) {
+			data = (
 				<div className="row">
 					{this.state.stages.map(function(stage, index) {
 						return (
@@ -290,6 +292,20 @@ DataDisplays.PatientAggregate = React.createClass({
 						);
 					}.bind(this))}
 				</div>
+			);
+		} else {
+			data = (
+				<div className="alert alert-info">
+					No data found for this display within the specified time range.
+				</div>
+			);
+		}
+
+		return (
+			<blockquote className="blockquote">
+				<h2>Patient aggregate data by stage</h2>
+				<hr/>
+				{data}
 				<hr/>
 				<DataDisplays.RangeModule
 					from={this.state.from}
