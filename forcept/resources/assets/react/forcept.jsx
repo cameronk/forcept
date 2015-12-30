@@ -251,3 +251,43 @@ Fields.MultiSelect = React.createClass({
 		);
 	}
 });
+
+Fields.File = React.createClass({
+	getInitialState: function() {
+		return {
+			fileCount: 0,
+		};
+	},
+
+	onFileInputChange: function(event) {
+		var reader = new FileReader();
+		var file = event.target.files[0];
+
+		reader.onload = function(upload) {
+			console.log("Reader onload return upload target result:");
+			console.log(upload.target.result);
+			this.props.onChange(this.props.id, upload.target.result);
+		}.bind(this);
+
+		reader.readAsDataURL(file);
+	},
+
+	render: function() {
+		var accept = "";
+		if(this.props.settings.hasOwnProperty("accept")) {
+			accept = this.props.settings.accept.join();
+		}
+
+		return (
+			<div className="form-group row">
+				<label htmlFor={this.props.id} className={Fields.labelColumnClasses + " form-control-label"}>{this.props.name}</label>
+				<div className={Fields.inputColumnClasses}>
+					<label className="file">
+						<input type="file" className="form-control" accept={accept} onChange={this.onFileInputChange} />
+						<span className="file-custom">{this.state.fileCount == 0 ? "No files - " : this.state.fileCount + " file" + (this.state.fileCount == 1 ? "" : "s")}</span>
+					</label>
+				</div>
+			</div>
+		);
+	}
+});

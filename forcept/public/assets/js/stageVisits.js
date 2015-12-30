@@ -20,7 +20,6 @@ var StageVisits = React.createClass({displayName: "StageVisits",
 	},
 
 	fetchVisits: function() {
-		// this.setState({ isFetching: true });
 		$.ajax({
 			type: "GET",
 			url: "/visits/fetch/" + this.props.stage.id,
@@ -77,7 +76,7 @@ var StageVisits = React.createClass({displayName: "StageVisits",
 
 						return (
 							React.createElement("div", {className: "col-sm-12 col-md-4", key: "patient-col-" + patientID}, 
-								React.createElement("div", {className: "card forcept-patient-summary-card"}, 
+								React.createElement("div", {className: "card forcept-patient-nametag"}, 
 									React.createElement("div", {className: "card-header"}, 
 										React.createElement("h5", {className: "card-title"}, 
 											React.createElement("span", {className: "label label-default pull-right"}, patientID), 
@@ -109,13 +108,13 @@ var StageVisits = React.createClass({displayName: "StageVisits",
 				return (
 					React.createElement("blockquote", {className: "blockquote", key: "visit-" + index}, 
 						React.createElement("div", {className: "row"}, 
-							React.createElement("div", {className: "col-xs-12 col-sm-9"}, 
+							React.createElement("div", {className: "col-xs-12 col-sm-8"}, 
 								React.createElement("h2", null, 
 									React.createElement("label", {className: "label label-default", "data-toggle": "tooltip", "data-placement": "top", title: "Visit ID"}, visit.id), 
 									"  ", visit.patients.length, " patient", visit.patients.length == 1 ? "" : "s"
 								)
 							), 
-							React.createElement("div", {className: "col-xs-12 col-sm-3"}, 
+							React.createElement("div", {className: "col-xs-12 col-sm-4"}, 
 								React.createElement("a", {href: "/visits/stage/" + this.props.stage.id + "/handle/" + visit.id, className: "btn btn-primary btn-block btn-lg"}, "Handle visit #", visit.id, " »")
 							)
 						), 
@@ -146,7 +145,7 @@ var StageVisits = React.createClass({displayName: "StageVisits",
 		return (
 			React.createElement("div", {className: "row"}, 
 				React.createElement("div", {className: "col-xs-12"}, 
-					React.createElement("h1", {className: "p-l text-xs-center"}, this.state.visits.length, " active visit", this.state.visits.length == 1 ? "" : "s", " for stage \"", this.props.stage.name, "\""), 
+					React.createElement("h1", {className: "p-l text-xs-center"}, this.props.stage.name, ": ", this.state.visits.length, " active visit", this.state.visits.length == 1 ? "" : "s"), 
 					React.createElement("hr", null), 
 					visitsDOM, 
 					fetching

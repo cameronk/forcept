@@ -213,6 +213,7 @@ Visit.PatientsOverview = React.createClass({
 		var iterableFields = jQuery.extend({}, this.props.fields);
 			delete iterableFields["first_name"];
 			delete iterableFields["last_name"];
+			delete iterableFields["photo"];
 
 		console.log("Rendering PatientsOverview with iterableFields:");
 		console.log(iterableFields);
@@ -223,18 +224,40 @@ Visit.PatientsOverview = React.createClass({
 		if(Object.keys(this.props.patients).length > 0) {
 			patientOverviews = Object.keys(this.props.patients).map(function(patientID, index) {
 				var thisPatient = this.props.patients[patientID];
+				var photo;
+
+				if(thisPatient.hasOwnProperty('photo') && thisPatient.photo !== null) {
+					console.log("Patient overview: " + patientID + " has photo");
+					var dataURI = thisPatient.photo.toString();
+					var split = dataURI.split(";");
+					var dataType = split[0].split('/');
+
+					if(dataType[0] == "data:image") {
+						console.log("Datatype is valid");
+						photo = (
+			                <div className="patient-photo-contain">
+			                	<img src={dataURI} />	
+			                </div>
+						);
+					}
+				}
 
 				console.log("Rendering patient overview card - ID #" + patientID);
 				console.log(thisPatient);
 
 				return (
-					<div className="card" key={patientID}>
+					<div className="card forcept-patient-summary" key={patientID}>
 		                <div className="card-header">
 		                    <span className="label label-info">#{index + 1}</span>
 		                    <span className="label label-default">{patientID}</span> 
-		                    &nbsp; <strong>{thisPatient['full_name'] !== null ? thisPatient['full_name'] : "Unnamed patient"}</strong>
 		                </div>
-		                <div className="list-group list-group-flush">
+		                <div className="card-block">
+		                	<h4 className="card-title text-xs-center m-a-0">
+		                		<strong>{(thisPatient["full_name"] !== null && thisPatient["full_name"].length > 0) ? thisPatient["full_name"] : "Unnamed patient"}</strong>
+		                	</h4>
+		                </div>
+		                {photo}
+		              	<div className="list-group list-group-flush">
 		                    {Object.keys(iterableFields).map(function(field, index) {
 
 		                    	var value = "No data";
@@ -257,6 +280,25 @@ Visit.PatientsOverview = React.createClass({
 		                    						value = arr.join(", ");
 		                    					}
 		                    					console.log("Multiselect value: " + value);
+		                    					break;
+		                    				case "file":
+
+		                    					var split = thisPatient[field].toString().split(";");
+		                    					var dataSection = split[0]; // data:image/png
+
+		                    					if(dataSection.split("/")[0] == "data:image") {
+
+			                    					value = (
+			                    						<img src={thisPatient[field].toString()} />
+			                    					);
+
+		                    					} else {
+
+		                    						var splitHeadAndData = thisPatient[field].toString().split(",");
+		                    						value = "1 file, " + (Math.round( (splitHeadAndData[1].length - splitHeadAndData[0].length) * 0.75 )) + " bytes";
+
+		                    					}
+
 		                    					break;
 		                    				default:
 		                    					value = thisPatient[field].toString();
@@ -288,7 +330,7 @@ Visit.PatientsOverview = React.createClass({
 			}.bind(this));
 		} else {
 			patientOverviews = (
-				<div className="alert alert-info">
+				<div className="alert alert-info hidden-sm-down">
 					No patients within this visit.
 				</div>
 			);
@@ -521,6 +563,7 @@ Visit.ImportBlock = React.createClass({
 			this.setState(state);
 		}.bind(this);
 	},
+
 	handleSearch: function(type) {
 		console.log("Handling click" + type);
 		this.setState({ display: 'searching' });
@@ -549,7 +592,6 @@ Visit.ImportBlock = React.createClass({
 	},
 	handlePatientAdd: function(patient) {
 		return function(event) {
-			// console.log("Caught handlePatientAdd for ID " + patientID);
 			this.props.onPatientAdd(patient);
 			this.resetDisplay();
 		}.bind(this);
@@ -576,7 +618,7 @@ Visit.ImportBlock = React.createClass({
 		switch(this.state.display) {
 			case "form":
 				display = (
-					<fieldset className="form-group">
+					<fieldset className="form-group m-b-0">
 						<label className="form-control-label hidden-sm-up">...by field number:</label>
 						<div className="input-group input-group-lg m-b">
 	      					<input type="number" className="form-control" placeholder="Search for a patient by field number..." value={this.state.fieldNumber} onChange={this.handleInputChange("fieldNumber")} />
@@ -689,16 +731,16 @@ Visit.ImportBlock = React.createClass({
 Visit.NewVisitControls = React.createClass({
 	render: function() {
 
-		var loadingGifClasses = ("m-x" + (this.props.isLoading == false ? " invisible" : ""));
+		var loadingGifClasses = ("m-x loading" + (this.props.isLoading == false ? " invisible" : ""));
 
 		return (
 			<div className="btn-toolbar" role="toolbar">
-				<div className="btn-group btn-group-lg">
+				<div className="btn-group btn-group-lg p-b">
 		        	<button type="button" className="btn btn-primary" disabled={this.props.isLoading} onClick={this.props.onPatientAddFromScratch}>{'\u002b'} New</button>
 		        	<button type="button" className="btn btn-default" disabled={this.props.isLoading || this.props.isImportBlockVisible} onClick={this.props.onShowImportBlock}>{'\u21af'} Import</button>
-		        	<img src="/assets/img/loading.gif" className={loadingGifClasses} width="52" height="52" />
-		        </div>
+		        	</div>
 	        	<div className="btn-group btn-group-lg">
+	        		<img src="/assets/img/loading.gif" className={loadingGifClasses} width="52" height="52" />
 	        		<button type="button" className="btn btn-success" disabled={this.props.isLoading} onClick={this.props.onFinishVisit}>{'\u2713'} Finish visit</button>
 	        	</div>
 	        </div>
@@ -752,12 +794,14 @@ Visit.Patient = React.createClass({
 	render: function() {
 		console.log("Preparing to render Visit.Patient with " + Object.keys(this.props.fields).length + " fields");
 		console.log(this.props);
+		var name = this.props['full_name'] !== null ? this.props['full_name'] : "Unnamed patient"
 		return (
 			<blockquote className="blockquote">
 				<h3>
 					<span className="label label-info">#{this.props.hasOwnProperty('index') ? this.props.index + 1 : "?"}</span>
 		            <span className="label label-default">{this.props.hasOwnProperty('id') ? this.props.id : "?"}</span> &nbsp; 
-		            {this.props['full_name'] !== null ? this.props['full_name'] : "Unnamed patient"}
+		            <span className="hidden-xs-down">{name}</span>
+		            <div className="hidden-sm-up p-t">{name}</div>
 		        </h3>
 		        <hr/>
 		        {Object.keys(this.props.fields).map(function(fieldID, index) {
@@ -807,6 +851,15 @@ Visit.Patient = React.createClass({
 		        				<Fields.MultiSelect 
 		        					{...this.props.fields[fieldID]} 
 		        					defaultValue={this.props.hasOwnProperty(fieldID) ? this.props[fieldID] : null}
+		        					onChange={this.handleFieldChange}
+		        					key={fieldID}
+		        					id={fieldID} />
+		        			);
+		        			break;
+		        		case "file":
+		        			return (
+								<Fields.File
+		        					{...this.props.fields[fieldID]} 
 		        					onChange={this.handleFieldChange}
 		        					key={fieldID}
 		        					id={fieldID} />

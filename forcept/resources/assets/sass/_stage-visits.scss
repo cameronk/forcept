@@ -2,7 +2,7 @@
  * _stage-visits.scss
  */
 
-.forcept-patient-summary-card {
+.forcept-patient-nametag {
     
     .card-block {
         padding: ($spacer-y / 2) ($spacer-x);
@@ -15,4 +15,26 @@
             padding-right: 5px;   
         }
     }
+}
+
+.forcept-patient-summary {
+	.card-title {
+		line-height: 27px;
+	}
+}
+.form-group label.file {
+	font-size: 15px;
+}
+div.patient-photo-contain {
+	max-height: 300px;
+	overflow-y: auto;
+	overflow-x: hidden;
+
+	img {
+		width: 100%;
+	}
+}
+
+img.loading {
+	display: inline-block;
 }

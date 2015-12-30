@@ -4,12 +4,12 @@
 
 /* =================================================== */
 
-var flowEditor_CustomizableFields = ["select", "multiselect"];
+var flowEditor_CustomizableFields = ["select", "multiselect", "file"];
 var flowEditor_DefaultFieldState = {
 	name: "",
 	type: "text",
 	mutable: true,
-	settings: null,
+	settings: {},
 };
 
 
@@ -272,21 +272,11 @@ FlowEditor.Field = React.createClass({
  	 */
  	handleFieldSettingsChange: function() {
 
- 		console.log("");
- 		console.log("--[handleFieldSettings change - "+ this.props['data-key'] + "]--");
- 		console.log("\t| State for this field's settings component:");
-
  		// Grab state object via React ref
  		var settings = this.refs['settings-' + this.props['data-key']].state;
 
- 		console.log(settings);
-
  		// Bump child state up to parent settings state
- 		this.setState({ settings: settings }, function() {
- 			console.log("\t| New state for " + this.props['data-key']);
- 			console.log(this.state);
- 			console.log("--[/handleFieldSettings change]--");
- 		}.bind(this));
+ 		this.setState({ settings: settings });
  	},
 
  	/*
@@ -372,6 +362,7 @@ FlowEditor.Field = React.createClass({
 	 						<option value="date">Date input</option>
 	 						<option value="select">Select input with options</option>
 	 						<option value="multiselect">Multi-select input with options</option>
+	 						<option value="file">File input</option>
 	 					</select>
 	 					{disableTypeChangeNotification}
 	 				</div>
@@ -425,6 +416,11 @@ FlowEditor.Field.Settings = React.createClass({
 				console.log("\t| Dialog is for multiselect field, returning initial select options.");
 				return {
 					options: [],
+				};
+				break;
+			case "file":
+				return {
+					accept: []
 				};
 				break;
 
@@ -486,6 +482,22 @@ FlowEditor.Field.Settings = React.createClass({
 				}
 
 				break;
+
+			case "file":
+
+				// If there's already an options array...
+				if(this.props.hasOwnProperty('settings') && this.props.settings !== null) {
+
+					// Settings array exists. Check for each setting data point
+					if(this.props.settings.hasOwnProperty("accept")) {
+						this.setState({ accept: this.props.settings.accept });
+					}
+
+				} else {
+					console.log("\t| Input DOES NOT have pre-defined settings");
+				}
+
+				break;
 		}
 	},
 
@@ -540,10 +552,13 @@ FlowEditor.Field.Settings = React.createClass({
 	handleRemoveOption: function(index) {
 		var options = this.state.options;
 			options.splice(index, 1);
-		this.setState({ options: options });
+		this.setState({ options: options }, function() {
+	
+			// Bump changes to parent element for aggregation
+			this.props.onChange(this.state);
 
-		// Bump changes to parent element for aggregation
-		this.props.onChange(this.state);
+		}.bind(this));
+
 	},
 
 	/*
@@ -553,10 +568,13 @@ FlowEditor.Field.Settings = React.createClass({
 		return function(event) {
 			var options = this.state.options;
 				options[index] = event.target.value;
-			this.setState({ options: options });
 
-			// Bump changes to parent element for aggregation
-			this.props.onChange(this.state);
+			this.setState({ options: options }, function() {
+				// Bump changes to parent element for aggregation
+				this.props.onChange(this.state);
+			}.bind(this));
+
+			
 		}.bind(this);
 	},
 
@@ -582,6 +600,30 @@ FlowEditor.Field.Settings = React.createClass({
 			console.log("");
 		});
 
+	},
+
+	handleChangeAllowedFiletypes: function(event) {
+
+		var options = event.target.options;
+		var values = [];
+
+		for(var i = 0; i < options.length; i++) {
+			if(options[i].selected) {
+				values.push(options[i].value);
+			}
+		}
+
+		console.log("Allowed filetypes is now:");
+		console.log(values);
+
+		console.log(this.state);
+
+
+		this.setState({ accept: values }, function() {
+
+			this.props.onChange(this.state);
+
+		}.bind(this));
 	},
 
 	/*
@@ -729,6 +771,23 @@ FlowEditor.Field.Settings = React.createClass({
 				);
 
 				break;
+
+			case "file":
+
+
+				return (
+					<div className="field-select-options-contain">
+						<h5>Accepted file types</h5>
+						<select className="form-control" multiple={true} onChange={this.handleChangeAllowedFiletypes} defaultValue={this.state.accept}>
+							<option value="image/*">image / *</option>
+						</select>
+						{mutabilityMessage}
+					</div>
+				);
+
+
+				break;
+
 			default:
 				return (
 					<div>

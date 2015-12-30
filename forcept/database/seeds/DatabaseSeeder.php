@@ -40,6 +40,16 @@ class DatabaseSeeder extends Seeder
                     "mutable" => false,
                     "settings" => null,
                 ],
+                "photo" => [
+                    "type" => "file",
+                    "name" => "Photo",
+                    "mutable" => false,
+                    "settings" => [
+                        "accept" => [
+                            "image/*"
+                        ]
+                    ]
+                ],
                 "priority" => [
                     "type" => "select",
                     "name" => "Priority",
@@ -52,7 +62,7 @@ class DatabaseSeeder extends Seeder
                         ],
                         "allowCustomData" => false
                     ]
-                ]
+                ],
             ])
         ]);
 

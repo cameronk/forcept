@@ -20,7 +20,6 @@ var StageVisits = React.createClass({
 	},
 
 	fetchVisits: function() {
-		// this.setState({ isFetching: true });
 		$.ajax({
 			type: "GET",
 			url: "/visits/fetch/" + this.props.stage.id,
@@ -77,7 +76,7 @@ var StageVisits = React.createClass({
 
 						return (
 							<div className="col-sm-12 col-md-4" key={"patient-col-" + patientID}>
-								<div className="card forcept-patient-summary-card">
+								<div className="card forcept-patient-nametag">
 									<div className="card-header">
 										<h5 className="card-title">
 											<span className="label label-default pull-right">{patientID}</span>
@@ -109,13 +108,13 @@ var StageVisits = React.createClass({
 				return (
 					<blockquote className="blockquote" key={"visit-" + index}>
 						<div className="row">
-							<div className="col-xs-12 col-sm-9">
+							<div className="col-xs-12 col-sm-8">
 								<h2>
 									<label className="label label-default" data-toggle="tooltip" data-placement="top" title="Visit ID">{visit.id}</label> 
 									&nbsp; {visit.patients.length} patient{visit.patients.length == 1 ? "" : "s"}
 								</h2>
 							</div>
-							<div className="col-xs-12 col-sm-3">
+							<div className="col-xs-12 col-sm-4">
 								<a href={"/visits/stage/" + this.props.stage.id + "/handle/" + visit.id} className="btn btn-primary btn-block btn-lg">Handle visit #{visit.id} &raquo;</a>
 							</div>
 						</div>
@@ -146,7 +145,7 @@ var StageVisits = React.createClass({
 		return (
 			<div className="row">
 				<div className="col-xs-12">
-					<h1 className="p-l text-xs-center">{this.state.visits.length} active visit{this.state.visits.length == 1 ? "" : "s"} for stage "{this.props.stage.name}"</h1>
+					<h1 className="p-l text-xs-center">{this.props.stage.name}: {this.state.visits.length} active visit{this.state.visits.length == 1 ? "" : "s"}</h1>
 					<hr/>
 					{visitsDOM}
 					{fetching}

@@ -19,6 +19,7 @@ class CreatePatientsTable extends Migration
             // Immutable base properties
             $table->string('first_name')->nullable();
             $table->string('last_name')->nullable();
+            $table->mediumText('photo')->nullable();
             //$table->string('full_name')->nullable(); // Not shown as a property in the admin panel, used for searching
             $table->string('priority')->nullable();
 
