@@ -182,7 +182,7 @@ var Visit = React.createClass({
 
 					onFinishVisit={this.handleFinishVisit}
 					onPatientAdd={this.handlePatientAdd} 
-					onPatientDataChange={this.topLevelPatientStateChange}/>
+					onPatientDataChange={this.topLevelPatientStateChange} />
 			</div>
 		)
 	}
@@ -293,10 +293,7 @@ Visit.PatientsOverview = React.createClass({
 			                    					);
 
 		                    					} else {
-
-		                    						var splitHeadAndData = thisPatient[field].toString().split(",");
-		                    						value = "1 file, " + (Math.round( (splitHeadAndData[1].length - splitHeadAndData[0].length) * 0.75 )) + " bytes";
-
+		                    						value = "1 file, " + base64bytes(thisPatient[field].toString()) + " bytes";
 		                    					}
 
 		                    					break;
@@ -860,6 +857,7 @@ Visit.Patient = React.createClass({
 		        			return (
 								<Fields.File
 		        					{...this.props.fields[fieldID]} 
+		        					defaultValue={this.props.hasOwnProperty(fieldID) ? this.props[fieldID] : null}
 		        					onChange={this.handleFieldChange}
 		        					key={fieldID}
 		        					id={fieldID} />

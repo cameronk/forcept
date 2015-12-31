@@ -293,10 +293,7 @@ Visit.PatientsOverview = React.createClass({displayName: "PatientsOverview",
 			                    					);
 
 		                    					} else {
-
-		                    						var splitHeadAndData = thisPatient[field].toString().split(",");
-		                    						value = "1 file, " + (Math.round( (splitHeadAndData[1].length - splitHeadAndData[0].length) * 0.75 )) + " bytes";
-
+		                    						value = "1 file, " + base64bytes(thisPatient[field].toString()) + " bytes";
 		                    					}
 
 		                    					break;
@@ -860,7 +857,8 @@ Visit.Patient = React.createClass({displayName: "Patient",
 		        			return (
 								React.createElement(Fields.File, React.__spread({}, 
 		        					this.props.fields[fieldID], 
-		        					{onChange: this.handleFieldChange, 
+		        					{defaultValue: this.props.hasOwnProperty(fieldID) ? this.props[fieldID] : null, 
+		        					onChange: this.handleFieldChange, 
 		        					key: fieldID, 
 		        					id: fieldID}))
 		        			);

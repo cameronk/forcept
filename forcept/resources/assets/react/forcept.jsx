@@ -31,6 +31,10 @@ function isTrue(statement) {
 	}
 }
 
+function base64bytes(string) {
+	var splitHeadAndData = string.split(',');
+	return Math.round( (splitHeadAndData[1].length - splitHeadAndData[0].length) * 0.75 );
+}
 
 /* ========================================= */
 
@@ -256,7 +260,17 @@ Fields.File = React.createClass({
 	getInitialState: function() {
 		return {
 			fileCount: 0,
+			fileSize: 0,
 		};
+	},
+
+	componentWillMount: function() {
+		if(this.props.hasOwnProperty("defaultValue") && this.props.defaultValue !== null) {
+			this.setState({
+				fileCount: 1,
+				fileSize: base64bytes(this.props.defaultValue)
+			});
+		}
 	},
 
 	onFileInputChange: function(event) {
@@ -266,6 +280,10 @@ Fields.File = React.createClass({
 		reader.onload = function(upload) {
 			console.log("Reader onload return upload target result:");
 			console.log(upload.target.result);
+			this.setState({ 
+				fileCount: 1, 
+				fileSize: base64bytes(upload.target.result)
+			});
 			this.props.onChange(this.props.id, upload.target.result);
 		}.bind(this);
 
@@ -284,8 +302,9 @@ Fields.File = React.createClass({
 				<div className={Fields.inputColumnClasses}>
 					<label className="file">
 						<input type="file" className="form-control" accept={accept} onChange={this.onFileInputChange} />
-						<span className="file-custom">{this.state.fileCount == 0 ? "No files - " : this.state.fileCount + " file" + (this.state.fileCount == 1 ? "" : "s")}</span>
+						<span className="file-custom">{this.state.fileCount == 0 ? "No files - " : this.state.fileCount + " file - " + (this.state.fileCount == 1 ? "" : "s")}</span>
 					</label>
+					<h6>{this.state.fileSize > 0 ? this.state.fileSize + " bytes" : ""}</h6>
 				</div>
 			</div>
 		);
