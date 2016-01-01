@@ -95,6 +95,32 @@ Fields.Number = React.createClass({
 	}
 });
 
+Fields.Date = React.createClass({
+	onNumberInputChange: function(event) {
+		// Bubble event up to handler passed from Visit
+		// (pass field ID and event)
+		this.props.onChange(this.props.id, event.target.value);
+	},
+
+	render: function() {
+		return (
+			<div className="form-group row">
+				<label htmlFor={this.props.id} className={Fields.labelColumnClasses + " form-control-label"}>{this.props.name}</label>
+				<div className={Fields.inputColumnClasses}>
+					<input 
+						type="date" 
+						className="form-control" 
+						id={this.props.id} 
+						placeholder={this.props.name + " goes here"} 
+						autoComplete="off"
+						defaultValue={this.props.defaultValue !== null ? this.props.defaultValue : null}
+						onChange={this.onDateInputChange} />
+				</div>
+			</div>
+		);
+	}
+});
+
 Fields.Select = React.createClass({
 
 	getInitialState: function() {

@@ -825,7 +825,7 @@ Visit.Patient = React.createClass({displayName: "Patient",
 		        			break;
 		        		case "date":
 		        			return (
-		        				React.createElement(Fields.Text, React.__spread({},  
+		        				React.createElement(Fields.Date, React.__spread({}, 
 		        					this.props.fields[fieldID], 
 		        					{defaultValue: this.props.hasOwnProperty(fieldID) ? this.props[fieldID] : null, 
 		        					onChange: this.handleFieldChange, 

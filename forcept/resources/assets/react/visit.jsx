@@ -825,7 +825,7 @@ Visit.Patient = React.createClass({
 		        			break;
 		        		case "date":
 		        			return (
-		        				<Fields.Text 
+		        				<Fields.Date
 		        					{...this.props.fields[fieldID]} 
 		        					defaultValue={this.props.hasOwnProperty(fieldID) ? this.props[fieldID] : null}
 		        					onChange={this.handleFieldChange}
