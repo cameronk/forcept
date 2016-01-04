@@ -84,6 +84,7 @@ class DataController extends Controller
                 $stages = Stage::get(['id', 'name', 'fields', 'root'])
                                 ->keyBy('id');
 
+                // Loop through all stages, map to stageID
                 $stages = $stages->keys()->map(function($stageID) use ($stages) {
                     $stage = $stages[$stageID];
                     $fields = collect($stage->fields);
@@ -137,6 +138,9 @@ class DataController extends Controller
                                     $fieldID => array_count_values($arrayOfMultiSelectOptions->collapse()->toArray())
                                 ]);
                                 break;
+                            case "file":
+                                return collect([]); // Cannot aggregate this file tpe
+                                break;
                             default:
                                 return collect([
                                     $fieldID => array_count_values($pluck->toArray())
@@ -147,67 +151,6 @@ class DataController extends Controller
 
                     return $stage; 
                 });
-
-                // \Log::debug($data);
-
-
-                // Loop through all stages stored in database
-                /*$stages = $stages->keys()->map(function($stageID) use($stages) {
-
-                    // $stageID's ROW in stages table
-                    $stage = $stages[$stageID][0];
-                    $fields = collect($stage->fields);
-
-                    // Grab all patient data from $stageID's unique table
-                    $patientStageData = DB::table($stage->tableName);
-                    if($stage->root) {
-                        $patientStageData = $patientStageData->where('concrete', true);
-                    }
-                    $patientStageData = $patientStageData->get(); // array of StdClass objects with patient data
-
-                    return $patientStageData;
-
-                    // Collect patient data
-                    $patients = collect($patientStageData);
-
-                    // Loop throgh each patient row
-                    $test = $patients->keys()->map(function($patientKey) use ($patients, $fields) {
-
-                        // \Log::debug(collect($stage->fields));
-
-                        // Loop through valid fields, find patient data for these fields if it exists
-                        $data = $fields->keys()->map(function($fieldID) use ($patients, $patientKey) {
-
-                            $patient = $patients->get($patientKey);
-                            // If the patient has this type of data stored
-                            if( property_exists($patient, $fieldID) ) {
-                                $r = array();
-                                $r[$fieldID] = $patient->$fieldID;
-                                return $r;
-                            }
-
-                        })->collapse();
-
-                        $data = $data->keys()->map(function($fieldID) use($data) {
-                        //     // return $data->get($fieldID);
-                            $r = array();
-                            $r[$fieldID] = $data->keyBy($fieldID)->count();
-                            return $r;
-                        });
-
-                        return $data;
-
-                        // $patients->get($patientKey)->;
-                    });
-
-                    \Log::debug("Debug for {$stageID}");
-                    \Log::debug($test);
-
-                    return $test;
-
-                });*/
-
-                // \Log::debug($stages);
 
                 return response()->json([
                     "stages" => $stages

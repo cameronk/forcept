@@ -96,7 +96,7 @@ Fields.Number = React.createClass({displayName: "Number",
 });
 
 Fields.Date = React.createClass({displayName: "Date",
-	onNumberInputChange: function(event) {
+	onDateInputChange: function(event) {
 		// Bubble event up to handler passed from Visit
 		// (pass field ID and event)
 		this.props.onChange(this.props.id, event.target.value);
