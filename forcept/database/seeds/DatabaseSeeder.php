@@ -14,8 +14,6 @@ class DatabaseSeeder extends Seeder
     {
         Model::unguard();
 
-        // $this->call(UserTableSeeder::run);
-
         DB::table('users')->insert([
             'username'=> 'admin',
             'password' => bcrypt('1234'),
@@ -40,6 +38,12 @@ class DatabaseSeeder extends Seeder
                     "mutable" => false,
                     "settings" => null,
                 ],
+                "birthday" => [
+                    "type" => "date",
+                    "name" => "Birthday",
+                    "mutable" => false,
+                    "settings" => null
+                ],
                 "photo" => [
                     "type" => "file",
                     "name" => "Photo",
@@ -50,6 +54,14 @@ class DatabaseSeeder extends Seeder
                         ]
                     ]
                 ],
+            ])
+        ]);
+
+        DB::table('stages')->insert([
+            'type' => 'basic',
+            'name' => 'Triage',
+            'root' => false,
+            "fields" => json_encode([
                 "priority" => [
                     "type" => "select",
                     "name" => "Priority",
@@ -62,7 +74,7 @@ class DatabaseSeeder extends Seeder
                         ],
                         "allowCustomData" => false
                     ]
-                ],
+                ]
             ])
         ]);
 

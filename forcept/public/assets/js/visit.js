@@ -30,6 +30,8 @@ var Visit = React.createClass({displayName: "Visit",
 	 */
 	getInitialState: function() {
 		return {
+			isSubmitting: false,
+			progress: 0,
 			confirmFinishVisitResponse: null,
 			patients: {},
 		}
@@ -44,8 +46,13 @@ var Visit = React.createClass({displayName: "Visit",
 
 		if(this.props.hasOwnProperty("patients") && this.props.patients !== null) {
 			console.log("Pre-existing patients detected, loading into state:");
+
+			var patients = {};
+			for(var patientID in this.props.patients) {
+				patients[patientID] = this.applyGeneratedFields(this.props.patients[patientID]);
+			}
 			this.setState({ 
-				patients: this.props.patients
+				patients: patients
 			});
 		}
 	},
@@ -54,6 +61,21 @@ var Visit = React.createClass({displayName: "Visit",
 	 *
 	 */
 	handleConfirmFinishVisit: function( destination, modalObject ) {
+
+		// Update state to submitting
+		this.setState({
+			isSubmitting: true,
+		});
+
+		// Go ahead and close the modal
+		$("#visit-finish-modal")
+			.modal('hide')
+			.on('hidden.bs.modal', function(e) {
+				console.log("Modal hidden");
+				modalObject.setState(modalObject.getInitialState());
+				modalObject.resetSelectState();
+			});
+
 		$.ajax({
 			type: "POST",
 			url: "/visits/store",
@@ -64,8 +86,24 @@ var Visit = React.createClass({displayName: "Visit",
 				stage: this.props.currentStage,
 				destination: destination
 			},
+			xhr: function() {
+				var xhr = new window.XMLHttpRequest();
+
+				xhr.upload.addEventListener("progress", function(evt) {
+		            if (evt.lengthComputable) {
+		                var percentComplete = evt.loaded / evt.total;
+		                console.log(percentComplete * 100);
+		                //Do something with upload progress here
+		                this.setState({
+		                	progress: percentComplete * 100
+		                });
+		            }
+		       }.bind(this), false);
+
+				return xhr;
+			}.bind(this),
 			success: function(resp) {
-				this.setState({ patients: {} });
+				this.setState(this.getInitialState());
 			}.bind(this),
 			error: function(resp) {
 
@@ -76,13 +114,6 @@ var Visit = React.createClass({displayName: "Visit",
 				this.setState({ 
 					confirmFinishVisitResponse: resp.responseJSON 
 				});
-				$("#visit-finish-modal")
-					.modal('hide')
-					.on('hidden.bs.modal', function(e) {
-						console.log("Modal hidden");
-						modalObject.setState(modalObject.getInitialState());
-						modalObject.resetSelectState();
-					});
 
 			}.bind(this)
 		});
@@ -101,7 +132,7 @@ var Visit = React.createClass({displayName: "Visit",
 			// Patient already in Visit
 		} else {
 			// Update state with new patient
-			patients[patient.id] = patient;
+			patients[patient.id] = this.applyGeneratedFields(patient);
 			this.setState({ 
 				confirmFinishVisitResponse: null, 
 				patients: patients 
@@ -119,6 +150,67 @@ var Visit = React.createClass({displayName: "Visit",
 			.modal('show');
 	},
 
+
+	/*
+	 *
+	 */
+	applyGeneratedFields: function( patient ) {
+		// Patient full name
+		var fullName = null;
+		if(
+			typeof patient.first_name === "string" 
+			&& typeof patient.last_name === "string"
+			&& patient.first_name.length > 0 
+			&& patient.last_name.length > 0
+		) {
+			fullName = patient.first_name + " " + patient.last_name;
+		} else {
+			if(typeof patient.first_name === "string" && patient.first_name.length > 0 ) {
+				fullName = patient.first_name;
+			}
+			if(typeof patient.last_name === "string" && patient.last_name.length > 0) {
+				fullName = patient.last_name;
+			}
+		}
+
+		// Combine first and last name
+		patient.full_name = fullName;
+
+		var age = null;
+		if(
+			typeof patient.birthday === "string"
+			&& patient.birthday.length > 0
+		) {
+			
+			// Setup date objects
+			var birthday = +new Date(patient.birthday);
+			var now = Date.now();
+
+			// Make sure the birthday is in the past
+			if(birthday < now) {
+
+				// Start by trying to calculate in years
+				var years = ~~((now - birthday) / (31557600000)); // 24 * 3600 * 365.25 * 1000
+
+				// If the birthday is < 1 year, use months
+				if(years == 0) {
+					var months = ((now - birthday) / (2629800000)); // 24 * 3600 * 365.25 * 1000 all over 12
+					age = ~~months !== 0 ? months.toFixed(1) + " months" : "<1 month"; // If <1 month, show "<1" instead of zero 
+				} else {
+					age = years + " years";
+				}
+
+				console.log("applyGeneratedFields: age is " + age);	
+			}
+		}
+
+		// Add patient age to patient object
+		patient.age = age;
+		
+
+		return patient;
+	},
+
 	/*
 	 * 
 	 */
@@ -131,25 +223,16 @@ var Visit = React.createClass({displayName: "Visit",
 		// Check if patient is in our patients array
 		if(this.state.patients.hasOwnProperty(patientID)) {
 
-			var patients = this.state.patients;
-				patients[patientID][fieldID] = value;
+			var patients = this.state.patients; // Grab patients from state
+				patients[patientID][fieldID] = value; // Find our patient and set fieldID = passed value
 
-				var fullName = null;
-				if((typeof patients[patientID]["first_name"] === "string" && typeof patients[patientID]["last_name"] === "string")
-					&& (patients[patientID]["first_name"].length > 0 && patients[patientID]["last_name"].length > 0)) {
-					fullName = patients[patientID]["first_name"] + " " + patients[patientID]["last_name"];
-				} else {
-					if(typeof patients[patientID]["first_name"] === "string" && patients[patientID]["first_name"].length > 0 ) {
-						fullName = patients[patientID]["first_name"];
-					}
-					if(typeof patients[patientID]["last_name"] === "string" && patients[patientID]["last_name"].length > 0) {
-						fullName = patients[patientID]["last_name"];
-					}
-				}
+			// Apply generated fields to patient object
+			patients[patientID] = this.applyGeneratedFields(patients[patientID]);
 
-				// Combine first and last name
-				patients[patientID]["full_name"] = fullName;
+			console.log("After generated fields are applied:");
+			console.log(patients[patientID]);
 
+			// Push patients back to state
 			this.setState({ patients: patients });
 
 		} else {
@@ -178,6 +261,9 @@ var Visit = React.createClass({displayName: "Visit",
 
 					fields: this.props.mutableFields, 
 					patients: this.state.patients, 
+
+					isSubmitting: this.state.isSubmitting, 
+					progress: this.state.progress, 
 					confirmFinishVisitResponse: this.state.confirmFinishVisitResponse, 
 
 					onFinishVisit: this.handleFinishVisit, 
@@ -188,6 +274,17 @@ var Visit = React.createClass({displayName: "Visit",
 	}
 
 });
+
+/*
+ * Variables
+ */
+Visit.generatedFields = {
+	"age": {
+		name: "Age",
+		type: "number"
+	}
+};
+
 
 /*
  * Patients overview (left sidebar)
@@ -210,7 +307,7 @@ Visit.PatientsOverview = React.createClass({displayName: "PatientsOverview",
 
 		// Copy the local patient fields property to a new variable
 		// and remove first/last name, so they don't appear in the list
-		var iterableFields = jQuery.extend({}, this.props.fields);
+		var iterableFields = jQuery.extend(jQuery.extend({}, this.props.fields), Visit.generatedFields);
 			delete iterableFields["first_name"];
 			delete iterableFields["last_name"];
 			delete iterableFields["photo"];
@@ -263,8 +360,8 @@ Visit.PatientsOverview = React.createClass({displayName: "PatientsOverview",
 		                    	var value = "No data";
 
 		                    	if(thisPatient.hasOwnProperty(field) 	// If this field exists in the patient data
-		                    		&& thisPatient[field] !== null 		// If the data for this field is null, show "No data"
-		                    		&& thisPatient[field].length > 0) 	// If string length == 0 or array length == 0, show "No data"
+		                    		&& thisPatient[field] !== null	 	// If the data for this field is null, show "No data"
+		                    		&& thisPatient[field].length > 0)	// If string length == 0 or array length == 0, show "No data"
 		                    	{
 		                    		if( ["string", "number"].indexOf(typeof thisPatient[field]) !== -1 ) // If the field is a string or number
 		                    		{
@@ -354,6 +451,8 @@ Visit.PatientsOverview = React.createClass({displayName: "PatientsOverview",
  *  - fields: 			All fields for this stage
  *  - patients:  		All patients in this visit
  * 
+ * 	- isSubmitting:  	is the parent form in submission state?
+ *
  *  - onFinishVisit:  	Bubble onFinishVisit event up to Visit container
  *  - onPatientAdd: 	Bubble onPatientAdd event up to Visit container
  *  - onPatientDataChange: Bubble onPatientDataChange event up to Visit container
@@ -414,7 +513,8 @@ Visit.PatientsContainer = React.createClass({displayName: "PatientsContainer",
 				}
 			}.bind(this),
 			error: function(resp) {
-				// console.log("success");
+				console.log("handlePatientAddfromScratch: error");
+				console.log(resp);
 				// console.log(resp);
 			},
 			complete: function() {
@@ -440,28 +540,43 @@ Visit.PatientsContainer = React.createClass({displayName: "PatientsContainer",
 			importBlock,
 			controls;
 
-		// Set up patients block
-		if(Object.keys(this.props.patients).length > 0) {
-			patients = (Object.keys(this.props.patients)).map(function(patientID, index) {
-				return (
-					React.createElement("div", {key: patientID}, 
-						React.createElement(Visit.Patient, React.__spread({},  
-							this.props.patients[patientID], 
-							{fields: this.props.fields, 
-							id: patientID, 
-							index: index, 
+		// Loading state can be triggered by:
+		// 		isLoading 	-> provided by controls, procs when adding new patient / importing
+		// 		isSubmitting -> provided by container, procs when visit is submitted to next stage
+		var isLoading = false;
+		if(this.state.isLoading || this.props.isSubmitting) {
+			isLoading = true;
+		}
 
-							onPatientDataChange: this.props.onPatientDataChange})), 
-						React.createElement("hr", null)
+
+		// If we're submitting, don't show patients block
+		if(!this.props.isSubmitting) {
+			// Set up patients block
+			if(Object.keys(this.props.patients).length > 0) {
+				patients = (Object.keys(this.props.patients)).map(function(patientID, index) {
+					return (
+						React.createElement("div", {key: patientID}, 
+							React.createElement(Visit.Patient, React.__spread({},  
+								this.props.patients[patientID], 
+								{fields: this.props.fields, 
+								id: patientID, 
+								index: index, 
+
+								onPatientDataChange: this.props.onPatientDataChange})), 
+							React.createElement("hr", null)
+						)
+					);
+				}.bind(this));
+			} else {
+				patients = (
+					React.createElement("div", {className: "alert alert-info"}, 
+						"There are currently no patients in this visit."
 					)
 				);
-			}.bind(this));
+			}
 		} else {
-			patients = (
-				React.createElement("div", {className: "alert alert-info"}, 
-					"There are currently no patients in this visit."
-				)
-			);
+			// Scroll to top of window
+			window.scrollTo(0, 0);
 		}
 
 		// Set up import block
@@ -481,7 +596,7 @@ Visit.PatientsContainer = React.createClass({displayName: "PatientsContainer",
 				// We're on the new visit page
 				controls = (
 					React.createElement(Visit.NewVisitControls, {
-						isLoading: this.state.isLoading, 
+						isLoading: isLoading, 
 						isImportBlockVisible: this.state.showImportBlock, 
 
 						onFinishVisit: this.onFinishVisit, 
@@ -493,7 +608,7 @@ Visit.PatientsContainer = React.createClass({displayName: "PatientsContainer",
 				// We're on some sort of stage page
 				controls = (
 					React.createElement(Visit.StageVisitControls, {
-						isLoading: this.state.isLoading, 
+						isLoading: isLoading, 
 
 						onFinishVisit: this.onFinishVisit})
 				);
@@ -502,26 +617,52 @@ Visit.PatientsContainer = React.createClass({displayName: "PatientsContainer",
 
 		// Add messages as necessary
 		var message;
-		if(this.props.confirmFinishVisitResponse !== null) {
-			var response = this.props.confirmFinishVisitResponse;
-			if(response.status == "success") {
+		if(isLoading == true) {
+
+			// If we have a progress value
+			if(this.props.progress > 0) {
+				var percent = this.props.progress.toFixed(1);
 				message = (
-					React.createElement("div", {className: "alert alert-success"}, 
-						React.createElement("strong", null, "Awesome!"), " ", response.message
+					React.createElement("div", null, 
+						React.createElement("div", {className: "alert alert-info"}, 
+							React.createElement("strong", null, "One moment...")
+						), 
+						React.createElement("progress", {className: "progress progress-striped progress-animated", value: percent, max: "100"}, 
+							percent, "%"
+						)
 					)
 				);
 			} else {
-				var errorListItems = response.errors.map(function(error, index) {
-					return (
-						React.createElement("li", {key: index}, error)
-					);
-				});
 				message = (
-					React.createElement("div", {className: "alert alert-danger"}, 
-						React.createElement("strong", null, "An error occurred:"), " ", response.message, 
-						React.createElement("ul", null, errorListItems)
+					React.createElement("div", {className: "alert alert-info"}, 
+						React.createElement("strong", null, "One moment...")
 					)
 				);
+			}
+
+		} else {
+			// We aren't loading, perhaps there was already a response?
+			if(this.props.confirmFinishVisitResponse !== null) {
+				var response = this.props.confirmFinishVisitResponse;
+				if(response.status == "success") {
+					message = (
+						React.createElement("div", {className: "alert alert-success"}, 
+							React.createElement("strong", null, "Awesome!"), " ", response.message
+						)
+					);
+				} else {
+					var errorListItems = response.errors.map(function(error, index) {
+						return (
+							React.createElement("li", {key: index}, error)
+						);
+					});
+					message = (
+						React.createElement("div", {className: "alert alert-danger"}, 
+							React.createElement("strong", null, "An error occurred:"), " ", response.message, 
+							React.createElement("ul", null, errorListItems)
+						)
+					);
+				}
 			}
 		}
 
@@ -530,10 +671,10 @@ Visit.PatientsContainer = React.createClass({displayName: "PatientsContainer",
 			React.createElement("div", {className: "col-xs-12 col-sm-12 col-md-8 col-xl-9"}, 
 	            React.createElement("h1", {className: "p-t text-xs-center"}, this.props.containerTitle), 
 	            React.createElement("hr", null), 
-	            	message, 
-	            	patients, 
-	            	importBlock, 
-	            	controls
+            	message, 
+            	patients, 
+            	importBlock, 
+            	controls
 	        )
 		);
 	}
