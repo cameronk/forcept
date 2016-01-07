@@ -30,6 +30,7 @@ class CreatePatientsTable extends Migration
 
             // Metadata
             $table->integer('created_by');
+            $table->integer('last_modified_by')->default(0);
             $table->boolean('concrete')->default(false)->comment("Patient created but data not yet gathered from NewVisit");
             
             // Timestamps

@@ -26,6 +26,8 @@ class DatabaseSeeder extends Seeder
             'name' => 'Check-in',
             'root' => true,
             'fields' => json_encode([
+
+                /** Immutables **/
                 "first_name" => [
                     "type" => "text",
                     "name" => "First name",
@@ -54,6 +56,138 @@ class DatabaseSeeder extends Seeder
                         ]
                     ]
                 ],
+
+                /** Haiti Mission defaults **/
+                "gender" => [
+                    "type" => "select",
+                    "name" => "Gender",
+                    "mutable" => true,
+                    "settings" => [
+                        "options" => [
+                            "Male",
+                            "Female"
+                        ]
+                    ]
+                ],
+                "chapel" => [
+                    "type" => "select",
+                    "name" => "Chapel",
+                    "mutable" => true,
+                    "settings" => [
+                        "options" => [
+                            "Bassin",
+                            "Beaudin",
+                            "C Roger",
+                            "Champagne",
+                            "Claire",
+                            "Clerisso",
+                            "Dallas",
+                            "Dulmene",
+                            "Faucodiere",
+                            "Fillette",
+                            "G Place",
+                            "La Trouble",
+                            "La Violette",
+                            "Le Traitre",
+                            "Libon",
+                            "Lume",
+                            "Margot",
+                            "Mayette",
+                            "Our Lady of Miracles",
+                            "Pigeote",
+                            "Pilot",
+                            "Poudre Encens",
+                            "Proprietaire",
+                            "Rosalie",
+                            "St. Augustin",
+                            "St. Joseph",
+                            "St. Therese",
+                            "Tantey",
+                            "Vastey",
+                            "Vastey I",
+                            "Vastey II",
+                            "Other"
+                        ],
+                        "allowCustomData" => true
+                    ],
+                ],
+                "married" => [
+                    "type" => "yesno",
+                    "name" => "Married",
+                    "subtitle" => "Are you married?",
+                    "mutable" => true,
+                    "settings" => null
+                ],
+                "number_in_house" => [
+                    "type" => "number",
+                    "name" => "Number in house",
+                    "subtitle" => "How many people live at home?",
+                    "mutable" => true,
+                    "settings" => null
+                ],
+                "clean_water_access" => [
+                    "type" => "select",
+                    "name" => "Clean water access",
+                    "subtitle" => "Do you have access to clean water?",
+                    "mutable" => true,
+                    "settings" => [
+                        "options" => [
+                            "No",
+                            "Yes"
+                        ],
+                        "allowCustomData" => false
+                    ]
+                ],
+                "water_access_location" => [
+                    "type" => "select",
+                    "name" => "Water access location",
+                    "subtitle" => "Where do you get your water?",
+                    "mutable" => true,
+                    "settings" => [
+                        "options" => [
+                            "Spring water / local pipes",
+                            "Chemical treatment",
+                            "Reverse osmosis",
+                            "Well at rectory",
+                            "BioSand filter",
+                            "River",
+                            "Boiled"
+                        ],
+                        "allowCustomData" => false
+                    ]
+                ],
+                "allergies" => [
+                    "type" => "select",
+                    "name" => "Allergies",
+                    "subtitle" => "Are you allergic to any medicine?",
+                    "mutable" => true,
+                    "settings" => [
+                        "options" => [
+                            "No",
+                            "Yes"
+                        ],
+                        "allowCustomData" => false
+                    ]
+                ],
+                "allergies_details" => [
+                    "type" => "textarea",
+                    "name" => "Drug allergy details",
+                    "mutable" => true,
+                    "settings" => null
+                ],
+                "phone" => [
+                    "type" => "select",
+                    "name" => "Phone",
+                    "subtitle" => "Do you own a cell phone?",
+                    "mutable" => true,
+                    "settings" => [
+                        "options" => [
+                            "No",
+                            "Yes"
+                        ],
+                        "allowCustomData" => false
+                    ]
+                ]
             ])
         ]);
 
@@ -74,9 +208,31 @@ class DatabaseSeeder extends Seeder
                         ],
                         "allowCustomData" => false
                     ]
+                ],
+            ])
+        ]);
+
+        DB::table('stages')->insert([
+            'type' => 'basic',
+            'name' => 'Medical',
+            'root' => false,
+            "fields" => json_encode([
+                "priority" => [
+                    "type" => "select",
+                    "name" => "Priority",
+                    "mutable" => false,
+                    "settings" => [
+                        "options" => [
+                            "Normal",
+                            "High",
+                            "Urgent"
+                        ],
+                        "allowCustomData" => false
+                    ]
                 ]
             ])
         ]);
+
 
         Model::reguard();
     }

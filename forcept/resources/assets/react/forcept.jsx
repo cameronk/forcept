@@ -39,9 +39,26 @@ function base64bytes(string) {
 /* ========================================= */
 
 var Fields = {
-	labelColumnClasses: "col-xl-2 col-lg-3 col-sm-5 col-xs-12",
-	inputColumnClasses: "col-xl-10 col-lg-9 col-sm-7 col-xs-12"
+	labelColumnClasses: "col-lg-4 col-sm-5 col-xs-12",
+	inputColumnClasses: "col-lg-8 col-sm-7 col-xs-12"
 };
+
+Fields.FieldLabel = React.createClass({
+	render: function() {
+		var subtitle;
+		if(this.props.hasOwnProperty("subtitle") && this.props.subtitle !== null && this.props.subtitle.length > 0) {
+			subtitle = (
+				<div><small>{this.props.subtitle}</small></div>
+			);
+		}
+		return (
+			<label htmlFor={this.props.id} className={Fields.labelColumnClasses + " form-control-label"}>
+				{this.props.name}
+				{subtitle}
+			</label>
+		)
+	}
+})
 
 Fields.Text = React.createClass({
 	onTextInputChange: function(event) {
@@ -53,16 +70,45 @@ Fields.Text = React.createClass({
 	render: function() {
 		return (
 			<div className="form-group row">
-				<label htmlFor={this.props.id} className={Fields.labelColumnClasses + " form-control-label"}>{this.props.name}</label>
+				<Fields.FieldLabel {...this.props} />
 				<div className={Fields.inputColumnClasses}>
 					<input 
 						type="text" 
 						className="form-control" 
+						autoComplete="off"
+						maxLength="255"
+
 						id={this.props.id} 
 						placeholder={this.props.name + " goes here"} 
-						autoComplete="off"
 						defaultValue={this.props.defaultValue !== null ? this.props.defaultValue : null}
 						onChange={this.onTextInputChange} />
+				</div>
+			</div>
+		);
+	}
+});
+
+Fields.Textarea = React.createClass({
+	onTextareaInputChange: function(event) {
+		// Bubble event up to handler passed from Visit
+		// (pass field ID and event)
+		this.props.onChange(this.props.id, event.target.value);
+	},
+
+	render: function() {
+		return (
+			<div className="form-group row">
+				<Fields.FieldLabel {...this.props} />
+				<div className={Fields.inputColumnClasses}>
+					<textarea
+						className="form-control"
+						autoComplete="off"
+						maxLength="255"
+
+						id={this.props.id} 
+						placeholder={this.props.name + " goes here"} 
+						defaultValue={this.props.defaultValue !== null ? this.props.defaultValue : null}
+						onChange={this.onTextareaInputChange} />
 				</div>
 			</div>
 		);
@@ -79,14 +125,16 @@ Fields.Number = React.createClass({
 	render: function() {
 		return (
 			<div className="form-group row">
-				<label htmlFor={this.props.id} className={Fields.labelColumnClasses + " form-control-label"}>{this.props.name}</label>
+				<Fields.FieldLabel {...this.props} />
 				<div className={Fields.inputColumnClasses}>
 					<input 
 						type="number" 
 						className="form-control" 
+						autoComplete="off"
+						maxLength="255"
+
 						id={this.props.id} 
 						placeholder={this.props.name + " goes here"} 
-						autoComplete="off"
 						defaultValue={this.props.defaultValue !== null ? this.props.defaultValue : null}
 						onChange={this.onNumberInputChange} />
 				</div>
@@ -105,14 +153,16 @@ Fields.Date = React.createClass({
 	render: function() {
 		return (
 			<div className="form-group row">
-				<label htmlFor={this.props.id} className={Fields.labelColumnClasses + " form-control-label"}>{this.props.name}</label>
+				<Fields.FieldLabel {...this.props} />
 				<div className={Fields.inputColumnClasses}>
 					<input 
 						type="date" 
 						className="form-control" 
+						autoComplete="off" 
+						maxLength="255"
+
 						id={this.props.id} 
-						placeholder={this.props.name + " goes here"} 
-						autoComplete="off"
+						placeholder={this.props.name + " goes here"}
 						defaultValue={this.props.defaultValue !== null ? this.props.defaultValue : null}
 						onChange={this.onDateInputChange} />
 				</div>
@@ -192,7 +242,7 @@ Fields.Select = React.createClass({
 		// If no error, build select input. Otherwise, display an error message.
 		if(!optionsError) {
 			displaySelect = (
-				<select className="form-control" onChange={this.onSelectInputChange} defaultValue={this.props.defaultValue !== null ? this.props.defaultValue : null}>
+				<select className="form-control" onChange={this.onSelectInputChange} defaultValue={this.props.defaultValue !== null ? this.props.defaultValue : "__default__"}>
 					{defaultOption}
 					{options}
 					{isTrue(this.props.settings.allowCustomData) ? customDataOption : ""}
@@ -208,7 +258,7 @@ Fields.Select = React.createClass({
 
 		return (
 			<div className="form-group row">
-				<label htmlFor={this.props.id} className={Fields.labelColumnClasses + " form-control-label"}>{this.props.name}</label>
+				<Fields.FieldLabel {...this.props} />
 				<div className={Fields.inputColumnClasses}>
 					{displaySelect}
 					{isTrue(this.state.isCustomDataOptionSelected) ? customDataInput : ""}
@@ -273,7 +323,7 @@ Fields.MultiSelect = React.createClass({
 
 		return (
 			<div className="form-group row">
-				<label htmlFor={this.props.id} className={Fields.labelColumnClasses + " form-control-label"}>{this.props.name}</label>
+				<Fields.FieldLabel {...this.props} />
 				<div className={Fields.inputColumnClasses}>
 					{displaySelect}
 				</div>
@@ -324,13 +374,59 @@ Fields.File = React.createClass({
 
 		return (
 			<div className="form-group row">
-				<label htmlFor={this.props.id} className={Fields.labelColumnClasses + " form-control-label"}>{this.props.name}</label>
+				<Fields.FieldLabel {...this.props} />
 				<div className={Fields.inputColumnClasses}>
 					<label className="file">
 						<input type="file" className="form-control" accept={accept} onChange={this.onFileInputChange} />
 						<span className="file-custom">{this.state.fileCount == 0 ? "No files - " : this.state.fileCount + " file - " + (this.state.fileCount == 1 ? "" : "s")}</span>
 					</label>
 					<h6>{this.state.fileSize > 0 ? this.state.fileSize + " bytes" : ""}</h6>
+				</div>
+			</div>
+		);
+	}
+});
+
+Fields.YesNo = React.createClass({
+
+	getInitialState: function() {
+		return {
+			yes: true,
+		};
+	},
+
+	componentWillMount: function() {
+		// If no data, check yes
+		if(!this.props.hasOwnProperty("defaultValue") || this.props.defaultValue == null) {
+			// this.props.onChange(this.props.id, "Yes");
+			this.setState({
+				yes: this.props.defaultValue !== "Yes" ? false : true
+			});
+		}
+	},
+
+	onYesNoInputChange: function(status) {
+		// this.setState({
+		// 	yes: status
+		// });
+		// this.props.onChange(this.props.id, status ? "Yes" : "No");
+	},
+
+	render: function() {
+		return (
+			<div className="form-group row">
+				<Fields.FieldLabel {...this.props} />
+				<div className={Fields.inputColumnClasses}>
+					<div className="btn-group" data-toggle="buttons">
+						<label className={"btn btn-primary" + (this.state.yes ? " active" : "")}>
+							<input type="radio" name={this.props.name + "-options"} autoComplete="off" onChange={this.onYesNoInputChange(true)} defaultChecked={this.state.yes} /> 
+							Yes
+						</label>
+						<label className={"btn btn-primary" + (!this.state.yes ? " active" : "")}>
+							<input type="radio" name={this.props.name + "-options"} autoComplete="off" onChange={this.onYesNoInputChange(false)} defaultChecked={!this.state.yes} /> 
+							No
+						</label>
+					</div>
 				</div>
 			</div>
 		);

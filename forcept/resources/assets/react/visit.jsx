@@ -370,6 +370,12 @@ Visit.PatientsOverview = React.createClass({
 
 		                    			// We might need to mutate the data
 		                    			switch(iterableFields[field].type) {
+		                    				case "textarea":
+		                    					value = (
+		                    						<p dangerouslySetInnerHTML={{ __html: thisPatient[field].replace(/\n/g, "<br/>") }}></p>
+		                    					);
+		                    					break;
+
 		                    				case "multiselect":
 		                    					// Convert from JSON array to nice string
 		                    					var arr = JSON.parse(thisPatient[field]);
@@ -378,6 +384,7 @@ Visit.PatientsOverview = React.createClass({
 		                    					}
 		                    					console.log("Multiselect value: " + value);
 		                    					break;
+
 		                    				case "file":
 
 		                    					var split = thisPatient[field].toString().split(";");
@@ -954,6 +961,16 @@ Visit.Patient = React.createClass({
 		        					id={fieldID} />
 		        			);
 		        			break;
+		        		case "textarea":
+		        			return (
+		        				<Fields.Textarea 
+		        					{...this.props.fields[fieldID]} 
+		        					defaultValue={this.props.hasOwnProperty(fieldID) ? this.props[fieldID] : null}
+		        					onChange={this.handleFieldChange}
+		        					key={fieldID}
+		        					id={fieldID} />
+		        			);
+		        			break;
 		        		case "number":
 		        			return (
 		        				<Fields.Number
@@ -997,6 +1014,16 @@ Visit.Patient = React.createClass({
 		        		case "file":
 		        			return (
 								<Fields.File
+		        					{...this.props.fields[fieldID]} 
+		        					defaultValue={this.props.hasOwnProperty(fieldID) ? this.props[fieldID] : null}
+		        					onChange={this.handleFieldChange}
+		        					key={fieldID}
+		        					id={fieldID} />
+		        			);
+		        			break;
+		        		case "yesno":
+		        			return (
+								<Fields.YesNo
 		        					{...this.props.fields[fieldID]} 
 		        					defaultValue={this.props.hasOwnProperty(fieldID) ? this.props[fieldID] : null}
 		        					onChange={this.handleFieldChange}

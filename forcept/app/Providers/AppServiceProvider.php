@@ -4,6 +4,7 @@ namespace App\Providers;
 
 use Illuminate\Support\ServiceProvider;
 
+use App\Patient;
 use Auth;
 use View;
 
@@ -16,7 +17,13 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot()
     {
-        //
+        // 
+
+        Patient::saving(function($patient) {
+            if(Auth::check()) {
+                $patient->last_modified_by = Auth::user()->id;
+            }
+        });
     }
 
     /**

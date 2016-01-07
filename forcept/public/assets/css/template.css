@@ -4548,6 +4548,12 @@ h4.field-title span.title {
 .forcept-patient-summary .card-title {
   line-height: 27px; }
 
+.forcept-patient-summary a.list-group-item p {
+  margin: 0;
+  width: 100%;
+  word-break: break-all;
+  word-wrap: break-word; }
+
 .form-group label.file {
   font-size: 15px; }
 

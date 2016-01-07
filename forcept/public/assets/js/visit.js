@@ -370,6 +370,12 @@ Visit.PatientsOverview = React.createClass({displayName: "PatientsOverview",
 
 		                    			// We might need to mutate the data
 		                    			switch(iterableFields[field].type) {
+		                    				case "textarea":
+		                    					value = (
+		                    						React.createElement("p", {dangerouslySetInnerHTML: { __html: thisPatient[field].replace(/\n/g, "<br/>")}})
+		                    					);
+		                    					break;
+
 		                    				case "multiselect":
 		                    					// Convert from JSON array to nice string
 		                    					var arr = JSON.parse(thisPatient[field]);
@@ -378,6 +384,7 @@ Visit.PatientsOverview = React.createClass({displayName: "PatientsOverview",
 		                    					}
 		                    					console.log("Multiselect value: " + value);
 		                    					break;
+
 		                    				case "file":
 
 		                    					var split = thisPatient[field].toString().split(";");
@@ -954,6 +961,16 @@ Visit.Patient = React.createClass({displayName: "Patient",
 		        					id: fieldID}))
 		        			);
 		        			break;
+		        		case "textarea":
+		        			return (
+		        				React.createElement(Fields.Textarea, React.__spread({},  
+		        					this.props.fields[fieldID], 
+		        					{defaultValue: this.props.hasOwnProperty(fieldID) ? this.props[fieldID] : null, 
+		        					onChange: this.handleFieldChange, 
+		        					key: fieldID, 
+		        					id: fieldID}))
+		        			);
+		        			break;
 		        		case "number":
 		        			return (
 		        				React.createElement(Fields.Number, React.__spread({}, 
@@ -997,6 +1014,16 @@ Visit.Patient = React.createClass({displayName: "Patient",
 		        		case "file":
 		        			return (
 								React.createElement(Fields.File, React.__spread({}, 
+		        					this.props.fields[fieldID], 
+		        					{defaultValue: this.props.hasOwnProperty(fieldID) ? this.props[fieldID] : null, 
+		        					onChange: this.handleFieldChange, 
+		        					key: fieldID, 
+		        					id: fieldID}))
+		        			);
+		        			break;
+		        		case "yesno":
+		        			return (
+								React.createElement(Fields.YesNo, React.__spread({}, 
 		        					this.props.fields[fieldID], 
 		        					{defaultValue: this.props.hasOwnProperty(fieldID) ? this.props[fieldID] : null, 
 		        					onChange: this.handleFieldChange, 

@@ -39,9 +39,26 @@ function base64bytes(string) {
 /* ========================================= */
 
 var Fields = {
-	labelColumnClasses: "col-xl-2 col-lg-3 col-sm-5 col-xs-12",
-	inputColumnClasses: "col-xl-10 col-lg-9 col-sm-7 col-xs-12"
+	labelColumnClasses: "col-lg-4 col-sm-5 col-xs-12",
+	inputColumnClasses: "col-lg-8 col-sm-7 col-xs-12"
 };
+
+Fields.FieldLabel = React.createClass({displayName: "FieldLabel",
+	render: function() {
+		var subtitle;
+		if(this.props.hasOwnProperty("subtitle") && this.props.subtitle !== null && this.props.subtitle.length > 0) {
+			subtitle = (
+				React.createElement("div", null, React.createElement("small", null, this.props.subtitle))
+			);
+		}
+		return (
+			React.createElement("label", {htmlFor: this.props.id, className: Fields.labelColumnClasses + " form-control-label"}, 
+				this.props.name, 
+				subtitle
+			)
+		)
+	}
+})
 
 Fields.Text = React.createClass({displayName: "Text",
 	onTextInputChange: function(event) {
@@ -53,16 +70,45 @@ Fields.Text = React.createClass({displayName: "Text",
 	render: function() {
 		return (
 			React.createElement("div", {className: "form-group row"}, 
-				React.createElement("label", {htmlFor: this.props.id, className: Fields.labelColumnClasses + " form-control-label"}, this.props.name), 
+				React.createElement(Fields.FieldLabel, React.__spread({},  this.props)), 
 				React.createElement("div", {className: Fields.inputColumnClasses}, 
 					React.createElement("input", {
 						type: "text", 
 						className: "form-control", 
+						autoComplete: "off", 
+						maxLength: "255", 
+
 						id: this.props.id, 
 						placeholder: this.props.name + " goes here", 
-						autoComplete: "off", 
 						defaultValue: this.props.defaultValue !== null ? this.props.defaultValue : null, 
 						onChange: this.onTextInputChange})
+				)
+			)
+		);
+	}
+});
+
+Fields.Textarea = React.createClass({displayName: "Textarea",
+	onTextareaInputChange: function(event) {
+		// Bubble event up to handler passed from Visit
+		// (pass field ID and event)
+		this.props.onChange(this.props.id, event.target.value);
+	},
+
+	render: function() {
+		return (
+			React.createElement("div", {className: "form-group row"}, 
+				React.createElement(Fields.FieldLabel, React.__spread({},  this.props)), 
+				React.createElement("div", {className: Fields.inputColumnClasses}, 
+					React.createElement("textarea", {
+						className: "form-control", 
+						autoComplete: "off", 
+						maxLength: "255", 
+
+						id: this.props.id, 
+						placeholder: this.props.name + " goes here", 
+						defaultValue: this.props.defaultValue !== null ? this.props.defaultValue : null, 
+						onChange: this.onTextareaInputChange})
 				)
 			)
 		);
@@ -79,14 +125,16 @@ Fields.Number = React.createClass({displayName: "Number",
 	render: function() {
 		return (
 			React.createElement("div", {className: "form-group row"}, 
-				React.createElement("label", {htmlFor: this.props.id, className: Fields.labelColumnClasses + " form-control-label"}, this.props.name), 
+				React.createElement(Fields.FieldLabel, React.__spread({},  this.props)), 
 				React.createElement("div", {className: Fields.inputColumnClasses}, 
 					React.createElement("input", {
 						type: "number", 
 						className: "form-control", 
+						autoComplete: "off", 
+						maxLength: "255", 
+
 						id: this.props.id, 
 						placeholder: this.props.name + " goes here", 
-						autoComplete: "off", 
 						defaultValue: this.props.defaultValue !== null ? this.props.defaultValue : null, 
 						onChange: this.onNumberInputChange})
 				)
@@ -105,14 +153,16 @@ Fields.Date = React.createClass({displayName: "Date",
 	render: function() {
 		return (
 			React.createElement("div", {className: "form-group row"}, 
-				React.createElement("label", {htmlFor: this.props.id, className: Fields.labelColumnClasses + " form-control-label"}, this.props.name), 
+				React.createElement(Fields.FieldLabel, React.__spread({},  this.props)), 
 				React.createElement("div", {className: Fields.inputColumnClasses}, 
 					React.createElement("input", {
 						type: "date", 
 						className: "form-control", 
+						autoComplete: "off", 
+						maxLength: "255", 
+
 						id: this.props.id, 
 						placeholder: this.props.name + " goes here", 
-						autoComplete: "off", 
 						defaultValue: this.props.defaultValue !== null ? this.props.defaultValue : null, 
 						onChange: this.onDateInputChange})
 				)
@@ -192,7 +242,7 @@ Fields.Select = React.createClass({displayName: "Select",
 		// If no error, build select input. Otherwise, display an error message.
 		if(!optionsError) {
 			displaySelect = (
-				React.createElement("select", {className: "form-control", onChange: this.onSelectInputChange, defaultValue: this.props.defaultValue !== null ? this.props.defaultValue : null}, 
+				React.createElement("select", {className: "form-control", onChange: this.onSelectInputChange, defaultValue: this.props.defaultValue !== null ? this.props.defaultValue : "__default__"}, 
 					defaultOption, 
 					options, 
 					isTrue(this.props.settings.allowCustomData) ? customDataOption : ""
@@ -208,7 +258,7 @@ Fields.Select = React.createClass({displayName: "Select",
 
 		return (
 			React.createElement("div", {className: "form-group row"}, 
-				React.createElement("label", {htmlFor: this.props.id, className: Fields.labelColumnClasses + " form-control-label"}, this.props.name), 
+				React.createElement(Fields.FieldLabel, React.__spread({},  this.props)), 
 				React.createElement("div", {className: Fields.inputColumnClasses}, 
 					displaySelect, 
 					isTrue(this.state.isCustomDataOptionSelected) ? customDataInput : ""
@@ -273,7 +323,7 @@ Fields.MultiSelect = React.createClass({displayName: "MultiSelect",
 
 		return (
 			React.createElement("div", {className: "form-group row"}, 
-				React.createElement("label", {htmlFor: this.props.id, className: Fields.labelColumnClasses + " form-control-label"}, this.props.name), 
+				React.createElement(Fields.FieldLabel, React.__spread({},  this.props)), 
 				React.createElement("div", {className: Fields.inputColumnClasses}, 
 					displaySelect
 				)
@@ -324,13 +374,59 @@ Fields.File = React.createClass({displayName: "File",
 
 		return (
 			React.createElement("div", {className: "form-group row"}, 
-				React.createElement("label", {htmlFor: this.props.id, className: Fields.labelColumnClasses + " form-control-label"}, this.props.name), 
+				React.createElement(Fields.FieldLabel, React.__spread({},  this.props)), 
 				React.createElement("div", {className: Fields.inputColumnClasses}, 
 					React.createElement("label", {className: "file"}, 
 						React.createElement("input", {type: "file", className: "form-control", accept: accept, onChange: this.onFileInputChange}), 
 						React.createElement("span", {className: "file-custom"}, this.state.fileCount == 0 ? "No files - " : this.state.fileCount + " file - " + (this.state.fileCount == 1 ? "" : "s"))
 					), 
 					React.createElement("h6", null, this.state.fileSize > 0 ? this.state.fileSize + " bytes" : "")
+				)
+			)
+		);
+	}
+});
+
+Fields.YesNo = React.createClass({displayName: "YesNo",
+
+	getInitialState: function() {
+		return {
+			yes: true,
+		};
+	},
+
+	componentWillMount: function() {
+		// If no data, check yes
+		if(!this.props.hasOwnProperty("defaultValue") || this.props.defaultValue == null) {
+			// this.props.onChange(this.props.id, "Yes");
+			this.setState({
+				yes: this.props.defaultValue !== "Yes" ? false : true
+			});
+		}
+	},
+
+	onYesNoInputChange: function(status) {
+		// this.setState({
+		// 	yes: status
+		// });
+		// this.props.onChange(this.props.id, status ? "Yes" : "No");
+	},
+
+	render: function() {
+		return (
+			React.createElement("div", {className: "form-group row"}, 
+				React.createElement(Fields.FieldLabel, React.__spread({},  this.props)), 
+				React.createElement("div", {className: Fields.inputColumnClasses}, 
+					React.createElement("div", {className: "btn-group", "data-toggle": "buttons"}, 
+						React.createElement("label", {className: "btn btn-primary" + (this.state.yes ? " active" : "")}, 
+							React.createElement("input", {type: "radio", name: this.props.name + "-options", autoComplete: "off", onChange: this.onYesNoInputChange(true), defaultChecked: this.state.yes}), 
+							"Yes"
+						), 
+						React.createElement("label", {className: "btn btn-primary" + (!this.state.yes ? " active" : "")}, 
+							React.createElement("input", {type: "radio", name: this.props.name + "-options", autoComplete: "off", onChange: this.onYesNoInputChange(false), defaultChecked: !this.state.yes}), 
+							"No"
+						)
+					)
 				)
 			)
 		);

@@ -55,5 +55,6 @@ $RECYCLE.BIN/
 *.lnk
 
 # Vagrant
-.vagrant
+/.vagrant
+boxes/*
 .bundle
