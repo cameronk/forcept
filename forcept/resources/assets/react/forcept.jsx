@@ -397,15 +397,12 @@ Fields.YesNo = React.createClass({
 
 	componentWillMount: function() {
 		// If no data, check yes
-		if(!this.props.hasOwnProperty("defaultValue") || this.props.defaultValue == null) {
-			// this.props.onChange(this.props.id, "Yes");
-			this.setState({
-				yes: this.props.defaultValue !== "Yes" ? false : true
-			});
-		}
 	},
 
 	onYesNoInputChange: function(status) {
+		return function(evt) {
+			console.log("Caught yes/no input change -> " + status);
+		};
 		// this.setState({
 		// 	yes: status
 		// });
@@ -419,11 +416,21 @@ Fields.YesNo = React.createClass({
 				<div className={Fields.inputColumnClasses}>
 					<div className="btn-group" data-toggle="buttons">
 						<label className={"btn btn-primary" + (this.state.yes ? " active" : "")}>
-							<input type="radio" name={this.props.name + "-options"} autoComplete="off" onChange={this.onYesNoInputChange(true)} defaultChecked={this.state.yes} /> 
+							<input type="radio" 
+								name={this.props.name + "-options"} 
+								autoComplete="off" 
+
+								onChange={this.onYesNoInputChange(true)} 
+								defaultChecked={this.state.yes} /> 
 							Yes
 						</label>
 						<label className={"btn btn-primary" + (!this.state.yes ? " active" : "")}>
-							<input type="radio" name={this.props.name + "-options"} autoComplete="off" onChange={this.onYesNoInputChange(false)} defaultChecked={!this.state.yes} /> 
+							<input type="radio" 
+								name={this.props.name + "-options"} 
+								autoComplete="off" 
+
+								onChange={this.onYesNoInputChange(false)} 
+								defaultChecked={!this.state.yes} /> 
 							No
 						</label>
 					</div>
