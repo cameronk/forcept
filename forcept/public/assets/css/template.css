@@ -4567,6 +4567,11 @@ div.patient-photo-contain {
 img.loading {
   display: inline-block; }
 
+.btn-group-block {
+  display: block; }
+  .btn-group-block > .btn {
+    width: 50% !important; }
+
 /**
  * _data-displays.scss
  */

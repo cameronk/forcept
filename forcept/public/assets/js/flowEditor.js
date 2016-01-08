@@ -228,6 +228,7 @@ FlowEditor.Field = React.createClass({displayName: "Field",
  			mutable: isTrue(this.props.mutable),
 
  			// Settings
+ 			description: this.props.hasOwnProperty("description") ? this.props.description : null,
  			settings: 
  				flowEditor_CustomizableFields.indexOf(this.props.type) !== -1 // If this field is a customizable field
  				&& typeof this.props.settings === "object" // If the settings object exists
@@ -255,6 +256,16 @@ FlowEditor.Field = React.createClass({displayName: "Field",
  	handleFieldTypeChange: function(event) {
  		console.log("Type change from " + this.state.type + " => " + event.target.value);
  		this.setState({ type: event.target.value }, function() {
+	 		// Remind container to check validity of inputs
+	 		this.props.onChange(this.props['data-key']);
+ 		});
+ 	},
+
+ 	/*
+ 	 *
+ 	 */
+ 	handleFieldDescriptionChange: function(event) {
+ 		this.setState({ description: event.target.value }, function() {
 	 		// Remind container to check validity of inputs
 	 		this.props.onChange(this.props['data-key']);
  		});
@@ -301,6 +312,7 @@ FlowEditor.Field = React.createClass({displayName: "Field",
  	render: function() {
 
  		var nameInput,
+ 			description,
  			disableTypeChangeNotification;
 
  		if(this.state.name.length == 0) {
@@ -322,12 +334,19 @@ FlowEditor.Field = React.createClass({displayName: "Field",
  			);
  		}
 
+ 		// Check if type change should be disabled for this input type
  		if(FlowEditor.DisableTypeChanges.indexOf(this.state.type) !== -1) {
  			disableTypeChangeNotification = (
  				React.createElement("div", {className: "alert alert-info"}, 
  					"Once created, the ", React.createElement("strong", null, this.state.type), " field type cannot be changed to any other type."
  				)
  			);
+ 		}
+
+ 		//
+ 		if(this.state.description !== null
+ 			&& this.state.description.length > 0) {
+ 			description = this.props.description;
  		}
 
  		return (
@@ -358,13 +377,25 @@ FlowEditor.Field = React.createClass({displayName: "Field",
  						React.createElement("label", {className: "form-control-label"}, "Type:"), 
 	 					React.createElement("select", {className: "form-control", disabled: !this.state.mutable || FlowEditor.DisableTypeChanges.indexOf(this.state.type) !== -1, onChange: this.handleFieldTypeChange, defaultValue: this.state.type}, 
 	 						React.createElement("option", {value: "text"}, "Text input"), 
+	 						React.createElement("option", {value: "textarea"}, "Textarea input"), 
 	 						React.createElement("option", {value: "number"}, "Number input"), 
 	 						React.createElement("option", {value: "date"}, "Date input"), 
 	 						React.createElement("option", {value: "select"}, "Select input with options"), 
 	 						React.createElement("option", {value: "multiselect"}, "Multi-select input with options"), 
-	 						React.createElement("option", {value: "file"}, "File input")
+	 						React.createElement("option", {value: "file"}, "File input"), 
+	 						React.createElement("option", {value: "yesno"}, "Yes/No field w/ buttons")
 	 					), 
 	 					disableTypeChangeNotification
+	 				), 
+	 				React.createElement("div", {className: "form-group"}, 
+	 					React.createElement("label", {className: "form-control-label"}, "Description:"), 
+	 					React.createElement("textarea", {
+	 						className: "form-control", 
+	 						maxLength: "255", 
+
+	 						onChange: this.handleFieldDescriptionChange, 
+	 						defaultValue: description}
+	 					)
 	 				)
  				), 
 
@@ -389,7 +420,6 @@ FlowEditor.Field = React.createClass({displayName: "Field",
 FlowEditor.Field.Settings = React.createClass({displayName: "Settings",
 
 	/*
-
 	 * Return initial state based on property type
 	 */
 	getInitialState: function() {
@@ -399,6 +429,7 @@ FlowEditor.Field.Settings = React.createClass({displayName: "Settings",
 			case "text":
 			case "date":
 			case "number":
+			case "yesno":
 				// Do nothing for these types
 				console.log("\t| Dialog is for text/date field, skipping.");
 				return {};
@@ -648,8 +679,10 @@ FlowEditor.Field.Settings = React.createClass({displayName: "Settings",
 
 		switch(this.props.type) {
 			case "text":
-			case "date":
+			case "textarea":
 			case "number":
+			case "date":
+			case "yesno":
 				return (
 					React.createElement("div", null, 
 						React.createElement("div", {className: "alert alert-info m-t"}, 

@@ -228,6 +228,7 @@ FlowEditor.Field = React.createClass({
  			mutable: isTrue(this.props.mutable),
 
  			// Settings
+ 			description: this.props.hasOwnProperty("description") ? this.props.description : null,
  			settings: 
  				flowEditor_CustomizableFields.indexOf(this.props.type) !== -1 // If this field is a customizable field
  				&& typeof this.props.settings === "object" // If the settings object exists
@@ -255,6 +256,16 @@ FlowEditor.Field = React.createClass({
  	handleFieldTypeChange: function(event) {
  		console.log("Type change from " + this.state.type + " => " + event.target.value);
  		this.setState({ type: event.target.value }, function() {
+	 		// Remind container to check validity of inputs
+	 		this.props.onChange(this.props['data-key']);
+ 		});
+ 	},
+
+ 	/*
+ 	 *
+ 	 */
+ 	handleFieldDescriptionChange: function(event) {
+ 		this.setState({ description: event.target.value }, function() {
 	 		// Remind container to check validity of inputs
 	 		this.props.onChange(this.props['data-key']);
  		});
@@ -301,6 +312,7 @@ FlowEditor.Field = React.createClass({
  	render: function() {
 
  		var nameInput,
+ 			description,
  			disableTypeChangeNotification;
 
  		if(this.state.name.length == 0) {
@@ -322,12 +334,19 @@ FlowEditor.Field = React.createClass({
  			);
  		}
 
+ 		// Check if type change should be disabled for this input type
  		if(FlowEditor.DisableTypeChanges.indexOf(this.state.type) !== -1) {
  			disableTypeChangeNotification = (
  				<div className="alert alert-info">
  					Once created, the <strong>{this.state.type}</strong> field type cannot be changed to any other type.
  				</div>
  			);
+ 		}
+
+ 		//
+ 		if(this.state.description !== null
+ 			&& this.state.description.length > 0) {
+ 			description = this.props.description;
  		}
 
  		return (
@@ -358,13 +377,26 @@ FlowEditor.Field = React.createClass({
  						<label className="form-control-label">Type:</label>
 	 					<select className="form-control" disabled={!this.state.mutable || FlowEditor.DisableTypeChanges.indexOf(this.state.type) !== -1} onChange={this.handleFieldTypeChange} defaultValue={this.state.type}>
 	 						<option value="text">Text input</option>
+	 						<option value="textarea">Textarea input</option>
 	 						<option value="number">Number input</option>
 	 						<option value="date">Date input</option>
 	 						<option value="select">Select input with options</option>
 	 						<option value="multiselect">Multi-select input with options</option>
 	 						<option value="file">File input</option>
+	 						<option value="yesno">Yes/No field w/ buttons</option>
 	 					</select>
 	 					{disableTypeChangeNotification}
+	 				</div>
+	 				<div className="form-group">
+	 					<label className="form-control-label">Description:</label>
+	 					<textarea 
+	 						className="form-control"
+	 						maxLength="255" 
+	 						placeholder="Enter a description here"
+	 						
+	 						onChange={this.handleFieldDescriptionChange} 
+	 						defaultValue={description}>
+	 					</textarea>
 	 				</div>
  				</div>
 
@@ -389,7 +421,6 @@ FlowEditor.Field = React.createClass({
 FlowEditor.Field.Settings = React.createClass({
 
 	/*
-
 	 * Return initial state based on property type
 	 */
 	getInitialState: function() {
@@ -399,6 +430,7 @@ FlowEditor.Field.Settings = React.createClass({
 			case "text":
 			case "date":
 			case "number":
+			case "yesno":
 				// Do nothing for these types
 				console.log("\t| Dialog is for text/date field, skipping.");
 				return {};
@@ -648,8 +680,10 @@ FlowEditor.Field.Settings = React.createClass({
 
 		switch(this.props.type) {
 			case "text":
-			case "date":
+			case "textarea":
 			case "number":
+			case "date":
+			case "yesno":
 				return (
 					<div>
 						<div className="alert alert-info m-t">

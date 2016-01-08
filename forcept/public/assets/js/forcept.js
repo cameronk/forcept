@@ -45,16 +45,16 @@ var Fields = {
 
 Fields.FieldLabel = React.createClass({displayName: "FieldLabel",
 	render: function() {
-		var subtitle;
-		if(this.props.hasOwnProperty("subtitle") && this.props.subtitle !== null && this.props.subtitle.length > 0) {
-			subtitle = (
-				React.createElement("div", null, React.createElement("small", null, this.props.subtitle))
+		var description;
+		if(this.props.hasOwnProperty("description") && this.props.description !== null && this.props.description.length > 0) {
+			description = (
+				React.createElement("div", null, React.createElement("small", null, this.props.description))
 			);
 		}
 		return (
 			React.createElement("label", {htmlFor: this.props.id, className: Fields.labelColumnClasses + " form-control-label"}, 
 				this.props.name, 
-				subtitle
+				description
 			)
 		)
 	}
@@ -391,25 +391,32 @@ Fields.YesNo = React.createClass({displayName: "YesNo",
 
 	getInitialState: function() {
 		return {
-			yes: true,
+			yes: null,
 		};
 	},
 
 	componentWillMount: function() {
-		// If no data, check yes
-		if(!this.props.hasOwnProperty("defaultValue") || this.props.defaultValue == null) {
-			// this.props.onChange(this.props.id, "Yes");
+		// If data, set
+		if(this.props.hasOwnProperty('defaultValue') 
+			&& this.props.defaultValue !== null
+			&& ["yes", "no"].indexOf(this.props.defaultValue.toLowerCase()) !== -1) {
 			this.setState({
-				yes: this.props.defaultValue !== "Yes" ? false : true
+				yes: this.props.defaultValue.toLowerCase() == "yes"
 			});
 		}
 	},
 
 	onYesNoInputChange: function(status) {
-		// this.setState({
-		// 	yes: status
-		// });
-		// this.props.onChange(this.props.id, status ? "Yes" : "No");
+		return function(evt) {
+			console.log("Caught yes/no input change -> " + status);
+
+			this.setState({
+				yes: status
+			});
+
+			this.props.onChange(this.props.id, status ? "Yes" : "No");
+
+		}.bind(this);
 	},
 
 	render: function() {
@@ -417,13 +424,21 @@ Fields.YesNo = React.createClass({displayName: "YesNo",
 			React.createElement("div", {className: "form-group row"}, 
 				React.createElement(Fields.FieldLabel, React.__spread({},  this.props)), 
 				React.createElement("div", {className: Fields.inputColumnClasses}, 
-					React.createElement("div", {className: "btn-group", "data-toggle": "buttons"}, 
-						React.createElement("label", {className: "btn btn-primary" + (this.state.yes ? " active" : "")}, 
-							React.createElement("input", {type: "radio", name: this.props.name + "-options", autoComplete: "off", onChange: this.onYesNoInputChange(true), defaultChecked: this.state.yes}), 
+					React.createElement("div", {className: "btn-group btn-group-block", "data-toggle": "buttons"}, 
+						React.createElement("label", {className: "btn btn-primary-outline" + (this.state.yes == true ? " active" : ""), onClick: this.onYesNoInputChange(true)}, 
+							React.createElement("input", {type: "radio", 
+								name: this.props.name + "-options", 
+								autoComplete: "off", 
+									
+								defaultChecked: this.state.yes == true}), 
 							"Yes"
 						), 
-						React.createElement("label", {className: "btn btn-primary" + (!this.state.yes ? " active" : "")}, 
-							React.createElement("input", {type: "radio", name: this.props.name + "-options", autoComplete: "off", onChange: this.onYesNoInputChange(false), defaultChecked: !this.state.yes}), 
+						React.createElement("label", {className: "btn btn-primary-outline" + (this.state.yes == false ? " active" : ""), onClick: this.onYesNoInputChange(false)}, 
+							React.createElement("input", {type: "radio", 
+								name: this.props.name + "-options", 
+								autoComplete: "off", 
+
+								defaultChecked: this.state.yes == false}), 
 							"No"
 						)
 					)

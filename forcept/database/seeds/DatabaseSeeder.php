@@ -114,34 +114,28 @@ class DatabaseSeeder extends Seeder
                 "married" => [
                     "type" => "yesno",
                     "name" => "Married",
-                    "subtitle" => "Are you married?",
+                    "description" => "Are you married?",
                     "mutable" => true,
                     "settings" => null
                 ],
                 "number_in_house" => [
                     "type" => "number",
                     "name" => "Number in house",
-                    "subtitle" => "How many people live at home?",
+                    "description" => "How many people live at home?",
                     "mutable" => true,
                     "settings" => null
                 ],
                 "clean_water_access" => [
-                    "type" => "select",
+                    "type" => "yesno",
                     "name" => "Clean water access",
-                    "subtitle" => "Do you have access to clean water?",
+                    "description" => "Do you have access to clean water?",
                     "mutable" => true,
-                    "settings" => [
-                        "options" => [
-                            "No",
-                            "Yes"
-                        ],
-                        "allowCustomData" => false
-                    ]
+                    "settings" => null
                 ],
                 "water_access_location" => [
                     "type" => "select",
                     "name" => "Water access location",
-                    "subtitle" => "Where do you get your water?",
+                    "description" => "Where do you get your water?",
                     "mutable" => true,
                     "settings" => [
                         "options" => [
@@ -157,17 +151,11 @@ class DatabaseSeeder extends Seeder
                     ]
                 ],
                 "allergies" => [
-                    "type" => "select",
+                    "type" => "yesno",
                     "name" => "Allergies",
-                    "subtitle" => "Are you allergic to any medicine?",
+                    "description" => "Are you allergic to any medicine?",
                     "mutable" => true,
-                    "settings" => [
-                        "options" => [
-                            "No",
-                            "Yes"
-                        ],
-                        "allowCustomData" => false
-                    ]
+                    "settings" => null
                 ],
                 "allergies_details" => [
                     "type" => "textarea",
@@ -176,17 +164,11 @@ class DatabaseSeeder extends Seeder
                     "settings" => null
                 ],
                 "phone" => [
-                    "type" => "select",
+                    "type" => "yesno",
                     "name" => "Phone",
-                    "subtitle" => "Do you own a cell phone?",
+                    "description" => "Do you own a cell phone?",
                     "mutable" => true,
-                    "settings" => [
-                        "options" => [
-                            "No",
-                            "Yes"
-                        ],
-                        "allowCustomData" => false
-                    ]
+                    "settings" => null
                 ]
             ])
         ]);
