@@ -152,9 +152,10 @@ var Visit = React.createClass({displayName: "Visit",
 
 
 	/*
-	 *
+	 * Handle automatic generation of field data
 	 */
 	applyGeneratedFields: function( patient ) {
+
 		// Patient full name
 		var fullName = null;
 		if(
@@ -173,9 +174,10 @@ var Visit = React.createClass({displayName: "Visit",
 			}
 		}
 
-		// Combine first and last name
 		patient.full_name = fullName;
 
+
+		// Age
 		var age = null;
 		if(
 			typeof patient.birthday === "string"
@@ -204,10 +206,9 @@ var Visit = React.createClass({displayName: "Visit",
 			}
 		}
 
-		// Add patient age to patient object
 		patient.age = age;
 		
-
+		// Return patient object
 		return patient;
 	},
 
@@ -305,6 +306,7 @@ Visit.PatientsOverview = React.createClass({displayName: "PatientsOverview",
 
 		var patientOverviews;
 
+
 		// Copy the local patient fields property to a new variable
 		// and remove first/last name, so they don't appear in the list
 		var iterableFields = jQuery.extend(jQuery.extend({}, this.props.fields), Visit.generatedFields);
@@ -357,7 +359,12 @@ Visit.PatientsOverview = React.createClass({displayName: "PatientsOverview",
 		              	React.createElement("div", {className: "list-group list-group-flush"}, 
 		                    Object.keys(iterableFields).map(function(field, index) {
 
-		                    	var value = "No data";
+		                    	var foundData = false;
+		                    	var value = (
+		                    		React.createElement("span", {className: "pull-right"}, 
+		                    			"No data"
+		                    		)
+		                    	);
 
 		                    	if(thisPatient.hasOwnProperty(field) 	// If this field exists in the patient data
 		                    		&& thisPatient[field] !== null	 	// If the data for this field is null, show "No data"
@@ -367,6 +374,9 @@ Visit.PatientsOverview = React.createClass({displayName: "PatientsOverview",
 		                    		{
 		                    			console.log(" | Field " + iterableFields[field]["name"] + " is string or number");
 		                    			console.log(" | -> type: " + iterableFields[field].type);
+
+		                    			// We found data!
+		                    			foundData = true;
 
 		                    			// We might need to mutate the data
 		                    			switch(iterableFields[field].type) {
@@ -380,7 +390,11 @@ Visit.PatientsOverview = React.createClass({displayName: "PatientsOverview",
 		                    					// Convert from JSON array to nice string
 		                    					var arr = JSON.parse(thisPatient[field]);
 		                    					if(Array.isArray(arr) && arr.length > 0) {
-		                    						value = arr.join(", ");
+		                    						value = (
+		                    							React.createElement("span", {className: "pull-right"}, 
+		                    								arr.join(", ")
+		                    							)
+		                    						);
 		                    					}
 		                    					console.log("Multiselect value: " + value);
 		                    					break;
@@ -393,16 +407,26 @@ Visit.PatientsOverview = React.createClass({displayName: "PatientsOverview",
 		                    					if(dataSection.split("/")[0] == "data:image") {
 
 			                    					value = (
-			                    						React.createElement("img", {src: thisPatient[field].toString()})
+			                    						React.createElement("div", {className: "patient-photo-contain"}, 
+			                    							React.createElement("img", {src: thisPatient[field].toString()})
+			                    						)
 			                    					);
 
 		                    					} else {
-		                    						value = "1 file, " + base64bytes(thisPatient[field].toString()) + " bytes";
+		                    						value = (
+		                    							React.createElement("span", {className: "pull-right"}, 
+		                    								"1 file, ", getFileSize(thisPatient[field])
+		                    							)
+		                    						);
 		                    					}
 
 		                    					break;
 		                    				default:
-		                    					value = thisPatient[field].toString();
+		                    					value = (
+		                    						React.createElement("span", {className: "pull-right"}, 
+		                    							thisPatient[field].toString()
+		                    						)
+		                    					);
 		                    					break;
 		                    			}
 		                    		} else {
@@ -410,7 +434,13 @@ Visit.PatientsOverview = React.createClass({displayName: "PatientsOverview",
 		                    			console.log(" | -> type: " + iterableFields[field].type);
 		                    			if( Array.isArray(thisPatient[field]) ) // If the data is an array
 		                    			{
-		                    				value = thisPatient[field].join(", ");
+		                    				// We found data!
+		                    				foundData = true;
+		                    				value = (
+		                    					React.createElement("span", {className: "pull-right"}, 
+		                    						thisPatient[field].join(", ")
+		                    					)
+		                    				);
 		                    			} else {
 		                    				// WTF is it?
 		                    				console.log("WARNING: unknown field data type for field " + field);
@@ -418,13 +448,31 @@ Visit.PatientsOverview = React.createClass({displayName: "PatientsOverview",
 		                    		}
 		                    	}
 
-		                    	return (
-		                    		React.createElement("a", {className: "list-group-item", key: field + "-" + index}, 
-		                    			React.createElement("strong", null, iterableFields[field].name), ":  ", 
-		                    			value
+		                    	var icon;
+		                    	if(!Visit.generatedFields.hasOwnProperty(field)) {
+		                    		if(foundData) {
+		                    			icon = (
+		                    				React.createElement("span", {className: "text-success"}, 
+		                    					"\u2713"
+		                    				)
+		                    			);
+		                    		} else {
+		                    			icon = (
+		                    				React.createElement("span", {className: "text-danger"}, 
+		                    					"\u2717"
+		                    				)
+		                    			);
+		                    		}
+		                    	} else {
+		                    		icon = "\u27a0";
+		                    	}
+	                    		return (
+	                    			React.createElement("a", {className: "list-group-item", key: field + "-" + index}, 
+		                    			icon, "   ", iterableFields[field].name, 
+		                    			React.createElement("strong", null, value)
 		                    		)
-		                    	);
-		                    })
+	                    		);
+	                    })
 		                )
 					)
 				);

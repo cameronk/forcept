@@ -89,6 +89,25 @@ var FlowEditor = React.createClass({displayName: "FlowEditor",
 		this.checkContainerValidity();
  	},
 
+ 	handleConfigUpload: function(event) {
+		var reader = new FileReader();
+		var file = event.target.files[0];
+
+		reader.onload = function(upload) {
+			console.log("Reader onload return upload target result:");
+			console.log(upload.target.result);
+
+			var fields = JSON.parse(atob(upload.target.result.split(",")[1]));
+			if(fields) {
+				this.setState({ 
+					fields: fields, 
+				});
+			}
+		}.bind(this);
+
+		reader.readAsDataURL(file);
+ 	},
+
  	/*
  	 * Check the validity of a field object
  	 */
@@ -172,10 +191,25 @@ var FlowEditor = React.createClass({displayName: "FlowEditor",
 		}
 
 		return (
-			React.createElement("div", {id: "flow-editor-fields-contain"}, 
-				fields, 
-	            React.createElement("button", {type: "button", className: "btn btn-primary btn-lg", onClick: this.handleAddNewField}, "Add a new field"), 
-	            React.createElement("button", {type: "button", className: "btn btn-success btn-lg", onClick: this.props.handleSubmit, disabled: !this.state.isValid}, this.state.isValid ? "Submit changes" : this.state.invalidCount + " field(s) need attention before submitting")
+			React.createElement("div", null, 
+				React.createElement("h4", {className: "p-t"}, 
+				    "Field configuration", 
+				    React.createElement("div", {className: "btn-group btn-group-sm pull-right"}, 
+				    	React.createElement("label", {htmlFor: "uploadConfig", className: "btn btn-primary-outline"}, 
+				    		'Upload config'
+				    	), 
+				    	React.createElement("input", {type: "file", id: "uploadConfig", style: {display: "none"}, onChange: this.handleConfigUpload, accept: ".json"}), 
+				    	React.createElement("a", {href: '/data/flow/download?stage=' + encodeURIComponent(this.props.stageName) + '&fields=' + window.btoa(JSON.stringify(this.state.fields)), target: "_blank", className: "btn btn-primary-outline"}, 
+				    		'Download config'
+				    	)
+				    )
+				), 
+				React.createElement("hr", null), 
+				React.createElement("div", {id: "flow-editor-fields-contain"}, 
+					fields, 
+		            React.createElement("button", {type: "button", className: "btn btn-primary btn-lg", onClick: this.handleAddNewField}, "Add a new field"), 
+		            React.createElement("button", {type: "button", className: "btn btn-success btn-lg", onClick: this.props.handleSubmit, disabled: !this.state.isValid}, this.state.isValid ? "Submit changes" : this.state.invalidCount + " field(s) need attention before submitting")
+				)
 			)
 		);
 	}
@@ -392,7 +426,8 @@ FlowEditor.Field = React.createClass({displayName: "Field",
 	 					React.createElement("textarea", {
 	 						className: "form-control", 
 	 						maxLength: "255", 
-
+	 						placeholder: "Enter a description here", 
+	 						
 	 						onChange: this.handleFieldDescriptionChange, 
 	 						defaultValue: description}
 	 					)

@@ -36,6 +36,13 @@ function base64bytes(string) {
 	return Math.round( (splitHeadAndData[1].length - splitHeadAndData[0].length) * 0.75 );
 }
 
+function getFileSize(n,a,b,c,d){
+	return (a=a?[1e3,'k','B']:[1024,'K','iB'],b=Math,c=b.log,
+	d=c(n)/c(a[0])|0,n/b.pow(a[0],d)).toFixed(2)
+	+' '+(d?(a[1]+'MGTPEZY')[--d]+a[2]:'Bytes');
+}
+
+
 /* ========================================= */
 
 var Fields = {
@@ -380,7 +387,7 @@ Fields.File = React.createClass({
 						<input type="file" className="form-control" accept={accept} onChange={this.onFileInputChange} />
 						<span className="file-custom">{this.state.fileCount == 0 ? "No files - " : this.state.fileCount + " file - " + (this.state.fileCount == 1 ? "" : "s")}</span>
 					</label>
-					<h6>{this.state.fileSize > 0 ? this.state.fileSize + " bytes" : ""}</h6>
+					<h6>{this.state.fileSize > 0 ? getFileSize(this.state.fileSize) : ""}</h6>
 				</div>
 			</div>
 		);

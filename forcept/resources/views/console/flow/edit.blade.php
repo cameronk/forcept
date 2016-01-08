@@ -111,8 +111,6 @@
 @endif
 
 <!--| console::flow::create - input config |-->
-<h4 class="p-t">Field configuration</h4> 
-<hr/>
 <div id="cfg-contain"></div>
 <div id="cfg-submitting" style="display: none;">
     <img src="{{ asset('assets/img/loading.gif') }}" />
@@ -132,6 +130,7 @@
     
     var FlowEditorFields = ReactDOM.render(
         React.createElement(FlowEditor, {
+            stageName: $("#stage-name").val(),
             fields: configuration,
             handleSubmit: function() {
                 var submitAJAX = function() {

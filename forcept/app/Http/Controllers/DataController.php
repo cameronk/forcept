@@ -12,6 +12,7 @@ use App\Visit;
 use App\Stage;
 use App\Patient;
 use DB;
+use Storage;
 
 use Carbon\Carbon;
 
@@ -160,6 +161,31 @@ class DataController extends Controller
         }
     }
 
+    /**
+     * Return a JSON list of patient data
+     *
+     * @return \Illuminate\Http\Response
+     */
+    public function flow(Request $request, $method)
+    {
+        switch($method) {
+            case "download":
+                if($request->has('stage') && $request->has('fields')) {
+                    $decode = base64_decode($request->fields);
+                    $path = 'flow_config/' . $request->stage . '-' . date("mdy") . '.json';
+                    if($decode !== false) {
+                        Storage::put($path,$decode);
+                        return response()->download(storage_path("app/" . $path));
+                    } else {
+                        return "Could not decode file";
+                    }
+                }
+                break;
+            default:
+                return "Unknown method";
+                break;
+        }
+    }
 
     /**
      * Return a JSON list of patient data

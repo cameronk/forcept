@@ -53,6 +53,11 @@ Route::group(['middleware' => 'auth'], function () {
 			'as' => 'visits',
 			'uses' => 'DataController@patients'
 		]);
+
+		Route::get('flow/{method?}', [
+			'as' => 'flow',
+			'uses' => 'DataController@flow'
+		]);
 	});
 
 	/**

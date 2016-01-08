@@ -89,6 +89,25 @@ var FlowEditor = React.createClass({
 		this.checkContainerValidity();
  	},
 
+ 	handleConfigUpload: function(event) {
+		var reader = new FileReader();
+		var file = event.target.files[0];
+
+		reader.onload = function(upload) {
+			console.log("Reader onload return upload target result:");
+			console.log(upload.target.result);
+
+			var fields = JSON.parse(atob(upload.target.result.split(",")[1]));
+			if(fields) {
+				this.setState({ 
+					fields: fields, 
+				});
+			}
+		}.bind(this);
+
+		reader.readAsDataURL(file);
+ 	},
+
  	/*
  	 * Check the validity of a field object
  	 */
@@ -172,10 +191,25 @@ var FlowEditor = React.createClass({
 		}
 
 		return (
-			<div id="flow-editor-fields-contain">
-				{fields}       
-	            <button type="button" className="btn btn-primary btn-lg" onClick={this.handleAddNewField}>Add a new field</button>
-	            <button type="button" className="btn btn-success btn-lg" onClick={this.props.handleSubmit} disabled={!this.state.isValid}>{this.state.isValid ? "Submit changes" : this.state.invalidCount + " field(s) need attention before submitting"}</button>
+			<div>
+				<h4 className="p-t">
+				    Field configuration
+				    <div className="btn-group btn-group-sm pull-right">
+				    	<label htmlFor="uploadConfig" className="btn btn-primary-outline">
+				    		{'Upload config'}
+				    	</label>
+				    	<input type="file" id="uploadConfig" style={{display: "none"}} onChange={this.handleConfigUpload} accept=".json" />
+				    	<a href={'/data/flow/download?stage=' + encodeURIComponent(this.props.stageName) + '&fields=' + window.btoa(JSON.stringify(this.state.fields))} target="_blank" className="btn btn-primary-outline">
+				    		{'Download config'}
+				    	</a>
+				    </div>
+				</h4> 
+				<hr/>
+				<div id="flow-editor-fields-contain">
+					{fields}       
+		            <button type="button" className="btn btn-primary btn-lg" onClick={this.handleAddNewField}>Add a new field</button>
+		            <button type="button" className="btn btn-success btn-lg" onClick={this.props.handleSubmit} disabled={!this.state.isValid}>{this.state.isValid ? "Submit changes" : this.state.invalidCount + " field(s) need attention before submitting"}</button>
+				</div>
 			</div>
 		);
 	}
