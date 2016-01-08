@@ -467,10 +467,12 @@ Visit.PatientsOverview = React.createClass({displayName: "PatientsOverview",
 		                    		icon = "\u27a0";
 		                    	}
 	                    		return (
-	                    			React.createElement("a", {className: "list-group-item", key: field + "-" + index}, 
-		                    			icon, "   ", iterableFields[field].name, 
-		                    			React.createElement("strong", null, value)
-		                    		)
+	                    			React.createElement("div", {className: "list-group-item", key: field + "-" + index}, 
+	                    				React.createElement("dl", null, 
+	                    					React.createElement("dt", null, icon, "   ", iterableFields[field].name), 
+	                    					React.createElement("dd", null, value)
+	                    				)
+	                    			)
 	                    		);
 	                    })
 		                )

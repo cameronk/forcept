@@ -4530,6 +4530,9 @@ h4.field-title span.title {
   margin-bottom: 2rem;
   padding-bottom: 2rem; }
 
+#flow-editor-fields-contain .field-select-option {
+  margin-bottom: 2px; }
+
 #cfg-submitting h5 {
   display: inline-block;
   padding-left: 1rem; }

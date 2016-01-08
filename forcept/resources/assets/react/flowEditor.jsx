@@ -624,7 +624,54 @@ FlowEditor.Field.Settings = React.createClass({
 			this.props.onChange(this.state);
 
 		}.bind(this));
+	},
 
+	/*
+	 * Handle change option position
+	 */
+	handleChangeOptionPosition: function(where, value) {
+		return function(event) {
+
+			console.log("Looking to move '" + value + "' " + where);
+
+			var opts = this.state.options;
+			var index = this.state.options.indexOf(value);
+
+			if(index !== -1) {
+
+				console.log(" -> found @ index " + index);
+
+				var cacheIndex;
+
+				switch(where) {
+					case "up":
+						cacheIndex = index - 1;
+						break;
+					case "down":
+						cacheIndex = index + 1;
+						break;
+				}	
+
+				var cacheValue = opts[cacheIndex];
+					opts[cacheIndex] = value;
+					opts[index] = cacheValue;
+
+				console.log(" -> caching index: " + cacheIndex);
+				console.log(" -> value @ cached index: " + cacheValue);
+				console.log(" -> New options:");
+				console.log(opts);
+
+				this.setState({
+					options: opts
+				}, function() {
+					// Bump state up to parent for aggregation
+					this.props.onChange(this.state);
+				}.bind(this));
+
+			} else {
+				console.log("WARNING: " + where + " not found in options");
+			}
+		}.bind(this);
 	},
 
 	/*
@@ -681,14 +728,10 @@ FlowEditor.Field.Settings = React.createClass({
 
 		console.log("Allowed filetypes is now:");
 		console.log(values);
-
 		console.log(this.state);
 
-
 		this.setState({ accept: values }, function() {
-
 			this.props.onChange(this.state);
-
 		}.bind(this));
 	},
 
@@ -696,6 +739,8 @@ FlowEditor.Field.Settings = React.createClass({
 	 * Render the settings dialog
 	 */
 	render: function() {
+
+		console.log("Rendering settings dialog for type " + this.props.type);
 
 		var mutabilityMessage;
 
@@ -729,6 +774,9 @@ FlowEditor.Field.Settings = React.createClass({
 				break;
 			case "select":
 
+				console.log(" -> Options:");
+				console.log(this.state.options);
+
 				var optionInputs,
 					customDataCheckbox;
 
@@ -737,14 +785,21 @@ FlowEditor.Field.Settings = React.createClass({
 
 					// Map option input containers to one variable
 					optionInputs = this.state.options.map(function(value, index) {
+						console.log(" : " + index + "=" + value);
 						return (
 							<div className="field-select-option form-group row" key={index}>
 								<div className="col-sm-12">
-									<div className="input-group">
-										<input type="text" placeholder="Enter an option" className="form-control" defaultValue={value} onChange={this.handleChangeOptionText(index)} />
+									<div className="input-group input-group-sm">
+										<input type="text" placeholder="Enter an option" className="form-control form-control-sm" value={value} onChange={this.handleChangeOptionText(index)} />
 										<span className="input-group-btn">
-											<button type="button" onClick={this.handleRemoveOption.bind(this, index)} className="btn btn-danger">
+											<button type="button" className="btn btn-danger" onClick={this.handleRemoveOption.bind(this, index)}>
 											  	<span>&times;</span>
+											</button>
+											<button type="button" className="btn btn-primary" disabled={index == 0} onClick={this.handleChangeOptionPosition("up", value)}>
+												&uarr;
+											</button>
+											<button type="button" className="btn btn-primary" disabled={index == (this.state.options.length - 1)} onClick={this.handleChangeOptionPosition("down", value)}>
+												&darr;
 											</button>
 										</span>
 									</div>
