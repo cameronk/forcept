@@ -439,6 +439,7 @@ Visit.PatientsOverview = React.createClass({
 			                    					}
 
 			                    					break;
+
 			                    				default:
 			                    					value = (
 			                    						<span className="pull-right">
@@ -487,14 +488,26 @@ Visit.PatientsOverview = React.createClass({
 		                    	}
 
 		                    	// Render the list item
-								return (
-									<div className="list-group-item" key={field + "-" + index}>
-										<dl>
-											<dt>{icon} &nbsp; {iterableFields[field].name}</dt>
-											<dd>{value}</dd>
-										</dl>
-									</div>
-								);
+		                    	if(iterableFields[field].type == "header") {
+		                    		if(this.props.mini == false) {
+			                    		return (
+			                    			<div className="list-group-item" key={field + "-" + index}>
+			                    				<h5 className="text-center m-a-0">
+			                    					{iterableFields[field].name}
+			                    				</h5>
+			                    			</div>
+			                    		);
+			                    	}
+		                    	} else {
+									return (
+										<div className="list-group-item" key={field + "-" + index}>
+											<dl>
+												<dt>{icon} &nbsp; {iterableFields[field].name}</dt>
+												<dd>{value}</dd>
+											</dl>
+										</div>
+									);
+		                    	}
 	                    	}.bind(this))}
 		                </div>
 					</div>

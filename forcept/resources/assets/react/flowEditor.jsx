@@ -244,7 +244,7 @@ FlowEditor.getDefaultOptionState = function(stageType) {
 			return {
 				value: "",
 				count: 0,
-				inStock: false
+				available: false
 			};
 			break;
 		default:
@@ -387,13 +387,50 @@ FlowEditor.Field = React.createClass({
  			fieldContext,
  			fieldContextPlural;
 
- 		var fieldContext = this.props.stageType == "pharmacy" ? "category" : "input";
+ 		// var fieldContext = this.props.stageType == "pharmacy" ? "category" : "input";
+
+
+ 		// Check if type change should be disabled for this input type
+ 		if(FlowEditor.disableTypeChanges.indexOf(this.state.type) !== -1) {
+ 			disableTypeChangeNotification = (
+ 				<div className="alert alert-info">
+ 					Once created, the <strong>{this.state.type}</strong> field type cannot be changed to any other type.
+ 				</div>
+ 			);
+ 		}
+
+ 		// Handle stageType-based changes
  		if(this.props.stageType == "pharmacy") {
  			fieldContext = "Category";
  			fieldContextPlural = "categories";
  		} else {
  			fieldContext = "Input";
  			fieldContextPlural = "inputs";
+
+	 		// Show option to change field type if NOT pharmacy stage
+ 			typeSelect = (
+				<div className="form-group">
+					<label className="form-control-label">Type:</label>
+ 					<select className="form-control" disabled={!this.state.mutable || FlowEditor.disableTypeChanges.indexOf(this.state.type) !== -1} onChange={this.handleFieldTypeChange} defaultValue={this.state.type}>
+ 						<optgroup label="Inputs">
+	 						<option value="text">Text input</option>
+	 						<option value="textarea">Textarea input</option>
+	 						<option value="number">Number input</option>
+	 						<option value="date">Date input</option>
+	 					</optgroup>
+	 					<optgroup label="Multiple-option fields">
+	 						<option value="select">Select input with options</option>
+	 						<option value="multiselect">Multi-select input with options</option>
+	 						<option value="file">File input</option>
+	 						<option value="yesno">Yes or no buttons</option>
+	 					</optgroup>
+	 					<optgroup label="Other">
+	 						<option value="header">Group fields with a header</option>
+	 					</optgroup>
+ 					</select>
+ 					{disableTypeChangeNotification}
+ 				</div>
+	 		);
  		}
 
 
@@ -422,46 +459,11 @@ FlowEditor.Field = React.createClass({
  			);
  		}
 
- 		// Check if type change should be disabled for this input type
- 		if(FlowEditor.disableTypeChanges.indexOf(this.state.type) !== -1) {
- 			disableTypeChangeNotification = (
- 				<div className="alert alert-info">
- 					Once created, the <strong>{this.state.type}</strong> field type cannot be changed to any other type.
- 				</div>
- 			);
- 		}
 
  		//
  		if(this.state.description !== null
  			&& this.state.description.length > 0) {
  			description = this.props.description;
- 		}
-
- 		// Show option to change field type if NOT pharmacy stage
- 		if(this.props.stageType !== "pharmacy") {
- 			typeSelect = (
-				<div className="form-group">
-					<label className="form-control-label">Type:</label>
- 					<select className="form-control" disabled={!this.state.mutable || FlowEditor.disableTypeChanges.indexOf(this.state.type) !== -1} onChange={this.handleFieldTypeChange} defaultValue={this.state.type}>
- 						<optgroup label="Inputs">
-	 						<option value="text">Text input</option>
-	 						<option value="textarea">Textarea input</option>
-	 						<option value="number">Number input</option>
-	 						<option value="date">Date input</option>
-	 					</optgroup>
-	 					<optgroup label="Multiple-option fields">
-	 						<option value="select">Select input with options</option>
-	 						<option value="multiselect">Multi-select input with options</option>
-	 						<option value="file">File input</option>
-	 						<option value="yesno">Yes or no buttons</option>
-	 					</optgroup>
-	 					<optgroup label="Other">
-	 						<option value="header">Group fields with a header</option>
-	 					</optgroup>
- 					</select>
- 					{disableTypeChangeNotification}
- 				</div>
-	 		);
  		}
 
  		return (
@@ -846,6 +848,40 @@ FlowEditor.Field.Settings = React.createClass({
 	},
 
 	/*
+	 *
+	 */
+	handleDrugQuantityChange: function(optionKey) {
+		return function(event) {
+			var options = this.state.options;
+				options[optionKey].count = parseInt(event.target.value);
+
+			this.setState({
+				options: options
+			}, function() {
+				this.props.onChange(this.state);
+			}.bind(this));
+		}.bind(this);
+	},
+
+
+	/*
+	 *
+	 */
+	handleDrugAvailabilityChange: function(optionKey) {
+		return function(event) {
+			var options = this.state.options;
+				options[optionKey].available = (event.target.value == "true");
+
+			this.setState({
+				options: options
+			}, function() {
+				this.props.onChange(this.state);
+			}.bind(this));
+
+		}.bind(this);
+	},
+
+	/*
 	 * Render the settings dialog
 	 */
 	render: function() {
@@ -904,6 +940,7 @@ FlowEditor.Field.Settings = React.createClass({
 					customDataCheckbox = (
 						<span></span>
 					);
+
 				};
 
 				// If there are options in the state
@@ -917,7 +954,6 @@ FlowEditor.Field.Settings = React.createClass({
 							// console.log(" : " + index + "=" + value);
 
 							var thisOption = this.state.options[optionKey];
-
 							var upButton, 
 								downButton;
 
@@ -939,7 +975,7 @@ FlowEditor.Field.Settings = React.createClass({
 
 
 							return (
-								<div className="field-select-option form-group row" key={index}>
+								<div className={(this.props.stageType !== "pharmacy" ? "field-select-option " : "") + "form-group row"} key={index}>
 									<div className="col-sm-12">
 										<div className="input-group input-group-sm">
 											<input type="text" 
@@ -955,24 +991,55 @@ FlowEditor.Field.Settings = React.createClass({
 												</button>
 											</span>
 										</div>
+										<div className="row">
+											<div className="col-xs-12 col-sm-6">
+												<div className="input-group input-group-sm">
+													<input 
+														type="number" 
+														className="form-control"
+														min={0}
+														value={thisOption.count}
+														onChange={this.handleDrugQuantityChange(optionKey)} />
+													<span className="input-group-addon">
+														qty in stock
+													</span>
+												</div>
+											</div>
+											<div className="col-xs-12 col-sm-6">
+												<div className="input-group input-group-sm">
+													<span className="input-group-addon">
+														available
+													</span>
+													<select 
+														className="form-control" 
+														defaultValue={thisOption.available}
+														onChange={this.handleDrugAvailabilityChange(optionKey)}>
+														<option value={true}>Yes</option>
+														<option value={false}>No</option>
+													</select>
+												</div>
+											</div>
+										</div>
 									</div>
 								</div>
 							);
 						}.bind(this));
 
 						// Add a checkbox at the end
-						customDataCheckbox = (
-							<div className="col-sm-12">
-								<div className="checkbox m-t">
-									<label>
-										<input type="checkbox" 
-											checked={this.state.allowCustomData == true} 
-											onChange={this.handleAllowCustomDataChange} />
-											Allow users to enter custom data for this field
-									</label>
+						if(this.props.stageType !== "pharmacy") {
+							customDataCheckbox = (
+								<div className="col-sm-12">
+									<div className="checkbox m-t">
+										<label>
+											<input type="checkbox" 
+												checked={this.state.allowCustomData == true} 
+												onChange={this.handleAllowCustomDataChange} />
+												Allow users to enter custom data for this field
+										</label>
+									</div>
 								</div>
-							</div>
-						);
+							);
+						}
 					} else {
 						noOptionsDefined();
 					}

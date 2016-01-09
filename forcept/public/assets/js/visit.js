@@ -439,6 +439,7 @@ Visit.PatientsOverview = React.createClass({displayName: "PatientsOverview",
 			                    					}
 
 			                    					break;
+
 			                    				default:
 			                    					value = (
 			                    						React.createElement("span", {className: "pull-right"}, 
@@ -487,14 +488,26 @@ Visit.PatientsOverview = React.createClass({displayName: "PatientsOverview",
 		                    	}
 
 		                    	// Render the list item
-								return (
-									React.createElement("div", {className: "list-group-item", key: field + "-" + index}, 
-										React.createElement("dl", null, 
-											React.createElement("dt", null, icon, "   ", iterableFields[field].name), 
-											React.createElement("dd", null, value)
+		                    	if(iterableFields[field].type == "header") {
+		                    		if(this.props.mini == false) {
+			                    		return (
+			                    			React.createElement("div", {className: "list-group-item", key: field + "-" + index}, 
+			                    				React.createElement("h5", {className: "text-center m-a-0"}, 
+			                    					iterableFields[field].name
+			                    				)
+			                    			)
+			                    		);
+			                    	}
+		                    	} else {
+									return (
+										React.createElement("div", {className: "list-group-item", key: field + "-" + index}, 
+											React.createElement("dl", null, 
+												React.createElement("dt", null, icon, "   ", iterableFields[field].name), 
+												React.createElement("dd", null, value)
+											)
 										)
-									)
-								);
+									);
+		                    	}
 	                    	}.bind(this))
 		                )
 					)
