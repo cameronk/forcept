@@ -30,6 +30,18 @@ class Stage extends Model
     	return json_decode($value, true);
     }
 
+    public function getInputFieldsAttribute() {
+        $fields = [];
+
+        foreach($this->fields as $fieldKey => $fieldData) {
+            if( !in_array($this->fields[$fieldKey]['type'], config('app.nonInputFieldTypes', [])) ) {
+                $fields[$fieldKey] = $fieldData;
+            }
+        }
+
+        return $fields;
+    }
+
     public function getRawFieldsAttribute() {
     	return json_encode($this->fields);
     }

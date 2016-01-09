@@ -55,7 +55,7 @@ Fields.FieldLabel = React.createClass({displayName: "FieldLabel",
 		var description;
 		if(this.props.hasOwnProperty("description") && this.props.description !== null && this.props.description.length > 0) {
 			description = (
-				React.createElement("div", null, React.createElement("small", null, this.props.description))
+				React.createElement("div", null, React.createElement("small", {className: "text-muted"}, this.props.description))
 			);
 		}
 		return (
@@ -242,12 +242,10 @@ Fields.Select = React.createClass({displayName: "Select",
 					React.createElement("option", {value: option, key: this.props.id + "-option-" + index}, option)
 				);
 			}.bind(this));
-		} else {
-			optionsError = true;
 		}
 
 		// If no error, build select input. Otherwise, display an error message.
-		if(!optionsError) {
+		//if(!optionsError) {
 			displaySelect = (
 				React.createElement("select", {className: "form-control", onChange: this.onSelectInputChange, defaultValue: this.props.defaultValue !== null ? this.props.defaultValue : "__default__"}, 
 					defaultOption, 
@@ -255,13 +253,13 @@ Fields.Select = React.createClass({displayName: "Select",
 					isTrue(this.props.settings.allowCustomData) ? customDataOption : ""
 				)
 			);
-		} else {
+		/*} else {
 			displaySelect = (
-				React.createElement("div", {className: "alert alert-danger"}, 
-					React.createElement("strong", null, "Warning:"), " no options defined for select input ", this.props.id
-				)
+				<div className="alert alert-danger">
+					<strong>Warning:</strong> no options defined for select input {this.props.id}
+				</div>
 			);
-		}
+		}*/
 
 		return (
 			React.createElement("div", {className: "form-group row"}, 
@@ -297,13 +295,15 @@ Fields.MultiSelect = React.createClass({displayName: "MultiSelect",
 	render: function() {
 
 		var options,
-			displaySelect;
+			displaySelect,
+			size;
 
 		// Was there an error with options?
 		var optionsError = false;
 
 		// Load options if they are present, otherwise error
 		if(this.props.settings.hasOwnProperty('options') && Array.isArray(this.props.settings.options)) {
+			size = this.props.settings.options.length > 30 ? 30 : this.props.settings.options.length;
 			options = this.props.settings.options.map(function(option, index) {
 				return (
 					React.createElement("option", {value: option, key: this.props.id + "-option-" + index}, option)
@@ -316,7 +316,7 @@ Fields.MultiSelect = React.createClass({displayName: "MultiSelect",
 		// If no error, build select input. Otherwise, display an error message.
 		if(!optionsError) {
 			displaySelect = (
-				React.createElement("select", {className: "form-control", onChange: this.onSelectInputChange, multiple: true, defaultValue: this.props.defaultValue}, 
+				React.createElement("select", {className: "form-control", onChange: this.onSelectInputChange, multiple: true, defaultValue: this.props.defaultValue, size: size}, 
 					options
 				)
 			);
@@ -450,6 +450,23 @@ Fields.YesNo = React.createClass({displayName: "YesNo",
 						)
 					)
 				)
+			)
+		);
+	}
+});
+
+Fields.Header = React.createClass({displayName: "Header",
+	render: function() {
+		var description;
+		if(this.props.hasOwnProperty('description') && description !== null) {
+			description = (
+				React.createElement("small", {className: "text-muted"}, this.props.description)
+			);
+		}
+		return (
+			React.createElement("div", {className: "form-group row"}, 
+				React.createElement("h3", {className: "forcept-fieldset-header"}, this.props.name, " ", description), 
+				React.createElement("hr", null)
 			)
 		);
 	}

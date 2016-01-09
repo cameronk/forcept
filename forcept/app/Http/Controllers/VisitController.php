@@ -33,14 +33,15 @@ class VisitController extends Controller
      */
     public function create()
     {
-        $allFields = Stage::where('root', '=', true)->first()->rawFields;
+        $patientFields = Stage::where('root', '=', true)->first()->rawFields;
         return view('visit/create', [
             'stage' => 1,
             'visit' => null, // Creating a visit so no visit ID
             'patients' => null, // No patients are in the visit yet
             'stages' => Stage::where('root', '!=', true)->orderBy('order', 'asc')->get(['id', 'order', 'name'])->toJson(),
-            'allFields' => $allFields,
-            'mutableFields' => $allFields
+            
+            'patientFields' => $patientFields,
+            'mutableFields' => $patientFields
         ]);
     }
 
@@ -61,7 +62,6 @@ class VisitController extends Controller
      */
     public function handle(Stage $stage, Visit $visit)
     {
-
 
         \Log::debug("Visit handle for visit [{$visit->id}], stage [{$stage->id}]");
 
@@ -90,14 +90,31 @@ class VisitController extends Controller
             //                     ->get(['id']);
 
 
-            $stages = Stage::where('root', '!=', true)->where('order', '<', $stage->order)->orderBy('order', 'asc')->get()->keyBy("id");
+            $stages = Stage::where('root', '!=', true)
+                            ->where('order', '<', $stage->order)
+                            ->orderBy('order', 'asc')
+                            ->get();
 
-            foreach($stages as $stageID => $stageData) {
+            \Log::debug("STAGES:");
+            \Log::debug($stages);
+
+            $summaryFields = array();
+
+            // Add new fields for these patients for all stages up to current stage
+            foreach($stages->keyBy("id") as $stageID => $stageData) {
 
                 \Log::debug("Querying stage [{$stageID}] [table: {$stageData->tableName}]");
 
-                $fieldsToObtain = array_keys($stageData->fields);
-                $fieldsToObtain[] = "patient_id";
+                $fieldsToObtain = array();
+                $fieldsToObtain[] = "patient_id"; // Make sure to retrieve the patient ID!
+                
+                foreach($stageData->inputFields as $fieldKey => $fieldData) {
+                    // Push this field to the summary array
+                    $summaryFields[$fieldKey] = $fieldData;
+
+                    // Add to field data to obtain for this stage
+                    $fieldsToObtain[] = $fieldKey;
+                }
 
                 $visitPatientsDataInThisStage = DB::table($stageData->tableName)
                     ->where('visit_id', $visit->id)
@@ -114,41 +131,40 @@ class VisitController extends Controller
                         \Log::debug($patientFieldValue);
                         $patients[$patient->patient_id][$patientField] = $patientFieldValue;
                     }
-                    // $patients[$patient->patient_id] ;
                 }
 
             }
 
-            // $all = $stages->keys()->map(function($stageID) use($stages, $visit) {
-            //     $stage = $stages[$stageID];
-            //     return collect(DB::table($stage->tableName) 
-            //         ->where('visit_id', $visit->id)
-            //         ->get(collect($stage->fields)->keys()->push('patient_id')->toArray()))
-            //         ->keyBy('patient_id');
-            // });
-
-            // \Log::debug($all);
-            // \Log::debug($patients);
-
-            // if(count($all) > 0) {
-            //     \Log::debug("all count >  0 ");
-            //     $all = $all[0];
-            //     $all = $all->keys()->map(function($patientID) use ($patients, $all) {
-            //         return collect($patients[$patientID])->merge($all[$patientID]);
-            //     })->keyBy('id')->toArray();
-
-            //     \Log::debug($all);
-            // } else {
-            //     $all = $patients;
-            // }
+            $stages = $stages->toArray();
 
             return view('visit/handle', [
+                // This stage info
                 'stage'         => $stage,
+
+                // This visit info
                 'visit'         => $visit,
+
+                // Patient table information for these patients
                 'patients'      => json_encode($patients),
-                'stages'        => Stage::where('root', '!=', true)->where('order', '>', $stage->order)->orderBy('order', 'asc')->get(['id', 'order', 'name'])->toJson(),
+                'stages'        => Stage::where('root', '!=', true)
+                                    ->where('order', '>', $stage->order)
+                                    ->orderBy('order', 'asc')
+                                    ->get(['id', 'order', 'name'])
+                                    ->toJson(),
+
+                // Fields that should be mutable in patientsContainer
                 'mutableFields' => $stage->rawFields,
-                'allFields'     => json_encode($allFields)
+
+                // Fields that should be displayed in the overview sidebar
+                'patientFields' => $stage->root == true 
+                                    ? $stage->rawFields 
+                                    : Stage::where('root', '=', true)
+                                            ->first(['fields'])
+                                            ->rawFields,
+
+                // Fields that should be immutable but shown in patientsContainer
+                'summaryFields' => json_encode($summaryFields)
+
             ]);
         } else return abort(403, "Unauthorized action.");
     }
@@ -285,7 +301,6 @@ class VisitController extends Controller
                 if($request->destination == "__checkout__") {
                     \Log::debug("Destination for patient " . $patient->id . " in visit " . $visit->id . " is " . $request->destination);
                     $patient->current_visit = null;
-                    $patient->priority = null;
                     $patient->save();
                 }
 
@@ -295,45 +310,6 @@ class VisitController extends Controller
                 \Log::debug($error);
             }
 
-
-            // If this is the root stage (Check-in), we want to update
-            // patient data instead of creating a new record. Also, do not
-            // set visit_id or patient_id parameters, as these are respective
-            // to non-root stages.
-            /*if($stage->root) {
-                $patient = Patient::where('id', '=', $patientID);
-
-                // Check if this patient record exists
-                if($patient->count() > 0) {
-                    $patient = $patient->first();
-
-                    // Set patient concrete = true now that we've update their data
-                    $data['concrete'] = true; 
-
-                    // If the destination is checkout, remove current_visit ID
-                    if($request->destination == "__checkout__") {
-
-                    } else {
-                        $data['current_visit'] = $visi
-                    }
-
-                    // Update patient record.
-                    $patient->update($data);
-
-                } else {
-                    $error = sprintf("Could not locate patient record [id: %s]", $patientID);
-                    $errors[] = $error;
-                    \Log::debug($error);
-                }
-
-            } else {
-                // Set visit_id and patient_id for reference in this sage
-                $data["visit_id"] = $visit->id;
-                $data["patient_id"] = $patientID;
-
-                // Insert data into this stage's table
-                DB::table($stage->tableName)->insert($data);
-            }*/
         }
 
         // Patient data has been stored, update Visit record

@@ -410,14 +410,21 @@ FlowEditor.Field = React.createClass({displayName: "Field",
  					React.createElement("div", {className: "form-group"}, 
  						React.createElement("label", {className: "form-control-label"}, "Type:"), 
 	 					React.createElement("select", {className: "form-control", disabled: !this.state.mutable || FlowEditor.DisableTypeChanges.indexOf(this.state.type) !== -1, onChange: this.handleFieldTypeChange, defaultValue: this.state.type}, 
-	 						React.createElement("option", {value: "text"}, "Text input"), 
-	 						React.createElement("option", {value: "textarea"}, "Textarea input"), 
-	 						React.createElement("option", {value: "number"}, "Number input"), 
-	 						React.createElement("option", {value: "date"}, "Date input"), 
-	 						React.createElement("option", {value: "select"}, "Select input with options"), 
-	 						React.createElement("option", {value: "multiselect"}, "Multi-select input with options"), 
-	 						React.createElement("option", {value: "file"}, "File input"), 
-	 						React.createElement("option", {value: "yesno"}, "Yes/No field w/ buttons")
+	 						React.createElement("optgroup", {label: "Inputs"}, 
+		 						React.createElement("option", {value: "text"}, "Text input"), 
+		 						React.createElement("option", {value: "textarea"}, "Textarea input"), 
+		 						React.createElement("option", {value: "number"}, "Number input"), 
+		 						React.createElement("option", {value: "date"}, "Date input")
+		 					), 
+		 					React.createElement("optgroup", {label: "Multiple-option fields"}, 
+		 						React.createElement("option", {value: "select"}, "Select input with options"), 
+		 						React.createElement("option", {value: "multiselect"}, "Multi-select input with options"), 
+		 						React.createElement("option", {value: "file"}, "File input"), 
+		 						React.createElement("option", {value: "yesno"}, "Yes or no buttons")
+		 					), 
+		 					React.createElement("optgroup", {label: "Other"}, 
+		 						React.createElement("option", {value: "header"}, "Group fields with a header")
+		 					)
 	 					), 
 	 					disableTypeChangeNotification
 	 				), 
@@ -452,6 +459,9 @@ FlowEditor.Field = React.createClass({displayName: "Field",
  });
 
 
+/*
+ *
+ */
 FlowEditor.Field.Settings = React.createClass({displayName: "Settings",
 
 	/*
@@ -459,17 +469,11 @@ FlowEditor.Field.Settings = React.createClass({displayName: "Settings",
 	 */
 	getInitialState: function() {
 		console.log("Caught getInitialState for field settings dialog with type " + this.props.type);
+
+		// Return initial state if settings are necessary for this file type
 		switch(this.props.type) {
 
-			case "text":
-			case "date":
-			case "number":
-			case "yesno":
-				// Do nothing for these types
-				console.log("\t| Dialog is for text/date field, skipping.");
-				return {};
-				break;
-
+			// Select input
 			case "select":
 				console.log("\t| Dialog is for select field, returning initial select options.");
 				return {
@@ -478,18 +482,22 @@ FlowEditor.Field.Settings = React.createClass({displayName: "Settings",
 				};
 				break;
 
+			// Multiselect input
 			case "multiselect":
 				console.log("\t| Dialog is for multiselect field, returning initial select options.");
 				return {
 					options: [],
 				};
 				break;
+
+			// File input
 			case "file":
 				return {
 					accept: []
 				};
 				break;
 
+			// For all others...
 			default:
 				console.log("\t| Field not recognized, skipping.");
 				return {};
@@ -507,12 +515,10 @@ FlowEditor.Field.Settings = React.createClass({displayName: "Settings",
 		console.log("Mounting options dialog for '" + this.props.type + "' input with props:");
 		console.log(this.props);
 
+		// If we have a field type that requires settings, load default settings into state
 		switch(this.props.type) {
-			case "text":
-			case "date":
-			case "number":
-				// Do nothing for these types
-				break;
+
+			// Select field type
 			case "select":
 
 				// If there's already an options array...
@@ -533,6 +539,8 @@ FlowEditor.Field.Settings = React.createClass({displayName: "Settings",
 				}
 
 				break;
+
+			// Multiselect field type
 			case "multiselect":
 
 				// If there's already an options array...
@@ -549,6 +557,7 @@ FlowEditor.Field.Settings = React.createClass({displayName: "Settings",
 
 				break;
 
+			// File field type
 			case "file":
 
 				// If there's already an options array...
@@ -568,7 +577,7 @@ FlowEditor.Field.Settings = React.createClass({displayName: "Settings",
 	},
 
 	/*
-	 * Component completed mounting
+	 * Component completed mounting (debug)
 	 */
 	componentDidMount: function() {
 		console.log("Component 'FlowEditorFieldConfiguratorSettingsDialog' mounted, state is now:");
@@ -578,13 +587,12 @@ FlowEditor.Field.Settings = React.createClass({displayName: "Settings",
 	},
 
 	/*
-	 * Handle adding of a new option (SELECT type)
+	 * Handle adding of a new option (SELECT/MULTISELECT type)
 	 */
 	handleAddOption: function() {
 
 		console.log("");
 		console.log("--[add option: " + this.props['field-key'] + "]--");
-
 
 		var push = function() {
 			var options = this.state.options;
@@ -613,7 +621,7 @@ FlowEditor.Field.Settings = React.createClass({displayName: "Settings",
 	},
 
 	/*
-	 * Handle removing of an option (SELECT type)
+	 * Handle removing of an option (SELECT/MULTISELECT type)
 	 */
 	handleRemoveOption: function(index) {
 		var options = this.state.options;
@@ -627,7 +635,7 @@ FlowEditor.Field.Settings = React.createClass({displayName: "Settings",
 	},
 
 	/*
-	 * Handle change option position
+	 * Handle change option position (SELECT/MULTISELECT type)
 	 */
 	handleChangeOptionPosition: function(where, value) {
 		return function(event) {
@@ -675,7 +683,7 @@ FlowEditor.Field.Settings = React.createClass({displayName: "Settings",
 	},
 
 	/*
-	 * Handle change of option text (SELECT type)
+	 * Handle change of option text (SELECT/MULTISELECT type)
 	 */
 	handleChangeOptionText: function(index) {
 		return function(event) {
@@ -692,7 +700,7 @@ FlowEditor.Field.Settings = React.createClass({displayName: "Settings",
 	},
 
 	/*
-	 * Handle change of allow custom data checkbox (SELECT type)
+	 * Handle change of allow custom data checkbox (SELECT/MULTISELECT type)
 	 */
 	handleAllowCustomDataChange: function() {
 		console.log("");
@@ -715,6 +723,9 @@ FlowEditor.Field.Settings = React.createClass({displayName: "Settings",
 
 	},
 
+	/**
+	 * Change the allowed filetypes (FILE field type)
+	 */
 	handleChangeAllowedFiletypes: function(event) {
 
 		var options = event.target.options;
@@ -763,6 +774,7 @@ FlowEditor.Field.Settings = React.createClass({displayName: "Settings",
 			case "number":
 			case "date":
 			case "yesno":
+			case "header":
 				return (
 					React.createElement("div", null, 
 						React.createElement("div", {className: "alert alert-info m-t"}, 
@@ -786,20 +798,37 @@ FlowEditor.Field.Settings = React.createClass({displayName: "Settings",
 					// Map option input containers to one variable
 					optionInputs = this.state.options.map(function(value, index) {
 						console.log(" : " + index + "=" + value);
+
+						var upButton, 
+							downButton;
+
+						if(index !== 0) {
+							upButton = (
+								React.createElement("button", {type: "button", className: "btn btn-primary", onClick: this.handleChangeOptionPosition("up", value)}, 
+									"↑"
+								)
+							);
+						}
+
+						if(index !== (this.state.options.length - 1)) {
+							downButton = (
+								React.createElement("button", {type: "button", className: "btn btn-primary", onClick: this.handleChangeOptionPosition("down", value)}, 
+									"↓"
+								)
+							);
+						}
+
+
 						return (
 							React.createElement("div", {className: "field-select-option form-group row", key: index}, 
 								React.createElement("div", {className: "col-sm-12"}, 
 									React.createElement("div", {className: "input-group input-group-sm"}, 
-										React.createElement("input", {type: "text", placeholder: "Enter an option", className: "form-control form-control-sm", value: value, onChange: this.handleChangeOptionText(index)}), 
+										React.createElement("input", {type: "text", placeholder: "Enter an option", className: "form-control", value: value, onChange: this.handleChangeOptionText(index)}), 
 										React.createElement("span", {className: "input-group-btn"}, 
+											upButton, 
+											downButton, 
 											React.createElement("button", {type: "button", className: "btn btn-danger", onClick: this.handleRemoveOption.bind(this, index)}, 
 											  	React.createElement("span", null, "×")
-											), 
-											React.createElement("button", {type: "button", className: "btn btn-primary", disabled: index == 0, onClick: this.handleChangeOptionPosition("up", value)}, 
-												"↑"
-											), 
-											React.createElement("button", {type: "button", className: "btn btn-primary", disabled: index == (this.state.options.length - 1), onClick: this.handleChangeOptionPosition("down", value)}, 
-												"↓"
 											)
 										)
 									)
@@ -855,12 +884,35 @@ FlowEditor.Field.Settings = React.createClass({displayName: "Settings",
 
 					// Map option input containers to one variable
 					optionInputs = this.state.options.map(function(value, index) {
+						console.log(" : " + index + "=" + value);
+
+						var upButton, 
+							downButton;
+
+						if(index !== 0) {
+							upButton = (
+								React.createElement("button", {type: "button", className: "btn btn-primary", onClick: this.handleChangeOptionPosition("up", value)}, 
+									"↑"
+								)
+							);
+						}
+
+						if(index !== (this.state.options.length - 1)) {
+							downButton = (
+								React.createElement("button", {type: "button", className: "btn btn-primary", onClick: this.handleChangeOptionPosition("down", value)}, 
+									"↓"
+								)
+							);
+						}
+
 						return (
 							React.createElement("div", {className: "field-select-option form-group row", key: index}, 
 								React.createElement("div", {className: "col-sm-12"}, 
-									React.createElement("div", {className: "input-group"}, 
-										React.createElement("input", {type: "text", placeholder: "Enter an option", className: "form-control", defaultValue: value, onChange: this.handleChangeOptionText(index)}), 
-										React.createElement("span", {className: "input-group-btn"}, 
+									React.createElement("div", {className: "input-group input-group-sm"}, 
+										React.createElement("input", {type: "text", placeholder: "Enter an option", className: "form-control", value: value, onChange: this.handleChangeOptionText(index)}), 
+										React.createElement("span", {className: "input-group-btn"}, 										
+											upButton, 
+											downButton, 
 											React.createElement("button", {type: "button", onClick: this.handleRemoveOption.bind(this, index), className: "btn btn-danger"}, 
 											  	React.createElement("span", null, "×")
 											)
@@ -896,8 +948,6 @@ FlowEditor.Field.Settings = React.createClass({displayName: "Settings",
 				break;
 
 			case "file":
-
-
 				return (
 					React.createElement("div", {className: "field-select-options-contain"}, 
 						React.createElement("h5", null, "Accepted file types"), 
@@ -907,8 +957,6 @@ FlowEditor.Field.Settings = React.createClass({displayName: "Settings",
 						mutabilityMessage
 					)
 				);
-
-
 				break;
 
 			default:

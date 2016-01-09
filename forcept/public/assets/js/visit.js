@@ -19,9 +19,9 @@
  *  - stages: Array of stages (in order of 'order') for finish modal
  *  - currentStage: ID of current stage
  *
- *  - mutablefields: Fields which should be mutable for EACH patient in the PatientContainer block.
- *  - allFields: Fields which should have their data displayed in the PatientOverview block.
- *				 CONTAINS ALL FIELDS FOR ALL STAGES UP TO  currentStage
+ *  - mutableFields: NEW Fields which should be mutable for EACH patient in the PatientContainer block.
+ *  - patientFields: PREEXISTING Fields which should have their data displayed in the PatientOverview block.
+ *  - summaryFields: PREEXISTING Fields which should have their data displayed in the PatientOverview block.
  */
 var Visit = React.createClass({displayName: "Visit",
 
@@ -252,14 +252,16 @@ var Visit = React.createClass({displayName: "Visit",
 					onConfirmFinishVisit: this.handleConfirmFinishVisit}), 
 
 				React.createElement(Visit.PatientsOverview, {
-					fields: this.props.allFields, 
-					patients: this.state.patients}), 
+					fields: this.props.patientFields, 
+					patients: this.state.patients, 
+					mini: false}), 
 
 				React.createElement(Visit.PatientsContainer, {
 					_token: this.props._token, 
 					controlsType: this.props.controlsType, 
 					containerTitle: this.props.containerTitle, 
 
+					summaryFields: this.props.summaryFields, 
 					fields: this.props.mutableFields, 
 					patients: this.state.patients, 
 
@@ -293,6 +295,8 @@ Visit.generatedFields = {
  * Accepted properties:
  * - fields: Object of ALL fields for ALL stages up to THIS CURRENT STAGE for displaying patient metadata
  * - patients: Object of patients w/ data as pulled from database
+ * 
+ * - mini: should this display as a card instead of a column
  */
 Visit.PatientsOverview = React.createClass({displayName: "PatientsOverview",
 
@@ -323,7 +327,8 @@ Visit.PatientsOverview = React.createClass({displayName: "PatientsOverview",
 		if(Object.keys(this.props.patients).length > 0) {
 			patientOverviews = Object.keys(this.props.patients).map(function(patientID, index) {
 				var thisPatient = this.props.patients[patientID];
-				var photo;
+				var cardHeader,
+					photo;
 
 				if(thisPatient.hasOwnProperty('photo') && thisPatient.photo !== null) {
 					console.log("Patient overview: " + patientID + " has photo");
@@ -334,11 +339,28 @@ Visit.PatientsOverview = React.createClass({displayName: "PatientsOverview",
 					if(dataType[0] == "data:image") {
 						console.log("Datatype is valid");
 						photo = (
-			                React.createElement("div", {className: "patient-photo-contain"}, 
+			                React.createElement("div", {className: "forcept-patient-photo-contain"}, 
 			                	React.createElement("img", {src: dataURI})	
 			                )
 						);
 					}
+				}
+
+				if(this.props.mini !== true) {
+					cardHeader = (
+						React.createElement("span", null, 
+			               	React.createElement("div", {className: "card-header"}, 
+			                    React.createElement("span", {className: "label label-info"}, "#", index + 1), 
+			                    React.createElement("span", {className: "label label-default"}, patientID)
+			                ), 
+			                React.createElement("div", {className: "card-block"}, 
+			                	React.createElement("h4", {className: "card-title text-xs-center m-a-0"}, 
+			                		React.createElement("strong", null, (thisPatient["full_name"] !== null && thisPatient["full_name"].length > 0) ? thisPatient["full_name"] : "Unnamed patient")
+			                	)
+			                ), 
+			                photo
+			            )
+			        );
 				}
 
 				console.log("Rendering patient overview card - ID #" + patientID);
@@ -346,135 +368,134 @@ Visit.PatientsOverview = React.createClass({displayName: "PatientsOverview",
 
 				return (
 					React.createElement("div", {className: "card forcept-patient-summary", key: patientID}, 
-		                React.createElement("div", {className: "card-header"}, 
-		                    React.createElement("span", {className: "label label-info"}, "#", index + 1), 
-		                    React.createElement("span", {className: "label label-default"}, patientID)
-		                ), 
-		                React.createElement("div", {className: "card-block"}, 
-		                	React.createElement("h4", {className: "card-title text-xs-center m-a-0"}, 
-		                		React.createElement("strong", null, (thisPatient["full_name"] !== null && thisPatient["full_name"].length > 0) ? thisPatient["full_name"] : "Unnamed patient")
-		                	)
-		                ), 
-		                photo, 
+						cardHeader, 
 		              	React.createElement("div", {className: "list-group list-group-flush"}, 
 		                    Object.keys(iterableFields).map(function(field, index) {
 
 		                    	var foundData = false;
+		                    	var isGeneratedField = Visit.generatedFields.hasOwnProperty(field);
+
 		                    	var value = (
 		                    		React.createElement("span", {className: "pull-right"}, 
 		                    			"No data"
 		                    		)
 		                    	);
 
-		                    	if(thisPatient.hasOwnProperty(field) 	// If this field exists in the patient data
+		                    	if(
+		                    		thisPatient.hasOwnProperty(field) 	// If this field exists in the patient data
 		                    		&& thisPatient[field] !== null	 	// If the data for this field is null, show "No data"
-		                    		&& thisPatient[field].length > 0)	// If string length == 0 or array length == 0, show "No data"
-		                    	{
-		                    		if( ["string", "number"].indexOf(typeof thisPatient[field]) !== -1 ) // If the field is a string or number
+		                    		&& thisPatient[field].length > 0	// If string length == 0 or array length == 0, show "No data"
+		                    	) {
+		                    		if(this.props.mini == false || !isGeneratedField) 
 		                    		{
-		                    			console.log(" | Field " + iterableFields[field]["name"] + " is string or number");
-		                    			console.log(" | -> type: " + iterableFields[field].type);
+			                    		if( ["string", "number"].indexOf(typeof thisPatient[field]) !== -1 ) // If the field is a string or number
+			                    		{
+			                    			console.log(" | Field " + iterableFields[field]["name"] + " is string or number");
+			                    			console.log(" | -> type: " + iterableFields[field].type);
 
-		                    			// We found data!
-		                    			foundData = true;
+			                    			// We found data!
+			                    			foundData = true;
 
-		                    			// We might need to mutate the data
-		                    			switch(iterableFields[field].type) {
-		                    				case "textarea":
-		                    					value = (
-		                    						React.createElement("p", {dangerouslySetInnerHTML: { __html: thisPatient[field].replace(/\n/g, "<br/>")}})
-		                    					);
-		                    					break;
-
-		                    				case "multiselect":
-		                    					// Convert from JSON array to nice string
-		                    					var arr = JSON.parse(thisPatient[field]);
-		                    					if(Array.isArray(arr) && arr.length > 0) {
-		                    						value = (
-		                    							React.createElement("span", {className: "pull-right"}, 
-		                    								arr.join(", ")
-		                    							)
-		                    						);
-		                    					}
-		                    					console.log("Multiselect value: " + value);
-		                    					break;
-
-		                    				case "file":
-
-		                    					var split = thisPatient[field].toString().split(";");
-		                    					var dataSection = split[0]; // data:image/png
-
-		                    					if(dataSection.split("/")[0] == "data:image") {
-
+			                    			// We might need to mutate the data
+			                    			switch(iterableFields[field].type) {
+			                    				case "textarea":
 			                    					value = (
-			                    						React.createElement("div", {className: "patient-photo-contain"}, 
-			                    							React.createElement("img", {src: thisPatient[field].toString()})
+			                    						React.createElement("p", {dangerouslySetInnerHTML: { __html: thisPatient[field].replace(/\n/g, "<br/>")}})
+			                    					);
+			                    					break;
+
+			                    				case "multiselect":
+			                    					// Convert from JSON array to nice string
+			                    					var arr = JSON.parse(thisPatient[field]);
+			                    					if(Array.isArray(arr) && arr.length > 0) {
+			                    						value = (
+			                    							React.createElement("span", {className: "pull-right"}, 
+			                    								arr.join(", ")
+			                    							)
+			                    						);
+			                    					}
+			                    					console.log("Multiselect value: " + value);
+			                    					break;
+
+			                    				case "file":
+
+			                    					var split = thisPatient[field].toString().split(";");
+			                    					var dataSection = split[0]; // data:image/png
+
+			                    					if(dataSection.split("/")[0] == "data:image") {
+
+				                    					value = (
+				                    						React.createElement("div", {className: "patient-photo-contain"}, 
+				                    							React.createElement("img", {src: thisPatient[field].toString()})
+				                    						)
+				                    					);
+
+			                    					} else {
+			                    						value = (
+			                    							React.createElement("span", {className: "pull-right"}, 
+			                    								"1 file, ", getFileSize(thisPatient[field])
+			                    							)
+			                    						);
+			                    					}
+
+			                    					break;
+			                    				default:
+			                    					value = (
+			                    						React.createElement("span", {className: "pull-right"}, 
+			                    							thisPatient[field].toString()
 			                    						)
 			                    					);
+			                    					break;
+			                    			}
+			                    		} else {
+			                    			console.log(" | Field " + iterableFields[field]["name"] + " is NOT string or number");
+			                    			console.log(" | -> type: " + iterableFields[field].type);
+			                    			if( Array.isArray(thisPatient[field]) ) // If the data is an array
+			                    			{
+			                    				// We found data!
+			                    				foundData = true;
+			                    				value = (
+			                    					React.createElement("span", {className: "pull-right"}, 
+			                    						thisPatient[field].join(", ")
+			                    					)
+			                    				);
+			                    			} else {
+			                    				// WTF is it?
+			                    				console.log("WARNING: unknown field data type for field " + field);
+			                    			}
+			                    		}
 
-		                    					} else {
-		                    						value = (
-		                    							React.createElement("span", {className: "pull-right"}, 
-		                    								"1 file, ", getFileSize(thisPatient[field])
-		                    							)
-		                    						);
-		                    					}
+				                    	var icon;
+				                    	if(!isGeneratedField) {
+				                    		if(foundData) {
+				                    			icon = (
+				                    				React.createElement("span", {className: "text-success"}, 
+				                    					"\u2713"
+				                    				)
+				                    			);
+				                    		} else {
+				                    			icon = (
+				                    				React.createElement("span", {className: "text-danger"}, 
+				                    					"\u2717"
+				                    				)
+				                    			);
+				                    		}
+				                    	} else {
+				                    		icon = "\u27a0";
+				                    	}
 
-		                    					break;
-		                    				default:
-		                    					value = (
-		                    						React.createElement("span", {className: "pull-right"}, 
-		                    							thisPatient[field].toString()
-		                    						)
-		                    					);
-		                    					break;
-		                    			}
-		                    		} else {
-		                    			console.log(" | Field " + iterableFields[field]["name"] + " is NOT string or number");
-		                    			console.log(" | -> type: " + iterableFields[field].type);
-		                    			if( Array.isArray(thisPatient[field]) ) // If the data is an array
-		                    			{
-		                    				// We found data!
-		                    				foundData = true;
-		                    				value = (
-		                    					React.createElement("span", {className: "pull-right"}, 
-		                    						thisPatient[field].join(", ")
-		                    					)
-		                    				);
-		                    			} else {
-		                    				// WTF is it?
-		                    				console.log("WARNING: unknown field data type for field " + field);
-		                    			}
-		                    		}
+			                    		return (
+			                    			React.createElement(Visit.SummaryItem, {
+		                    					field: field, 
+		                    					index: index, 
+		                    					icon: icon, 
+		                    					name: iterableFields[field].name, 
+		                    					value: value})
+			                    		);
+			                    	}
 		                    	}
-
-		                    	var icon;
-		                    	if(!Visit.generatedFields.hasOwnProperty(field)) {
-		                    		if(foundData) {
-		                    			icon = (
-		                    				React.createElement("span", {className: "text-success"}, 
-		                    					"\u2713"
-		                    				)
-		                    			);
-		                    		} else {
-		                    			icon = (
-		                    				React.createElement("span", {className: "text-danger"}, 
-		                    					"\u2717"
-		                    				)
-		                    			);
-		                    		}
-		                    	} else {
-		                    		icon = "\u27a0";
-		                    	}
-	                    		return (
-	                    			React.createElement("div", {className: "list-group-item", key: field + "-" + index}, 
-	                    				React.createElement("dl", null, 
-	                    					React.createElement("dt", null, icon, "   ", iterableFields[field].name), 
-	                    					React.createElement("dd", null, value)
-	                    				)
-	                    			)
-	                    		);
-	                    })
+		                    
+	                    }.bind(this))
 		                )
 					)
 				);
@@ -487,7 +508,13 @@ Visit.PatientsOverview = React.createClass({displayName: "PatientsOverview",
 			);
 		}
 
-		return (
+		if(this.props.mini == true) {
+			return (
+		        React.createElement("div", {className: "col-xs-12 col-lg-6"}, 
+		           patientOverviews
+		        )
+			);
+		} else return (
 	        React.createElement("div", {className: "col-xs-12 col-sm-12 col-md-4 col-xl-3"}, 
 	           patientOverviews
 	        )
@@ -605,7 +632,6 @@ Visit.PatientsContainer = React.createClass({displayName: "PatientsContainer",
 			isLoading = true;
 		}
 
-
 		// If we're submitting, don't show patients block
 		if(!this.props.isSubmitting) {
 			// Set up patients block
@@ -613,13 +639,14 @@ Visit.PatientsContainer = React.createClass({displayName: "PatientsContainer",
 				patients = (Object.keys(this.props.patients)).map(function(patientID, index) {
 					return (
 						React.createElement("div", {key: patientID}, 
-							React.createElement(Visit.Patient, React.__spread({},  
-								this.props.patients[patientID], 
-								{fields: this.props.fields, 
+							React.createElement(Visit.Patient, {
+								patient: this.props.patients[patientID], 
+								fields: this.props.fields, 
+								summaryFields: this.props.summaryFields, 
 								id: patientID, 
 								index: index, 
 
-								onPatientDataChange: this.props.onPatientDataChange})), 
+								onPatientDataChange: this.props.onPatientDataChange}), 
 							React.createElement("hr", null)
 						)
 					);
@@ -989,7 +1016,51 @@ Visit.Patient = React.createClass({displayName: "Patient",
 	render: function() {
 		console.log("Preparing to render Visit.Patient with " + Object.keys(this.props.fields).length + " fields");
 		console.log(this.props);
-		var name = this.props['full_name'] !== null ? this.props['full_name'] : "Unnamed patient"
+
+		var name = this.props.patient.full_name !== null ? this.props.patient.full_name : "Unnamed patient";
+		var summary;
+
+
+		console.log("Summary fields:");
+		console.log(this.props.summaryFields);
+
+		// Build summary DOM
+		if(this.props.summaryFields !== null
+			&& typeof this.props.summaryFields === "object"
+			&& Object.keys(this.props.summaryFields).length > 0) {
+			
+			console.log("Generating summary fields");
+
+			var leftColumnFields = {};
+			var rightColumnFields = {};
+			var patientsObjectSpoof = {};
+				patientsObjectSpoof[this.props.patient.id] = this.props.patient;
+
+			var countSummaryFields = Object.keys(this.props.summaryFields).length;
+
+			Object.keys(this.props.summaryFields).map(function(key, index) {
+				if(index > (countSummaryFields - 1) / 2) {
+					rightColumnFields[key] = this.props.summaryFields[key];
+				} else {
+					leftColumnFields[key] = this.props.summaryFields[key];
+				}
+			}.bind(this));
+
+			summary = (
+				React.createElement("div", {className: "row"}, 
+					React.createElement(Visit.PatientsOverview, {
+						fields: leftColumnFields, 
+						patients: patientsObjectSpoof, 
+						mini: true}), 
+					React.createElement(Visit.PatientsOverview, {
+						fields: rightColumnFields, 
+						patients: patientsObjectSpoof, 
+						mini: true})
+				)
+			);
+		}
+
+
 		return (
 			React.createElement("blockquote", {className: "blockquote"}, 
 				React.createElement("h3", null, 
@@ -998,14 +1069,22 @@ Visit.Patient = React.createClass({displayName: "Patient",
 		            React.createElement("span", {className: "hidden-xs-down"}, name), 
 		            React.createElement("div", {className: "hidden-sm-up p-t"}, name)
 		        ), 
+		        summary, 
 		        React.createElement("hr", null), 
 		        Object.keys(this.props.fields).map(function(fieldID, index) {
+
+		        	// Figure out which type of field we should render
 		        	switch(this.props.fields[fieldID]['type']) {
+
+
+		        		/*
+		        		 * Input field types
+		        		 */
 		        		case "text":
 		        			return (
 		        				React.createElement(Fields.Text, React.__spread({},  
 		        					this.props.fields[fieldID], 
-		        					{defaultValue: this.props.hasOwnProperty(fieldID) ? this.props[fieldID] : null, 
+		        					{defaultValue: this.props.patient.hasOwnProperty(fieldID) ? this.props.patient[fieldID] : null, 
 		        					onChange: this.handleFieldChange, 
 		        					key: fieldID, 
 		        					id: fieldID}))
@@ -1015,7 +1094,7 @@ Visit.Patient = React.createClass({displayName: "Patient",
 		        			return (
 		        				React.createElement(Fields.Textarea, React.__spread({},  
 		        					this.props.fields[fieldID], 
-		        					{defaultValue: this.props.hasOwnProperty(fieldID) ? this.props[fieldID] : null, 
+		        					{defaultValue: this.props.patient.hasOwnProperty(fieldID) ? this.props.patient[fieldID] : null, 
 		        					onChange: this.handleFieldChange, 
 		        					key: fieldID, 
 		        					id: fieldID}))
@@ -1025,7 +1104,7 @@ Visit.Patient = React.createClass({displayName: "Patient",
 		        			return (
 		        				React.createElement(Fields.Number, React.__spread({}, 
 		        					this.props.fields[fieldID], 
-		        					{defaultValue: this.props.hasOwnProperty(fieldID) ? this.props[fieldID] : null, 
+		        					{defaultValue: this.props.patient.hasOwnProperty(fieldID) ? this.props.patient[fieldID] : null, 
 		        					onChange: this.handleFieldChange, 
 		        					key: fieldID, 
 		        					id: fieldID}))
@@ -1035,7 +1114,7 @@ Visit.Patient = React.createClass({displayName: "Patient",
 		        			return (
 		        				React.createElement(Fields.Date, React.__spread({}, 
 		        					this.props.fields[fieldID], 
-		        					{defaultValue: this.props.hasOwnProperty(fieldID) ? this.props[fieldID] : null, 
+		        					{defaultValue: this.props.patient.hasOwnProperty(fieldID) ? this.props.patient[fieldID] : null, 
 		        					onChange: this.handleFieldChange, 
 		        					key: fieldID, 
 		        					id: fieldID}))
@@ -1045,7 +1124,7 @@ Visit.Patient = React.createClass({displayName: "Patient",
 							return (
 		        				React.createElement(Fields.Select, React.__spread({},  
 		        					this.props.fields[fieldID], 
-		        					{defaultValue: this.props.hasOwnProperty(fieldID) ? this.props[fieldID] : null, 
+		        					{defaultValue: this.props.patient.hasOwnProperty(fieldID) ? this.props.patient[fieldID] : null, 
 		        					onChange: this.handleFieldChange, 
 		        					key: fieldID, 
 		        					id: fieldID}))
@@ -1055,7 +1134,7 @@ Visit.Patient = React.createClass({displayName: "Patient",
 		        			return (
 		        				React.createElement(Fields.MultiSelect, React.__spread({},  
 		        					this.props.fields[fieldID], 
-		        					{defaultValue: this.props.hasOwnProperty(fieldID) ? this.props[fieldID] : null, 
+		        					{defaultValue: this.props.patient.hasOwnProperty(fieldID) ? this.props.patient[fieldID] : null, 
 		        					onChange: this.handleFieldChange, 
 		        					key: fieldID, 
 		        					id: fieldID}))
@@ -1065,7 +1144,7 @@ Visit.Patient = React.createClass({displayName: "Patient",
 		        			return (
 								React.createElement(Fields.File, React.__spread({}, 
 		        					this.props.fields[fieldID], 
-		        					{defaultValue: this.props.hasOwnProperty(fieldID) ? this.props[fieldID] : null, 
+		        					{defaultValue: this.props.patient.hasOwnProperty(fieldID) ? this.props.patient[fieldID] : null, 
 		        					onChange: this.handleFieldChange, 
 		        					key: fieldID, 
 		        					id: fieldID}))
@@ -1075,12 +1154,28 @@ Visit.Patient = React.createClass({displayName: "Patient",
 		        			return (
 								React.createElement(Fields.YesNo, React.__spread({}, 
 		        					this.props.fields[fieldID], 
-		        					{defaultValue: this.props.hasOwnProperty(fieldID) ? this.props[fieldID] : null, 
+		        					{defaultValue: this.props.patient.hasOwnProperty(fieldID) ? this.props.patient[fieldID] : null, 
 		        					onChange: this.handleFieldChange, 
 		        					key: fieldID, 
 		        					id: fieldID}))
 		        			);
 		        			break;
+
+		        		/*
+		        		 * Other fields
+		        		 */
+		        		case "header":
+		        			return (
+		        				React.createElement(Fields.Header, React.__spread({},  
+		        					this.props.fields[fieldID], 
+		        					{key: fieldID, 
+		        					id: fieldID}))
+		        			);
+		        			break;
+
+		        		/*
+		        		 * Field type not recognized
+		        		 */
 		        		default:
 		        			return (
 		        				React.createElement("div", {className: "alert alert-danger"}, 
@@ -1215,3 +1310,19 @@ Visit.FinishModal = React.createClass({displayName: "FinishModal",
 	}
 
 });
+
+/*
+ *
+ */
+Visit.SummaryItem = React.createClass({displayName: "SummaryItem",
+	render: function() {
+		return (
+			React.createElement("div", {className: "list-group-item", key: this.props.field + "-" + this.props.index}, 
+				React.createElement("dl", null, 
+					React.createElement("dt", null, this.props.icon, "   ", this.props.name), 
+					React.createElement("dd", null, this.props.value)
+				)
+			)
+		);
+	}
+})

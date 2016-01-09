@@ -15,7 +15,7 @@
 <script type="text/javascript" src="{{ asset('assets/js/visit.js') }}"></script>
 <script type="text/javascript">
 
-var NewVisit = ReactDOM.render(
+var HandleVisit = ReactDOM.render(
     React.createElement(Visit, {
         
         "_token": "{{ csrf_token() }}",
@@ -29,7 +29,8 @@ var NewVisit = ReactDOM.render(
         "currentStage": {{ $stage->id }},
         
         "mutableFields": <?php echo $mutableFields ?>, 
-        "allFields": <?php echo $allFields ?>,
+        "patientFields": <?php echo $patientFields ?>,        
+        "summaryFields": <?php echo $summaryFields ?>
         
     }),
     document.getElementById('page-content')

@@ -1,0 +1,91 @@
+{
+  "priority": {
+    "name": "Priority",
+    "type": "select",
+    "mutable": "false",
+    "settings": {
+      "options": [
+        "Normal",
+        "High",
+        "Urgent"
+      ],
+      "allowCustomData": "false"
+    },
+    "description": ""
+  },
+  "complaint": {
+    "name": "Main complaint",
+    "type": "multiselect",
+    "mutable": "true",
+    "settings": {
+      "options": [
+        "Acid/Stomach",
+        "Abdominal pain",
+        "Back pain",
+        "Chest pain",
+        "Coughing",
+        "Diarrhea",
+        "Dizziness",
+        "Fever",
+        "Headache",
+        "Joint pain",
+        "Malaise/Fatigue",
+        "Poor appetite",
+        "Poor sleep",
+        "Poor vision",
+        "Respiratory difficulty",
+        "Recheck patient",
+        "Short of breath",
+        "Skin disorder",
+        "Swelling",
+        "UTI Symptoms",
+        "Vaginal discharge",
+        "Weight loss"
+      ],
+      "allowCustomData": "false"
+    },
+    "description": ""
+  },
+  "complaint_details": {
+    "name": "Complaint details",
+    "type": "textarea",
+    "mutable": "true",
+    "settings": "",
+    "description": "Short details about the complaint"
+  },
+  "blood_pressure": {
+    "name": "Blood pressure",
+    "type": "text",
+    "mutable": "true",
+    "settings": "",
+    "description": "Format: Systolic/Diastolic"
+  },
+  "weight": {
+    "name": "Weight (lb)",
+    "type": "number",
+    "mutable": "true",
+    "settings": "",
+    "description": ""
+  },
+  "pregnant": {
+    "name": "Currently pregnant",
+    "type": "yesno",
+    "mutable": "true",
+    "settings": "",
+    "description": "Are you currently pregnant?"
+  },
+  "nursing": {
+    "name": "Currently nursing?",
+    "type": "yesno",
+    "mutable": "true",
+    "settings": "",
+    "description": "Are you currently nuring?"
+  },
+  "albendazole": {
+    "name": "Currently taking Albendazole?",
+    "type": "yesno",
+    "mutable": "true",
+    "settings": "",
+    "description": "Are you currently taking Albendazole?"
+  }
+}

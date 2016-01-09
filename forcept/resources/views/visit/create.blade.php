@@ -22,13 +22,15 @@ var NewVisit = ReactDOM.render(
         "containerTitle" : "Create a new visit",
         "controlsType": "new-visit",
         
+        
         "visitID": null,
         "patients": null,
         "stages": <?php echo $stages; ?>,
         "currentStage": 1,
         
         "mutableFields": <?php echo $mutableFields ?>, 
-        "allFields": <?php echo $allFields ?>,
+        "patientFields": <?php echo $patientFields ?>,
+        "summaryFields": {},
         
     }),
     document.getElementById('page-content')

@@ -410,14 +410,21 @@ FlowEditor.Field = React.createClass({
  					<div className="form-group">
  						<label className="form-control-label">Type:</label>
 	 					<select className="form-control" disabled={!this.state.mutable || FlowEditor.DisableTypeChanges.indexOf(this.state.type) !== -1} onChange={this.handleFieldTypeChange} defaultValue={this.state.type}>
-	 						<option value="text">Text input</option>
-	 						<option value="textarea">Textarea input</option>
-	 						<option value="number">Number input</option>
-	 						<option value="date">Date input</option>
-	 						<option value="select">Select input with options</option>
-	 						<option value="multiselect">Multi-select input with options</option>
-	 						<option value="file">File input</option>
-	 						<option value="yesno">Yes/No field w/ buttons</option>
+	 						<optgroup label="Inputs">
+		 						<option value="text">Text input</option>
+		 						<option value="textarea">Textarea input</option>
+		 						<option value="number">Number input</option>
+		 						<option value="date">Date input</option>
+		 					</optgroup>
+		 					<optgroup label="Multiple-option fields">
+		 						<option value="select">Select input with options</option>
+		 						<option value="multiselect">Multi-select input with options</option>
+		 						<option value="file">File input</option>
+		 						<option value="yesno">Yes or no buttons</option>
+		 					</optgroup>
+		 					<optgroup label="Other">
+		 						<option value="header">Group fields with a header</option>
+		 					</optgroup>
 	 					</select>
 	 					{disableTypeChangeNotification}
 	 				</div>
@@ -452,6 +459,9 @@ FlowEditor.Field = React.createClass({
  });
 
 
+/*
+ *
+ */
 FlowEditor.Field.Settings = React.createClass({
 
 	/*
@@ -459,17 +469,11 @@ FlowEditor.Field.Settings = React.createClass({
 	 */
 	getInitialState: function() {
 		console.log("Caught getInitialState for field settings dialog with type " + this.props.type);
+
+		// Return initial state if settings are necessary for this file type
 		switch(this.props.type) {
 
-			case "text":
-			case "date":
-			case "number":
-			case "yesno":
-				// Do nothing for these types
-				console.log("\t| Dialog is for text/date field, skipping.");
-				return {};
-				break;
-
+			// Select input
 			case "select":
 				console.log("\t| Dialog is for select field, returning initial select options.");
 				return {
@@ -478,18 +482,22 @@ FlowEditor.Field.Settings = React.createClass({
 				};
 				break;
 
+			// Multiselect input
 			case "multiselect":
 				console.log("\t| Dialog is for multiselect field, returning initial select options.");
 				return {
 					options: [],
 				};
 				break;
+
+			// File input
 			case "file":
 				return {
 					accept: []
 				};
 				break;
 
+			// For all others...
 			default:
 				console.log("\t| Field not recognized, skipping.");
 				return {};
@@ -507,12 +515,10 @@ FlowEditor.Field.Settings = React.createClass({
 		console.log("Mounting options dialog for '" + this.props.type + "' input with props:");
 		console.log(this.props);
 
+		// If we have a field type that requires settings, load default settings into state
 		switch(this.props.type) {
-			case "text":
-			case "date":
-			case "number":
-				// Do nothing for these types
-				break;
+
+			// Select field type
 			case "select":
 
 				// If there's already an options array...
@@ -533,6 +539,8 @@ FlowEditor.Field.Settings = React.createClass({
 				}
 
 				break;
+
+			// Multiselect field type
 			case "multiselect":
 
 				// If there's already an options array...
@@ -549,6 +557,7 @@ FlowEditor.Field.Settings = React.createClass({
 
 				break;
 
+			// File field type
 			case "file":
 
 				// If there's already an options array...
@@ -568,7 +577,7 @@ FlowEditor.Field.Settings = React.createClass({
 	},
 
 	/*
-	 * Component completed mounting
+	 * Component completed mounting (debug)
 	 */
 	componentDidMount: function() {
 		console.log("Component 'FlowEditorFieldConfiguratorSettingsDialog' mounted, state is now:");
@@ -578,13 +587,12 @@ FlowEditor.Field.Settings = React.createClass({
 	},
 
 	/*
-	 * Handle adding of a new option (SELECT type)
+	 * Handle adding of a new option (SELECT/MULTISELECT type)
 	 */
 	handleAddOption: function() {
 
 		console.log("");
 		console.log("--[add option: " + this.props['field-key'] + "]--");
-
 
 		var push = function() {
 			var options = this.state.options;
@@ -613,7 +621,7 @@ FlowEditor.Field.Settings = React.createClass({
 	},
 
 	/*
-	 * Handle removing of an option (SELECT type)
+	 * Handle removing of an option (SELECT/MULTISELECT type)
 	 */
 	handleRemoveOption: function(index) {
 		var options = this.state.options;
@@ -627,7 +635,7 @@ FlowEditor.Field.Settings = React.createClass({
 	},
 
 	/*
-	 * Handle change option position
+	 * Handle change option position (SELECT/MULTISELECT type)
 	 */
 	handleChangeOptionPosition: function(where, value) {
 		return function(event) {
@@ -675,7 +683,7 @@ FlowEditor.Field.Settings = React.createClass({
 	},
 
 	/*
-	 * Handle change of option text (SELECT type)
+	 * Handle change of option text (SELECT/MULTISELECT type)
 	 */
 	handleChangeOptionText: function(index) {
 		return function(event) {
@@ -692,7 +700,7 @@ FlowEditor.Field.Settings = React.createClass({
 	},
 
 	/*
-	 * Handle change of allow custom data checkbox (SELECT type)
+	 * Handle change of allow custom data checkbox (SELECT/MULTISELECT type)
 	 */
 	handleAllowCustomDataChange: function() {
 		console.log("");
@@ -715,6 +723,9 @@ FlowEditor.Field.Settings = React.createClass({
 
 	},
 
+	/**
+	 * Change the allowed filetypes (FILE field type)
+	 */
 	handleChangeAllowedFiletypes: function(event) {
 
 		var options = event.target.options;
@@ -763,6 +774,7 @@ FlowEditor.Field.Settings = React.createClass({
 			case "number":
 			case "date":
 			case "yesno":
+			case "header":
 				return (
 					<div>
 						<div className="alert alert-info m-t">
@@ -786,20 +798,37 @@ FlowEditor.Field.Settings = React.createClass({
 					// Map option input containers to one variable
 					optionInputs = this.state.options.map(function(value, index) {
 						console.log(" : " + index + "=" + value);
+
+						var upButton, 
+							downButton;
+
+						if(index !== 0) {
+							upButton = (
+								<button type="button" className="btn btn-primary" onClick={this.handleChangeOptionPosition("up", value)}>
+									&uarr;
+								</button>
+							);
+						}
+
+						if(index !== (this.state.options.length - 1)) {
+							downButton = (
+								<button type="button" className="btn btn-primary" onClick={this.handleChangeOptionPosition("down", value)}>
+									&darr;
+								</button>
+							);
+						}
+
+
 						return (
 							<div className="field-select-option form-group row" key={index}>
 								<div className="col-sm-12">
 									<div className="input-group input-group-sm">
-										<input type="text" placeholder="Enter an option" className="form-control form-control-sm" value={value} onChange={this.handleChangeOptionText(index)} />
+										<input type="text" placeholder="Enter an option" className="form-control" value={value} onChange={this.handleChangeOptionText(index)} />
 										<span className="input-group-btn">
+											{upButton}
+											{downButton}
 											<button type="button" className="btn btn-danger" onClick={this.handleRemoveOption.bind(this, index)}>
 											  	<span>&times;</span>
-											</button>
-											<button type="button" className="btn btn-primary" disabled={index == 0} onClick={this.handleChangeOptionPosition("up", value)}>
-												&uarr;
-											</button>
-											<button type="button" className="btn btn-primary" disabled={index == (this.state.options.length - 1)} onClick={this.handleChangeOptionPosition("down", value)}>
-												&darr;
 											</button>
 										</span>
 									</div>
@@ -855,12 +884,35 @@ FlowEditor.Field.Settings = React.createClass({
 
 					// Map option input containers to one variable
 					optionInputs = this.state.options.map(function(value, index) {
+						console.log(" : " + index + "=" + value);
+
+						var upButton, 
+							downButton;
+
+						if(index !== 0) {
+							upButton = (
+								<button type="button" className="btn btn-primary" onClick={this.handleChangeOptionPosition("up", value)}>
+									&uarr;
+								</button>
+							);
+						}
+
+						if(index !== (this.state.options.length - 1)) {
+							downButton = (
+								<button type="button" className="btn btn-primary" onClick={this.handleChangeOptionPosition("down", value)}>
+									&darr;
+								</button>
+							);
+						}
+
 						return (
 							<div className="field-select-option form-group row" key={index}>
 								<div className="col-sm-12">
-									<div className="input-group">
-										<input type="text" placeholder="Enter an option" className="form-control" defaultValue={value} onChange={this.handleChangeOptionText(index)} />
-										<span className="input-group-btn">
+									<div className="input-group input-group-sm">
+										<input type="text" placeholder="Enter an option" className="form-control" value={value} onChange={this.handleChangeOptionText(index)} />
+										<span className="input-group-btn">										
+											{upButton}
+											{downButton}
 											<button type="button" onClick={this.handleRemoveOption.bind(this, index)} className="btn btn-danger">
 											  	<span>&times;</span>
 											</button>
@@ -896,8 +948,6 @@ FlowEditor.Field.Settings = React.createClass({
 				break;
 
 			case "file":
-
-
 				return (
 					<div className="field-select-options-contain">
 						<h5>Accepted file types</h5>
@@ -907,8 +957,6 @@ FlowEditor.Field.Settings = React.createClass({
 						{mutabilityMessage}
 					</div>
 				);
-
-
 				break;
 
 			default:

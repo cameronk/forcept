@@ -1,0 +1,119 @@
+{
+  "diagnosis": {
+    "name": "Diagnosis",
+    "type": "multiselect",
+    "mutable": "true",
+    "settings": {
+      "options": [
+        "Allergies",
+        "Arthritis",
+        "Asthma",
+        "Cararacts",
+        "Ear infection",
+        "Haitian malaise",
+        "Hypertension",
+        "Malnutrition",
+        "Vaginal yeast",
+        "Skin disorder",
+        "Tinea",
+        "Newborn",
+        "Reflux",
+        "Scabies",
+        "STD",
+        "URI",
+        "UTI",
+        "Worms",
+        "Anemia"
+      ],
+      "allowCustomData": "true"
+    },
+    "description": ""
+  },
+  "treatment": {
+    "name": "Treatment",
+    "type": "textarea",
+    "mutable": "true",
+    "settings": "",
+    "description": "Short details about the treatment plan"
+  },
+  "tests_header": {
+    "name": "Tests",
+    "type": "header",
+    "mutable": "true",
+    "description": "Options for patient tests"
+  },
+  "test_urine": {
+    "name": "Urine test",
+    "type": "select",
+    "mutable": "true",
+    "settings": {
+      "options": [
+        
+      ],
+      "allowCustomData": "true"
+    },
+    "description": "Urine test results"
+  },
+  "test_bg": {
+    "name": "BG test",
+    "type": "select",
+    "mutable": "true",
+    "settings": {
+      "options": [
+        
+      ],
+      "allowCustomData": "true"
+    },
+    "description": "BG test results"
+  },
+  "test_HCG": {
+    "name": "HCG test",
+    "type": "select",
+    "mutable": "true",
+    "settings": {
+      "options": [
+        "Positive",
+        "Negative"
+      ],
+      "allowCustomData": "true"
+    },
+    "description": "HCG test results"
+  },
+  "test_HGB": {
+    "name": "HGB test",
+    "type": "select",
+    "mutable": "true",
+    "settings": {
+      "options": [
+      ],
+      "allowCustomData": "true"
+    },
+    "description": "HGB test results"
+  },
+  "test_HGB": {
+    "name": "Mal test",
+    "type": "select",
+    "mutable": "true",
+    "settings": {
+      "options": [
+        "Positive",
+        "Negative"
+      ],
+      "allowCustomData": "true"
+    },
+    "description": "Mal test results"
+  },
+  "test_HIV": {
+    "name": "HIV test",
+    "type": "select",
+    "mutable": "true",
+    "settings": {
+      "options": [
+        "Positive",
+        "Negative"
+      ],
+      "allowCustomData": "true"
+    },
+    "description": "HIV test results"
+  }
+}

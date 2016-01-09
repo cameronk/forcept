@@ -4548,23 +4548,24 @@ h4.field-title span.title {
   .forcept-patient-nametag .card-title span.title-content {
     padding-right: 5px; }
 
-.forcept-patient-summary .card-title {
-  line-height: 27px; }
-
-.forcept-patient-summary a.list-group-item p {
-  margin: 0;
-  width: 100%;
-  word-break: break-all;
-  word-wrap: break-word; }
+.forcept-patient-summary {
+  font-size: 16px; }
+  .forcept-patient-summary .card-title {
+    line-height: 27px; }
+  .forcept-patient-summary a.list-group-item p {
+    margin: 0;
+    width: 100%;
+    word-break: break-all;
+    word-wrap: break-word; }
 
 .form-group label.file {
   font-size: 15px; }
 
-div.patient-photo-contain {
+div.forcept-patient-photo-contain {
   max-height: 300px;
   overflow-y: auto;
   overflow-x: hidden; }
-  div.patient-photo-contain img {
+  div.forcept-patient-photo-contain img {
     width: 100%; }
 
 img.loading {
@@ -4574,6 +4575,17 @@ img.loading {
   display: block; }
   .btn-group-block > .btn {
     width: 50% !important; }
+
+.forcept-fieldset-header {
+  display: block;
+  width: 100%;
+  padding-left: 1rem;
+  padding-bottom: 0.5rem;
+  border-bottom: #eceeef solid 3px;
+  margin-top: 1rem; }
+  .forcept-fieldset-header small {
+    padding-left: 0.5rem;
+    font-size: 62.5%; }
 
 /**
  * _data-displays.scss

@@ -19,9 +19,9 @@
  *  - stages: Array of stages (in order of 'order') for finish modal
  *  - currentStage: ID of current stage
  *
- *  - mutablefields: Fields which should be mutable for EACH patient in the PatientContainer block.
- *  - allFields: Fields which should have their data displayed in the PatientOverview block.
- *				 CONTAINS ALL FIELDS FOR ALL STAGES UP TO  currentStage
+ *  - mutableFields: NEW Fields which should be mutable for EACH patient in the PatientContainer block.
+ *  - patientFields: PREEXISTING Fields which should have their data displayed in the PatientOverview block.
+ *  - summaryFields: PREEXISTING Fields which should have their data displayed in the PatientOverview block.
  */
 var Visit = React.createClass({
 
@@ -252,14 +252,16 @@ var Visit = React.createClass({
 					onConfirmFinishVisit={this.handleConfirmFinishVisit} />
 
 				<Visit.PatientsOverview 
-					fields={this.props.allFields}
-					patients={this.state.patients} />
+					fields={this.props.patientFields}
+					patients={this.state.patients} 
+					mini={false} />
 
 				<Visit.PatientsContainer
 					_token={this.props._token}
 					controlsType={this.props.controlsType}
 					containerTitle={this.props.containerTitle}
 
+					summaryFields={this.props.summaryFields}
 					fields={this.props.mutableFields}
 					patients={this.state.patients}
 
@@ -293,6 +295,8 @@ Visit.generatedFields = {
  * Accepted properties:
  * - fields: Object of ALL fields for ALL stages up to THIS CURRENT STAGE for displaying patient metadata
  * - patients: Object of patients w/ data as pulled from database
+ * 
+ * - mini: should this display as a card instead of a column
  */
 Visit.PatientsOverview = React.createClass({
 
@@ -323,7 +327,8 @@ Visit.PatientsOverview = React.createClass({
 		if(Object.keys(this.props.patients).length > 0) {
 			patientOverviews = Object.keys(this.props.patients).map(function(patientID, index) {
 				var thisPatient = this.props.patients[patientID];
-				var photo;
+				var cardHeader,
+					photo;
 
 				if(thisPatient.hasOwnProperty('photo') && thisPatient.photo !== null) {
 					console.log("Patient overview: " + patientID + " has photo");
@@ -334,11 +339,28 @@ Visit.PatientsOverview = React.createClass({
 					if(dataType[0] == "data:image") {
 						console.log("Datatype is valid");
 						photo = (
-			                <div className="patient-photo-contain">
+			                <div className="forcept-patient-photo-contain">
 			                	<img src={dataURI} />	
 			                </div>
 						);
 					}
+				}
+
+				if(this.props.mini !== true) {
+					cardHeader = (
+						<span>
+			               	<div className="card-header">
+			                    <span className="label label-info">#{index + 1}</span>
+			                    <span className="label label-default">{patientID}</span> 
+			                </div>
+			                <div className="card-block">
+			                	<h4 className="card-title text-xs-center m-a-0">
+			                		<strong>{(thisPatient["full_name"] !== null && thisPatient["full_name"].length > 0) ? thisPatient["full_name"] : "Unnamed patient"}</strong>
+			                	</h4>
+			                </div>
+			                {photo}
+			            </span>
+			        );
 				}
 
 				console.log("Rendering patient overview card - ID #" + patientID);
@@ -346,135 +368,134 @@ Visit.PatientsOverview = React.createClass({
 
 				return (
 					<div className="card forcept-patient-summary" key={patientID}>
-		                <div className="card-header">
-		                    <span className="label label-info">#{index + 1}</span>
-		                    <span className="label label-default">{patientID}</span> 
-		                </div>
-		                <div className="card-block">
-		                	<h4 className="card-title text-xs-center m-a-0">
-		                		<strong>{(thisPatient["full_name"] !== null && thisPatient["full_name"].length > 0) ? thisPatient["full_name"] : "Unnamed patient"}</strong>
-		                	</h4>
-		                </div>
-		                {photo}
+						{cardHeader}
 		              	<div className="list-group list-group-flush">
 		                    {Object.keys(iterableFields).map(function(field, index) {
 
 		                    	var foundData = false;
+		                    	var isGeneratedField = Visit.generatedFields.hasOwnProperty(field);
+
 		                    	var value = (
 		                    		<span className="pull-right">
 		                    			No data
 		                    		</span>
 		                    	);
 
-		                    	if(thisPatient.hasOwnProperty(field) 	// If this field exists in the patient data
+		                    	if(
+		                    		thisPatient.hasOwnProperty(field) 	// If this field exists in the patient data
 		                    		&& thisPatient[field] !== null	 	// If the data for this field is null, show "No data"
-		                    		&& thisPatient[field].length > 0)	// If string length == 0 or array length == 0, show "No data"
-		                    	{
-		                    		if( ["string", "number"].indexOf(typeof thisPatient[field]) !== -1 ) // If the field is a string or number
+		                    		&& thisPatient[field].length > 0	// If string length == 0 or array length == 0, show "No data"
+		                    	) {
+		                    		if(this.props.mini == false || !isGeneratedField) 
 		                    		{
-		                    			console.log(" | Field " + iterableFields[field]["name"] + " is string or number");
-		                    			console.log(" | -> type: " + iterableFields[field].type);
+			                    		if( ["string", "number"].indexOf(typeof thisPatient[field]) !== -1 ) // If the field is a string or number
+			                    		{
+			                    			console.log(" | Field " + iterableFields[field]["name"] + " is string or number");
+			                    			console.log(" | -> type: " + iterableFields[field].type);
 
-		                    			// We found data!
-		                    			foundData = true;
+			                    			// We found data!
+			                    			foundData = true;
 
-		                    			// We might need to mutate the data
-		                    			switch(iterableFields[field].type) {
-		                    				case "textarea":
-		                    					value = (
-		                    						<p dangerouslySetInnerHTML={{ __html: thisPatient[field].replace(/\n/g, "<br/>") }}></p>
-		                    					);
-		                    					break;
-
-		                    				case "multiselect":
-		                    					// Convert from JSON array to nice string
-		                    					var arr = JSON.parse(thisPatient[field]);
-		                    					if(Array.isArray(arr) && arr.length > 0) {
-		                    						value = (
-		                    							<span className="pull-right">
-		                    								{arr.join(", ")}
-		                    							</span>
-		                    						);
-		                    					}
-		                    					console.log("Multiselect value: " + value);
-		                    					break;
-
-		                    				case "file":
-
-		                    					var split = thisPatient[field].toString().split(";");
-		                    					var dataSection = split[0]; // data:image/png
-
-		                    					if(dataSection.split("/")[0] == "data:image") {
-
+			                    			// We might need to mutate the data
+			                    			switch(iterableFields[field].type) {
+			                    				case "textarea":
 			                    					value = (
-			                    						<div className="patient-photo-contain">
-			                    							<img src={thisPatient[field].toString()} />
-			                    						</div>
+			                    						<p dangerouslySetInnerHTML={{ __html: thisPatient[field].replace(/\n/g, "<br/>") }}></p>
 			                    					);
+			                    					break;
 
-		                    					} else {
-		                    						value = (
-		                    							<span className="pull-right">
-		                    								1 file, {getFileSize(thisPatient[field])}
-		                    							</span>
-		                    						);
-		                    					}
+			                    				case "multiselect":
+			                    					// Convert from JSON array to nice string
+			                    					var arr = JSON.parse(thisPatient[field]);
+			                    					if(Array.isArray(arr) && arr.length > 0) {
+			                    						value = (
+			                    							<span className="pull-right">
+			                    								{arr.join(", ")}
+			                    							</span>
+			                    						);
+			                    					}
+			                    					console.log("Multiselect value: " + value);
+			                    					break;
 
-		                    					break;
-		                    				default:
-		                    					value = (
-		                    						<span className="pull-right">
-		                    							{thisPatient[field].toString()}
-		                    						</span>
-		                    					);
-		                    					break;
-		                    			}
-		                    		} else {
-		                    			console.log(" | Field " + iterableFields[field]["name"] + " is NOT string or number");
-		                    			console.log(" | -> type: " + iterableFields[field].type);
-		                    			if( Array.isArray(thisPatient[field]) ) // If the data is an array
-		                    			{
-		                    				// We found data!
-		                    				foundData = true;
-		                    				value = (
-		                    					<span className="pull-right">
-		                    						{thisPatient[field].join(", ")}
-		                    					</span>
-		                    				);
-		                    			} else {
-		                    				// WTF is it?
-		                    				console.log("WARNING: unknown field data type for field " + field);
-		                    			}
-		                    		}
+			                    				case "file":
+
+			                    					var split = thisPatient[field].toString().split(";");
+			                    					var dataSection = split[0]; // data:image/png
+
+			                    					if(dataSection.split("/")[0] == "data:image") {
+
+				                    					value = (
+				                    						<div className="patient-photo-contain">
+				                    							<img src={thisPatient[field].toString()} />
+				                    						</div>
+				                    					);
+
+			                    					} else {
+			                    						value = (
+			                    							<span className="pull-right">
+			                    								1 file, {getFileSize(thisPatient[field])}
+			                    							</span>
+			                    						);
+			                    					}
+
+			                    					break;
+			                    				default:
+			                    					value = (
+			                    						<span className="pull-right">
+			                    							{thisPatient[field].toString()}
+			                    						</span>
+			                    					);
+			                    					break;
+			                    			}
+			                    		} else {
+			                    			console.log(" | Field " + iterableFields[field]["name"] + " is NOT string or number");
+			                    			console.log(" | -> type: " + iterableFields[field].type);
+			                    			if( Array.isArray(thisPatient[field]) ) // If the data is an array
+			                    			{
+			                    				// We found data!
+			                    				foundData = true;
+			                    				value = (
+			                    					<span className="pull-right">
+			                    						{thisPatient[field].join(", ")}
+			                    					</span>
+			                    				);
+			                    			} else {
+			                    				// WTF is it?
+			                    				console.log("WARNING: unknown field data type for field " + field);
+			                    			}
+			                    		}
+
+				                    	var icon;
+				                    	if(!isGeneratedField) {
+				                    		if(foundData) {
+				                    			icon = (
+				                    				<span className="text-success">
+				                    					{"\u2713"}
+				                    				</span>
+				                    			);
+				                    		} else {
+				                    			icon = (
+				                    				<span className="text-danger">
+				                    					{"\u2717"}
+				                    				</span>
+				                    			);
+				                    		}
+				                    	} else {
+				                    		icon = "\u27a0";
+				                    	}
+
+			                    		return (
+			                    			<Visit.SummaryItem
+		                    					field={field}
+		                    					index={index}
+		                    					icon={icon}
+		                    					name={iterableFields[field].name}
+		                    					value={value} />
+			                    		);
+			                    	}
 		                    	}
-
-		                    	var icon;
-		                    	if(!Visit.generatedFields.hasOwnProperty(field)) {
-		                    		if(foundData) {
-		                    			icon = (
-		                    				<span className="text-success">
-		                    					{"\u2713"}
-		                    				</span>
-		                    			);
-		                    		} else {
-		                    			icon = (
-		                    				<span className="text-danger">
-		                    					{"\u2717"}
-		                    				</span>
-		                    			);
-		                    		}
-		                    	} else {
-		                    		icon = "\u27a0";
-		                    	}
-	                    		return (
-	                    			<div className="list-group-item" key={field + "-" + index}>
-	                    				<dl>
-	                    					<dt>{icon} &nbsp; {iterableFields[field].name}</dt>
-	                    					<dd>{value}</dd>
-	                    				</dl>
-	                    			</div>
-	                    		);
-	                    })}
+		                    
+	                    }.bind(this))}
 		                </div>
 					</div>
 				);
@@ -487,7 +508,13 @@ Visit.PatientsOverview = React.createClass({
 			);
 		}
 
-		return (
+		if(this.props.mini == true) {
+			return (
+		        <div className="col-xs-12 col-lg-6">
+		           {patientOverviews}
+		        </div>
+			);
+		} else return (
 	        <div className="col-xs-12 col-sm-12 col-md-4 col-xl-3">
 	           {patientOverviews}
 	        </div>
@@ -605,7 +632,6 @@ Visit.PatientsContainer = React.createClass({
 			isLoading = true;
 		}
 
-
 		// If we're submitting, don't show patients block
 		if(!this.props.isSubmitting) {
 			// Set up patients block
@@ -614,8 +640,9 @@ Visit.PatientsContainer = React.createClass({
 					return (
 						<div key={patientID}>
 							<Visit.Patient 
-								{...this.props.patients[patientID]} 
+								patient={this.props.patients[patientID]}
 								fields={this.props.fields}
+								summaryFields={this.props.summaryFields}
 								id={patientID}
 								index={index}
 
@@ -989,7 +1016,51 @@ Visit.Patient = React.createClass({
 	render: function() {
 		console.log("Preparing to render Visit.Patient with " + Object.keys(this.props.fields).length + " fields");
 		console.log(this.props);
-		var name = this.props['full_name'] !== null ? this.props['full_name'] : "Unnamed patient"
+
+		var name = this.props.patient.full_name !== null ? this.props.patient.full_name : "Unnamed patient";
+		var summary;
+
+
+		console.log("Summary fields:");
+		console.log(this.props.summaryFields);
+
+		// Build summary DOM
+		if(this.props.summaryFields !== null
+			&& typeof this.props.summaryFields === "object"
+			&& Object.keys(this.props.summaryFields).length > 0) {
+			
+			console.log("Generating summary fields");
+
+			var leftColumnFields = {};
+			var rightColumnFields = {};
+			var patientsObjectSpoof = {};
+				patientsObjectSpoof[this.props.patient.id] = this.props.patient;
+
+			var countSummaryFields = Object.keys(this.props.summaryFields).length;
+
+			Object.keys(this.props.summaryFields).map(function(key, index) {
+				if(index > (countSummaryFields - 1) / 2) {
+					rightColumnFields[key] = this.props.summaryFields[key];
+				} else {
+					leftColumnFields[key] = this.props.summaryFields[key];
+				}
+			}.bind(this));
+
+			summary = (
+				<div className="row">
+					<Visit.PatientsOverview 
+						fields={leftColumnFields}
+						patients={patientsObjectSpoof} 
+						mini={true} />
+					<Visit.PatientsOverview 
+						fields={rightColumnFields}
+						patients={patientsObjectSpoof} 
+						mini={true} />
+				</div>
+			);
+		}
+
+
 		return (
 			<blockquote className="blockquote">
 				<h3>
@@ -998,14 +1069,22 @@ Visit.Patient = React.createClass({
 		            <span className="hidden-xs-down">{name}</span>
 		            <div className="hidden-sm-up p-t">{name}</div>
 		        </h3>
+		        {summary}
 		        <hr/>
 		        {Object.keys(this.props.fields).map(function(fieldID, index) {
+
+		        	// Figure out which type of field we should render
 		        	switch(this.props.fields[fieldID]['type']) {
+
+
+		        		/*
+		        		 * Input field types
+		        		 */
 		        		case "text":
 		        			return (
 		        				<Fields.Text 
 		        					{...this.props.fields[fieldID]} 
-		        					defaultValue={this.props.hasOwnProperty(fieldID) ? this.props[fieldID] : null}
+		        					defaultValue={this.props.patient.hasOwnProperty(fieldID) ? this.props.patient[fieldID] : null}
 		        					onChange={this.handleFieldChange}
 		        					key={fieldID}
 		        					id={fieldID} />
@@ -1015,7 +1094,7 @@ Visit.Patient = React.createClass({
 		        			return (
 		        				<Fields.Textarea 
 		        					{...this.props.fields[fieldID]} 
-		        					defaultValue={this.props.hasOwnProperty(fieldID) ? this.props[fieldID] : null}
+		        					defaultValue={this.props.patient.hasOwnProperty(fieldID) ? this.props.patient[fieldID] : null}
 		        					onChange={this.handleFieldChange}
 		        					key={fieldID}
 		        					id={fieldID} />
@@ -1025,7 +1104,7 @@ Visit.Patient = React.createClass({
 		        			return (
 		        				<Fields.Number
 		        					{...this.props.fields[fieldID]} 
-		        					defaultValue={this.props.hasOwnProperty(fieldID) ? this.props[fieldID] : null}
+		        					defaultValue={this.props.patient.hasOwnProperty(fieldID) ? this.props.patient[fieldID] : null}
 		        					onChange={this.handleFieldChange}
 		        					key={fieldID}
 		        					id={fieldID} />
@@ -1035,7 +1114,7 @@ Visit.Patient = React.createClass({
 		        			return (
 		        				<Fields.Date
 		        					{...this.props.fields[fieldID]} 
-		        					defaultValue={this.props.hasOwnProperty(fieldID) ? this.props[fieldID] : null}
+		        					defaultValue={this.props.patient.hasOwnProperty(fieldID) ? this.props.patient[fieldID] : null}
 		        					onChange={this.handleFieldChange}
 		        					key={fieldID}
 		        					id={fieldID} />
@@ -1045,7 +1124,7 @@ Visit.Patient = React.createClass({
 							return (
 		        				<Fields.Select 
 		        					{...this.props.fields[fieldID]} 
-		        					defaultValue={this.props.hasOwnProperty(fieldID) ? this.props[fieldID] : null}
+		        					defaultValue={this.props.patient.hasOwnProperty(fieldID) ? this.props.patient[fieldID] : null}
 		        					onChange={this.handleFieldChange}
 		        					key={fieldID}
 		        					id={fieldID} />
@@ -1055,7 +1134,7 @@ Visit.Patient = React.createClass({
 		        			return (
 		        				<Fields.MultiSelect 
 		        					{...this.props.fields[fieldID]} 
-		        					defaultValue={this.props.hasOwnProperty(fieldID) ? this.props[fieldID] : null}
+		        					defaultValue={this.props.patient.hasOwnProperty(fieldID) ? this.props.patient[fieldID] : null}
 		        					onChange={this.handleFieldChange}
 		        					key={fieldID}
 		        					id={fieldID} />
@@ -1065,7 +1144,7 @@ Visit.Patient = React.createClass({
 		        			return (
 								<Fields.File
 		        					{...this.props.fields[fieldID]} 
-		        					defaultValue={this.props.hasOwnProperty(fieldID) ? this.props[fieldID] : null}
+		        					defaultValue={this.props.patient.hasOwnProperty(fieldID) ? this.props.patient[fieldID] : null}
 		        					onChange={this.handleFieldChange}
 		        					key={fieldID}
 		        					id={fieldID} />
@@ -1075,12 +1154,28 @@ Visit.Patient = React.createClass({
 		        			return (
 								<Fields.YesNo
 		        					{...this.props.fields[fieldID]} 
-		        					defaultValue={this.props.hasOwnProperty(fieldID) ? this.props[fieldID] : null}
+		        					defaultValue={this.props.patient.hasOwnProperty(fieldID) ? this.props.patient[fieldID] : null}
 		        					onChange={this.handleFieldChange}
 		        					key={fieldID}
 		        					id={fieldID} />
 		        			);
 		        			break;
+
+		        		/*
+		        		 * Other fields
+		        		 */
+		        		case "header":
+		        			return (
+		        				<Fields.Header 
+		        					{...this.props.fields[fieldID]} 
+		        					key={fieldID}
+		        					id={fieldID} />
+		        			);
+		        			break;
+
+		        		/*
+		        		 * Field type not recognized
+		        		 */
 		        		default:
 		        			return (
 		        				<div className="alert alert-danger">
@@ -1215,3 +1310,19 @@ Visit.FinishModal = React.createClass({
 	}
 
 });
+
+/*
+ *
+ */
+Visit.SummaryItem = React.createClass({
+	render: function() {
+		return (
+			<div className="list-group-item" key={this.props.field + "-" + this.props.index}>
+				<dl>
+					<dt>{this.props.icon} &nbsp; {this.props.name}</dt>
+					<dd>{this.props.value}</dd>
+				</dl>
+			</div>
+		);
+	}
+})

@@ -1,0 +1,163 @@
+{
+  "first_name": {
+    "name": "First name",
+    "type": "text",
+    "mutable": "false",
+    "settings": "",
+    "description": ""
+  },
+  "last_name": {
+    "name": "Last name",
+    "type": "text",
+    "mutable": "false",
+    "settings": "",
+    "description": ""
+  },
+  "photo": {
+    "name": "Photo",
+    "type": "file",
+    "mutable": "false",
+    "settings": {
+      "accept": [
+        "image/*"
+      ]
+    },
+    "description": ""
+  },
+  "birthday": {
+    "name": "Birthday",
+    "type": "date",
+    "mutable": "false",
+    "settings": "",
+    "description": ""
+  },
+  "gender": {
+    "name": "Gender",
+    "type": "select",
+    "mutable": "true",
+    "settings": {
+      "options": [
+        "Male",
+        "Female"
+      ]
+    },
+    "description": ""
+  },
+
+  "demographics_header": {
+    "name": "Demographics",
+    "type": "header",
+    "mutable": "true",
+    "description": "Various patient demographics"
+  },
+  "chapel": {
+    "name": "Chapel",
+    "type": "select",
+    "mutable": "true",
+    "settings": {
+      "options": [
+        "Bassin",
+        "Beaudin",
+        "C Roger",
+        "Champagne",
+        "Claire",
+        "Clerisso",
+        "Dallas",
+        "Dulmene",
+        "Faucodiere",
+        "Fillette",
+        "G Place",
+        "La Trouble",
+        "La Violette",
+        "Le Traitre",
+        "Libon",
+        "Lume",
+        "Margot",
+        "Mayette",
+        "Our Lady of Miracles",
+        "Pigeote",
+        "Pilot",
+        "Poudre Encens",
+        "Proprietaire",
+        "Rosalie",
+        "St. Augustin",
+        "St. Joseph",
+        "St. Therese",
+        "Tantey",
+        "Vastey",
+        "Vastey I",
+        "Vastey II",
+        "Other"
+      ],
+      "allowCustomData": "true"
+    },
+    "description": ""
+  },
+  "married": {
+    "name": "Married",
+    "type": "yesno",
+    "mutable": "true",
+    "settings": "",
+    "description": "Are you married?"
+  },
+  "number_in_house": {
+    "name": "Number in house",
+    "type": "number",
+    "mutable": "true",
+    "settings": "",
+    "description": "How many people live at home?"
+  },
+  "clean_water_access": {
+    "name": "Clean water access",
+    "type": "yesno",
+    "mutable": "true",
+    "settings": "",
+    "description": "Do you have access to clean water?"
+  },
+  "water_access_location": {
+    "name": "Water access location",
+    "type": "select",
+    "mutable": "true",
+    "settings": {
+      "options": [
+        "Spring water / local pipes",
+        "Chemical treatment",
+        "Reverse osmosis",
+        "Well at rectory",
+        "BioSand filter",
+        "River",
+        "Boiled"
+      ],
+      "allowCustomData": "false"
+    },
+    "description": "Where do you get your water?"
+  },
+  "phone": {
+    "name": "Phone",
+    "type": "yesno",
+    "mutable": "true",
+    "settings": "",
+    "description": "Do you own a cell phone?"
+  },
+  
+  "medical_header": {
+    "name": "Medical-related",
+    "type": "header",
+    "mutable": "true",
+    "description": "Known allergies, details"
+  },
+  "allergies": {
+    "name": "Allergies",
+    "type": "yesno",
+    "mutable": "true",
+    "settings": "",
+    "description": "Are you allergic to any medicine?"
+  },
+  "allergies_details": {
+    "name": "Drug allergy details",
+    "type": "textarea",
+    "mutable": "true",
+    "settings": "",
+    "description": ""
+  }
+}

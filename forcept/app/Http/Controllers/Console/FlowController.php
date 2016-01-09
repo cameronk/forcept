@@ -161,7 +161,11 @@ class FlowController extends Controller
             // Attempt to save stage record
             if($stage->save()) {
 
+                // Grab new fields array from stage object
                 $newFields = $stage->toArray()["fields"];
+
+                // Disable adding/deleting/renaming columns for these types
+                $nonInputFieldTypes = array("header");
 
                 // Update table schema.
                 // Compare old to new and look for additions/deletions
@@ -172,8 +176,11 @@ class FlowController extends Controller
                 // Name changes:
                 $nameChanges = [];
                 foreach($newFields as $key => $data) {
-                    // Check if cachedfields has this field key
-                    if(array_key_exists($key, $cachedFields)) {
+                    if(
+                        array_key_exists($key, $cachedFields) // If key exists in cachedFields
+                        && array_key_exists('type', $newFields[$key]) // Make sure that this field has a type (it should..)
+                        && !in_array($newFields[$key]['type'], config('app.nonInputFieldTypes', [])) // If this type is actually an input
+                    ) {
                         // If NEW name is different than OLD name
                         if($data['name'] !== $cachedFields[$key]['name']) {
 
@@ -189,8 +196,11 @@ class FlowController extends Controller
                 // Additions:
                 $additions = [];
                 foreach($newFields as $key => $data) {
-                    // If key did NOT exist in cached fields
-                    if(!array_key_exists($key, $cachedFields)) {
+                    if(
+                        !array_key_exists($key, $cachedFields) // If key did NOT exist in cached fields
+                        && array_key_exists('type', $newFields[$key]) // Make sure that this field has a type (it should..)
+                        && !in_array($newFields[$key]['type'], config('app.nonInputFieldTypes', [])) // If this type is actually an input
+                    ) {
                         $additions[$key] = $data;
                         \Log::debug("Adding " + $key + " as an addition");
                     }
@@ -199,13 +209,14 @@ class FlowController extends Controller
                 // Deletions:
                 $deletions = [];
                 foreach($cachedFields as $key => $data) {
-                    // If key NO LONGER exists in fields
-                    if(!array_key_exists($key, $newFields)) {
+                    if(
+                        !array_key_exists($key, $newFields) // If key NO LONGER exists in fields
+                        && array_key_exists('type', $cachedFields[$key]) // Make sure that this field has a type (it should..)
+                        && !in_array($cachedFields[$key]['type'], config('app.nonInputFieldTypes', [])) // If this type is actually an input
+                    ) {
                         \Log::debug("DELETION: gettype data = " . gettype($data) );
                         $deletions[$key] = $data;
                         $deletions[$key]["_destination"] = $key . "_" . str_slug($data['name']) . "_" . time() . "_backup";
-                        // $deletions[$key]["_datatype"] = $this->determineDataType($data['type']);
-
                         \Log::debug("Adding " + $key + " as a deletion with destination " + $deletions[$key]["_destination"]);
                     }
                 }
@@ -241,18 +252,18 @@ class FlowController extends Controller
                     foreach($additions as $columnName => $data) {
                         \Log::debug("-> adding " . $columnName . ": " . json_encode(($data)));
 
-                        // Create column w/ type string (all columns are stored as VARCHAR(255))
-                        $table
-                            ->string($columnName)
-                            ->comment('Column created ' . date('r') . ' w/ name ' . $data['name']);
-
-                        // switch($data['type']) {
-                        //     case "integer":
-                        //         $table->integer($columnName)->default($data['settings']["default"]);
-                        //         break;
-                        //     default:
-                        //         break;
-                        // }
+                        switch($data['type']) {
+                            case "file":
+                                // Create MEDIUMTEXT column for storing base64 file info
+                                $table->mediumText($columnName)->nullable();
+                                break;
+                            default:
+                                // Create  VARCHAR(255) column for storing most inputs
+                                $table
+                                    ->string($columnName)
+                                    ->comment('Column created ' . date('r') . ' w/ name ' . $data['name']);
+                                break;
+                        }
                     }
 
                 });

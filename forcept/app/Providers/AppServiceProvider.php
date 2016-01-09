@@ -17,7 +17,12 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot()
     {
-        // 
+        // Add app config values
+        config([
+            'app.nonInputFieldTypes' => [
+                'header'
+            ]
+        ]);
 
         Patient::saving(function($patient) {
             if(Auth::check()) {
