@@ -137,8 +137,6 @@ var Visit = React.createClass({displayName: "Visit",
 				confirmFinishVisitResponse: null, 
 				patients: patients 
 			});
-
-			__debug(this.state);
 		}
 	},
 
@@ -310,13 +308,14 @@ Visit.PatientsOverview = React.createClass({displayName: "PatientsOverview",
 
 		var patientOverviews;
 
-
 		// Copy the local patient fields property to a new variable
 		// and remove first/last name, so they don't appear in the list
 		var iterableFields = jQuery.extend(jQuery.extend({}, this.props.fields), Visit.generatedFields);
 			delete iterableFields["first_name"];
 			delete iterableFields["last_name"];
 			delete iterableFields["photo"];
+
+		__debug(this.props.patients, iterableFields);
 
 		console.log("Rendering PatientsOverview with iterableFields:");
 		console.log(iterableFields);
@@ -346,7 +345,8 @@ Visit.PatientsOverview = React.createClass({displayName: "PatientsOverview",
 					}
 				}
 
-				if(this.props.mini !== true) {
+				// Show header if we're not in Mini mode
+				if(this.props.mini == false) {
 					cardHeader = (
 						React.createElement("span", null, 
 			               	React.createElement("div", {className: "card-header"}, 
@@ -374,7 +374,7 @@ Visit.PatientsOverview = React.createClass({displayName: "PatientsOverview",
 
 		                    	var foundData = false;
 		                    	var isGeneratedField = Visit.generatedFields.hasOwnProperty(field);
-
+				                var icon;
 		                    	var value = (
 		                    		React.createElement("span", {className: "pull-right"}, 
 		                    			"No data"
@@ -386,7 +386,7 @@ Visit.PatientsOverview = React.createClass({displayName: "PatientsOverview",
 		                    		&& thisPatient[field] !== null	 	// If the data for this field is null, show "No data"
 		                    		&& thisPatient[field].length > 0	// If string length == 0 or array length == 0, show "No data"
 		                    	) {
-		                    		if(this.props.mini == false || !isGeneratedField) 
+		                    		if(!(this.props.mini == true && isGeneratedField)) // Don't show generated fields in Mini mode 
 		                    		{
 			                    		if( ["string", "number"].indexOf(typeof thisPatient[field]) !== -1 ) // If the field is a string or number
 			                    		{
@@ -464,38 +464,38 @@ Visit.PatientsOverview = React.createClass({displayName: "PatientsOverview",
 			                    				console.log("WARNING: unknown field data type for field " + field);
 			                    			}
 			                    		}
-
-				                    	var icon;
-				                    	if(!isGeneratedField) {
-				                    		if(foundData) {
-				                    			icon = (
-				                    				React.createElement("span", {className: "text-success"}, 
-				                    					"\u2713"
-				                    				)
-				                    			);
-				                    		} else {
-				                    			icon = (
-				                    				React.createElement("span", {className: "text-danger"}, 
-				                    					"\u2717"
-				                    				)
-				                    			);
-				                    		}
-				                    	} else {
-				                    		icon = "\u27a0";
-				                    	}
-
-			                    		return (
-			                    			React.createElement(Visit.SummaryItem, {
-		                    					field: field, 
-		                    					index: index, 
-		                    					icon: icon, 
-		                    					name: iterableFields[field].name, 
-		                    					value: value})
-			                    		);
 			                    	}
 		                    	}
-		                    
-	                    }.bind(this))
+
+		                    	// Choose which icon to display
+		                    	if(!isGeneratedField) {
+		                    		if(foundData) {
+		                    			icon = (
+		                    				React.createElement("span", {className: "text-success"}, 
+		                    					"\u2713"
+		                    				)
+		                    			);
+		                    		} else {
+		                    			icon = (
+		                    				React.createElement("span", {className: "text-danger"}, 
+		                    					"\u2717"
+		                    				)
+		                    			);
+		                    		}
+		                    	} else {
+		                    		icon = "\u27a0";
+		                    	}
+
+		                    	// Render the list item
+								return (
+									React.createElement("div", {className: "list-group-item", key: field + "-" + index}, 
+										React.createElement("dl", null, 
+											React.createElement("dt", null, icon, "   ", iterableFields[field].name), 
+											React.createElement("dd", null, value)
+										)
+									)
+								);
+	                    	}.bind(this))
 		                )
 					)
 				);
@@ -508,6 +508,7 @@ Visit.PatientsOverview = React.createClass({displayName: "PatientsOverview",
 			);
 		}
 
+		// If we're in mini mode, use different column structure
 		if(this.props.mini == true) {
 			return (
 		        React.createElement("div", {className: "col-xs-12 col-lg-6"}, 
@@ -1124,7 +1125,8 @@ Visit.Patient = React.createClass({displayName: "Patient",
 							return (
 		        				React.createElement(Fields.Select, React.__spread({},  
 		        					this.props.fields[fieldID], 
-		        					{defaultValue: this.props.patient.hasOwnProperty(fieldID) ? this.props.patient[fieldID] : null, 
+		        					{multiple: false, 
+		        					defaultValue: this.props.patient.hasOwnProperty(fieldID) ? this.props.patient[fieldID] : null, 
 		        					onChange: this.handleFieldChange, 
 		        					key: fieldID, 
 		        					id: fieldID}))
@@ -1132,9 +1134,10 @@ Visit.Patient = React.createClass({displayName: "Patient",
 		        			break;
 		        		case "multiselect":
 		        			return (
-		        				React.createElement(Fields.MultiSelect, React.__spread({},  
+		        				React.createElement(Fields.Select, React.__spread({},  
 		        					this.props.fields[fieldID], 
-		        					{defaultValue: this.props.patient.hasOwnProperty(fieldID) ? this.props.patient[fieldID] : null, 
+		        					{multiple: true, 
+		        					defaultValue: this.props.patient.hasOwnProperty(fieldID) ? this.props.patient[fieldID] : null, 
 		        					onChange: this.handleFieldChange, 
 		        					key: fieldID, 
 		        					id: fieldID}))
@@ -1310,19 +1313,3 @@ Visit.FinishModal = React.createClass({displayName: "FinishModal",
 	}
 
 });
-
-/*
- *
- */
-Visit.SummaryItem = React.createClass({displayName: "SummaryItem",
-	render: function() {
-		return (
-			React.createElement("div", {className: "list-group-item", key: this.props.field + "-" + this.props.index}, 
-				React.createElement("dl", null, 
-					React.createElement("dt", null, this.props.icon, "   ", this.props.name), 
-					React.createElement("dd", null, this.props.value)
-				)
-			)
-		);
-	}
-})

@@ -223,7 +223,7 @@ FlowEditor.getDefaultFieldState = function(stageType) {
 				type: "select",
 				mutable: true,
 				settings: {
-					options: [],
+					options: {},
 					allowCustomData: false
 				},
 			}
@@ -234,6 +234,22 @@ FlowEditor.getDefaultFieldState = function(stageType) {
 				type: "text",
 				mutable: true,
 				settings: {},
+			};
+			break;
+	}
+};
+FlowEditor.getDefaultOptionState = function(stageType) {
+	switch(stageType) {
+		case "pharmacy":
+			return {
+				value: "",
+				count: 0,
+				inStock: false
+			};
+			break;
+		default:
+			return {
+				value: ""
 			};
 			break;
 	}
@@ -377,7 +393,7 @@ FlowEditor.Field = React.createClass({displayName: "Field",
  			fieldContextPlural = "categories";
  		} else {
  			fieldContext = "Input";
- 			fieldContext = "inputs";
+ 			fieldContextPlural = "inputs";
  		}
 
 
@@ -385,7 +401,13 @@ FlowEditor.Field = React.createClass({displayName: "Field",
  			nameInputGroup = (
  				React.createElement("div", {className: "form-group has-error"}, 
  					React.createElement("label", {className: "form-control-label", htmlFor: "name-" + this.props['data-key']}, "Name:"), 
- 					React.createElement("input", {type: "text", id: "name-" + this.props['data-key'], className: "form-control form-control-error", placeholder: fieldContext + " name", maxLength: "30", onChange: this.handleFieldNameChange, defaultValue: this.state.name}), 
+ 					React.createElement("input", {type: "text", 
+ 						id: "name-" + this.props['data-key'], 
+ 						className: "form-control form-control-error", 
+ 						placeholder: fieldContext + " name", 
+ 						maxLength: "30", 
+ 						onChange: this.handleFieldNameChange, 
+ 						defaultValue: this.state.name}), 
  					React.createElement("div", {className: "alert alert-danger"}, 
  						React.createElement("strong", null, "Heads up:"), " all ", fieldContextPlural, " require a name."
  					)
@@ -534,7 +556,7 @@ FlowEditor.Field.Settings = React.createClass({displayName: "Settings",
 			case "select":
 				console.log("\t| Dialog is for select field, returning initial select options.");
 				return {
-					options: [],
+					options: {},
 					allowCustomData: false,
 				};
 				break;
@@ -543,7 +565,7 @@ FlowEditor.Field.Settings = React.createClass({displayName: "Settings",
 			case "multiselect":
 				console.log("\t| Dialog is for multiselect field, returning initial select options.");
 				return {
-					options: [],
+					options: {},
 				};
 				break;
 
@@ -652,8 +674,12 @@ FlowEditor.Field.Settings = React.createClass({displayName: "Settings",
 		console.log("--[add option: " + this.props['field-key'] + "]--");
 
 		var push = function() {
+
+			// Grab options object, add a new entry with default option state based on stage type
 			var options = this.state.options;
-				options.push("");
+				options[new Date().getTime()] = FlowEditor.getDefaultOptionState(this.props.stageType);
+
+			// Push to our local state
 			this.setState({ options: options });
 
 			// Bump changes to parent element for aggregation
@@ -661,6 +687,7 @@ FlowEditor.Field.Settings = React.createClass({displayName: "Settings",
 
 			console.log("--[/add option: " + this.props['field-key'] + "]--");
 			console.log("");
+
 		}.bind(this);
 
 		if(!this.state.hasOwnProperty('options')) {
@@ -680,9 +707,15 @@ FlowEditor.Field.Settings = React.createClass({displayName: "Settings",
 	/*
 	 * Handle removing of an option (SELECT/MULTISELECT type)
 	 */
-	handleRemoveOption: function(index) {
+	handleRemoveOption: function(optionKey) {
+		// Cache options object
 		var options = this.state.options;
-			options.splice(index, 1);
+
+		// Get rid of it!
+		if(options.hasOwnProperty(optionKey)) {
+			delete options[optionKey];
+		}
+
 		this.setState({ options: options }, function() {
 	
 			// Bump changes to parent element for aggregation
@@ -694,40 +727,45 @@ FlowEditor.Field.Settings = React.createClass({displayName: "Settings",
 	/*
 	 * Handle change option position (SELECT/MULTISELECT type)
 	 */
-	handleChangeOptionPosition: function(where, value) {
+	handleChangeOptionPosition: function(where, optionKey) {
 		return function(event) {
 
-			console.log("Looking to move '" + value + "' " + where);
+			console.log("Looking to move '" + optionKey + "' " + where);
 
-			var opts = this.state.options;
-			var index = this.state.options.indexOf(value);
+			var options = this.state.options;
+			var keys = Object.keys(options);
+			var value = options[optionKey]; 		// Get option data object at optionKey
+			var index = keys.indexOf(optionKey);	// Get index of optionKey
 
+			// If the index was found
 			if(index !== -1) {
 
 				console.log(" -> found @ index " + index);
 
-				var cacheIndex;
+				var cacheKey;
+				var indexKey = keys[index];
 
 				switch(where) {
 					case "up":
-						cacheIndex = index - 1;
+						cacheKey = keys[index - 1]; // get option KEY corresponding to the index above
 						break;
 					case "down":
-						cacheIndex = index + 1;
+						cacheKey = keys[index + 1]; // get option KEY corresponding to the index below
 						break;
 				}	
 
-				var cacheValue = opts[cacheIndex];
-					opts[cacheIndex] = value;
-					opts[index] = cacheValue;
+				// Get option value object by index
+				var cacheValue = options[cacheKey];
+					options[cacheKey] = value;
+					options[indexKey] = cacheValue;
 
-				console.log(" -> caching index: " + cacheIndex);
-				console.log(" -> value @ cached index: " + cacheValue);
+				console.log(" -> caching key: " + cacheKey);
+				console.log(" -> value @ cached key: " + cacheValue);
 				console.log(" -> New options:");
-				console.log(opts);
+				console.log(options);
 
 				this.setState({
-					options: opts
+					options: options
 				}, function() {
 					// Bump state up to parent for aggregation
 					this.props.onChange(this.state);
@@ -742,10 +780,14 @@ FlowEditor.Field.Settings = React.createClass({displayName: "Settings",
 	/*
 	 * Handle change of option text (SELECT/MULTISELECT type)
 	 */
-	handleChangeOptionText: function(index) {
+	handleChangeOptionText: function(optionKey) {
 		return function(event) {
 			var options = this.state.options;
-				options[index] = event.target.value;
+
+			// If the option at this index exists
+			if(options.hasOwnProperty(optionKey)) {
+				options[optionKey].value = event.target.value;
+			}
 
 			this.setState({ options: options }, function() {
 				// Bump changes to parent element for aggregation
@@ -841,7 +883,9 @@ FlowEditor.Field.Settings = React.createClass({displayName: "Settings",
 					)
 				);
 				break;
+
 			case "select":
+			case "multiselect":
 
 				console.log(" -> Options:");
 				console.log(this.state.options);
@@ -849,65 +893,7 @@ FlowEditor.Field.Settings = React.createClass({displayName: "Settings",
 				var optionInputs,
 					customDataCheckbox;
 
-				// If there are options in the state
-				if(this.state.hasOwnProperty('options') && this.state.options.length > 0) {
-
-					// Map option input containers to one variable
-					optionInputs = this.state.options.map(function(value, index) {
-						console.log(" : " + index + "=" + value);
-
-						var upButton, 
-							downButton;
-
-						if(index !== 0) {
-							upButton = (
-								React.createElement("button", {type: "button", className: "btn btn-primary", onClick: this.handleChangeOptionPosition("up", value)}, 
-									"↑"
-								)
-							);
-						}
-
-						if(index !== (this.state.options.length - 1)) {
-							downButton = (
-								React.createElement("button", {type: "button", className: "btn btn-primary", onClick: this.handleChangeOptionPosition("down", value)}, 
-									"↓"
-								)
-							);
-						}
-
-
-						return (
-							React.createElement("div", {className: "field-select-option form-group row", key: index}, 
-								React.createElement("div", {className: "col-sm-12"}, 
-									React.createElement("div", {className: "input-group input-group-sm"}, 
-										React.createElement("input", {type: "text", placeholder: "Enter an option", className: "form-control", value: value, onChange: this.handleChangeOptionText(index)}), 
-										React.createElement("span", {className: "input-group-btn"}, 
-											upButton, 
-											downButton, 
-											React.createElement("button", {type: "button", className: "btn btn-danger", onClick: this.handleRemoveOption.bind(this, index)}, 
-											  	React.createElement("span", null, "×")
-											)
-										)
-									)
-								)
-							)
-						);
-					}.bind(this));
-
-					// Add a checkbox at the end
-					customDataCheckbox = (
-						React.createElement("div", {className: "col-sm-12"}, 
-							React.createElement("div", {className: "checkbox m-t"}, 
-								React.createElement("label", null, 
-									React.createElement("input", {type: "checkbox", 
-										checked: this.state.allowCustomData == true, 
-										onChange: this.handleAllowCustomDataChange}), 
-										"Allow users to enter custom data for this field"
-								)
-							)
-						)
-					);
-				} else {
+				var noOptionsDefined = function() {
 
 					// No options available, show info message
 					optionInputs = (
@@ -918,87 +904,91 @@ FlowEditor.Field.Settings = React.createClass({displayName: "Settings",
 					customDataCheckbox = (
 						React.createElement("span", null)
 					);
+				};
+
+				// If there are options in the state
+				if(this.state.hasOwnProperty('options')) {
+					var optionKeys = Object.keys(this.state.options);
+
+					if(optionKeys.length > 0) {
+
+						// Map option input containers to one variable
+						optionInputs = optionKeys.map(function(optionKey, index) {
+							// console.log(" : " + index + "=" + value);
+
+							var thisOption = this.state.options[optionKey];
+
+							var upButton, 
+								downButton;
+
+							if(index !== 0) {
+								upButton = (
+									React.createElement("button", {type: "button", className: "btn btn-primary", onClick: this.handleChangeOptionPosition("up", optionKey)}, 
+										"↑"
+									)
+								);
+							}
+
+							if(index !== (optionKeys.length - 1)) {
+								downButton = (
+									React.createElement("button", {type: "button", className: "btn btn-primary", onClick: this.handleChangeOptionPosition("down", optionKey)}, 
+										"↓"
+									)
+								);
+							}
+
+
+							return (
+								React.createElement("div", {className: "field-select-option form-group row", key: index}, 
+									React.createElement("div", {className: "col-sm-12"}, 
+										React.createElement("div", {className: "input-group input-group-sm"}, 
+											React.createElement("input", {type: "text", 
+												placeholder: "Enter a value for this option", 
+												className: "form-control", 
+												value: thisOption.value, 
+												onChange: this.handleChangeOptionText(optionKey)}), 
+											React.createElement("span", {className: "input-group-btn"}, 
+												upButton, 
+												downButton, 
+												React.createElement("button", {type: "button", className: "btn btn-danger", onClick: this.handleRemoveOption.bind(this, optionKey)}, 
+												  	React.createElement("span", null, "×")
+												)
+											)
+										)
+									)
+								)
+							);
+						}.bind(this));
+
+						// Add a checkbox at the end
+						customDataCheckbox = (
+							React.createElement("div", {className: "col-sm-12"}, 
+								React.createElement("div", {className: "checkbox m-t"}, 
+									React.createElement("label", null, 
+										React.createElement("input", {type: "checkbox", 
+											checked: this.state.allowCustomData == true, 
+											onChange: this.handleAllowCustomDataChange}), 
+											"Allow users to enter custom data for this field"
+									)
+								)
+							)
+						);
+					} else {
+						noOptionsDefined();
+					}
+				} else {
+					noOptionsDefined();
 				}
 
 				return (
 					React.createElement("div", {className: "field-select-options-contain"}, 
-		            	React.createElement("h5", null, this.props.stageType == "pharmacy" ? "Drugs in this category" : "Options", " (",  this.state.hasOwnProperty('options') ? this.state.options.length : 0, ")"), 
+		            	React.createElement("h5", null, this.props.stageType == "pharmacy" ? "Drugs in this category" : "Options", " (",  this.state.hasOwnProperty('options') ? Object.keys(this.state.options).length : 0, ")"), 
 						optionInputs, 
 						customDataCheckbox, 
 						mutabilityMessage, 
-						React.createElement("button", {type: "button", className: "btn btn-primary-outline", onClick: this.handleAddOption}, "Add another ", this.props.stageType == "pharmacy" ? "drug" : "option")
-					)
-				);
-
-				break;
-
-			case "multiselect":
-
-				var optionInputs;
-
-				// If there are options in the state
-				if(this.state.hasOwnProperty('options') && this.state.options.length > 0) {
-
-					// Map option input containers to one variable
-					optionInputs = this.state.options.map(function(value, index) {
-						console.log(" : " + index + "=" + value);
-
-						var upButton, 
-							downButton;
-
-						if(index !== 0) {
-							upButton = (
-								React.createElement("button", {type: "button", className: "btn btn-primary", onClick: this.handleChangeOptionPosition("up", value)}, 
-									"↑"
-								)
-							);
-						}
-
-						if(index !== (this.state.options.length - 1)) {
-							downButton = (
-								React.createElement("button", {type: "button", className: "btn btn-primary", onClick: this.handleChangeOptionPosition("down", value)}, 
-									"↓"
-								)
-							);
-						}
-
-						return (
-							React.createElement("div", {className: "field-select-option form-group row", key: index}, 
-								React.createElement("div", {className: "col-sm-12"}, 
-									React.createElement("div", {className: "input-group input-group-sm"}, 
-										React.createElement("input", {type: "text", placeholder: "Enter an option", className: "form-control", value: value, onChange: this.handleChangeOptionText(index)}), 
-										React.createElement("span", {className: "input-group-btn"}, 										
-											upButton, 
-											downButton, 
-											React.createElement("button", {type: "button", onClick: this.handleRemoveOption.bind(this, index), className: "btn btn-danger"}, 
-											  	React.createElement("span", null, "×")
-											)
-										)
-									)
-								)
-							)
-						);
-					}.bind(this));
-
-				} else {
-
-					// No options available, show info message
-					optionInputs = (
-						React.createElement("div", {className: "alert alert-info"}, 
-							"No options have been defined — try ", React.createElement("a", {className: "alert-link", onClick: this.handleAddOption}, "adding one"), "." 
+						React.createElement("button", {type: "button", className: "btn btn-primary-outline", onClick: this.handleAddOption}, 
+							"Add another ", this.props.stageType == "pharmacy" ? "drug" : "option"
 						)
-					);
-					customDataCheckbox = (
-						React.createElement("span", null)
-					);
-				}
-
-				return (
-					React.createElement("div", {className: "field-select-options-contain"}, 
-		            	React.createElement("h5", null, "Options (",  this.state.hasOwnProperty('options') ? this.state.options.length : 0, ")"), 
-						optionInputs, 
-						mutabilityMessage, 
-						React.createElement("button", {type: "button", className: "btn btn-primary-outline", onClick: this.handleAddOption}, "Add another option")
 					)
 				);
 

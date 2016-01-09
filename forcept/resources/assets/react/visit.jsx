@@ -137,8 +137,6 @@ var Visit = React.createClass({
 				confirmFinishVisitResponse: null, 
 				patients: patients 
 			});
-
-			__debug(this.state);
 		}
 	},
 
@@ -310,13 +308,14 @@ Visit.PatientsOverview = React.createClass({
 
 		var patientOverviews;
 
-
 		// Copy the local patient fields property to a new variable
 		// and remove first/last name, so they don't appear in the list
 		var iterableFields = jQuery.extend(jQuery.extend({}, this.props.fields), Visit.generatedFields);
 			delete iterableFields["first_name"];
 			delete iterableFields["last_name"];
 			delete iterableFields["photo"];
+
+		__debug(this.props.patients, iterableFields);
 
 		console.log("Rendering PatientsOverview with iterableFields:");
 		console.log(iterableFields);
@@ -346,7 +345,8 @@ Visit.PatientsOverview = React.createClass({
 					}
 				}
 
-				if(this.props.mini !== true) {
+				// Show header if we're not in Mini mode
+				if(this.props.mini == false) {
 					cardHeader = (
 						<span>
 			               	<div className="card-header">
@@ -374,7 +374,7 @@ Visit.PatientsOverview = React.createClass({
 
 		                    	var foundData = false;
 		                    	var isGeneratedField = Visit.generatedFields.hasOwnProperty(field);
-
+				                var icon;
 		                    	var value = (
 		                    		<span className="pull-right">
 		                    			No data
@@ -386,7 +386,7 @@ Visit.PatientsOverview = React.createClass({
 		                    		&& thisPatient[field] !== null	 	// If the data for this field is null, show "No data"
 		                    		&& thisPatient[field].length > 0	// If string length == 0 or array length == 0, show "No data"
 		                    	) {
-		                    		if(this.props.mini == false || !isGeneratedField) 
+		                    		if(!(this.props.mini == true && isGeneratedField)) // Don't show generated fields in Mini mode 
 		                    		{
 			                    		if( ["string", "number"].indexOf(typeof thisPatient[field]) !== -1 ) // If the field is a string or number
 			                    		{
@@ -464,38 +464,38 @@ Visit.PatientsOverview = React.createClass({
 			                    				console.log("WARNING: unknown field data type for field " + field);
 			                    			}
 			                    		}
-
-				                    	var icon;
-				                    	if(!isGeneratedField) {
-				                    		if(foundData) {
-				                    			icon = (
-				                    				<span className="text-success">
-				                    					{"\u2713"}
-				                    				</span>
-				                    			);
-				                    		} else {
-				                    			icon = (
-				                    				<span className="text-danger">
-				                    					{"\u2717"}
-				                    				</span>
-				                    			);
-				                    		}
-				                    	} else {
-				                    		icon = "\u27a0";
-				                    	}
-
-			                    		return (
-			                    			<Visit.SummaryItem
-		                    					field={field}
-		                    					index={index}
-		                    					icon={icon}
-		                    					name={iterableFields[field].name}
-		                    					value={value} />
-			                    		);
 			                    	}
 		                    	}
-		                    
-	                    }.bind(this))}
+
+		                    	// Choose which icon to display
+		                    	if(!isGeneratedField) {
+		                    		if(foundData) {
+		                    			icon = (
+		                    				<span className="text-success">
+		                    					{"\u2713"}
+		                    				</span>
+		                    			);
+		                    		} else {
+		                    			icon = (
+		                    				<span className="text-danger">
+		                    					{"\u2717"}
+		                    				</span>
+		                    			);
+		                    		}
+		                    	} else {
+		                    		icon = "\u27a0";
+		                    	}
+
+		                    	// Render the list item
+								return (
+									<div className="list-group-item" key={field + "-" + index}>
+										<dl>
+											<dt>{icon} &nbsp; {iterableFields[field].name}</dt>
+											<dd>{value}</dd>
+										</dl>
+									</div>
+								);
+	                    	}.bind(this))}
 		                </div>
 					</div>
 				);
@@ -508,6 +508,7 @@ Visit.PatientsOverview = React.createClass({
 			);
 		}
 
+		// If we're in mini mode, use different column structure
 		if(this.props.mini == true) {
 			return (
 		        <div className="col-xs-12 col-lg-6">
@@ -1124,6 +1125,7 @@ Visit.Patient = React.createClass({
 							return (
 		        				<Fields.Select 
 		        					{...this.props.fields[fieldID]} 
+		        					multiple={false}
 		        					defaultValue={this.props.patient.hasOwnProperty(fieldID) ? this.props.patient[fieldID] : null}
 		        					onChange={this.handleFieldChange}
 		        					key={fieldID}
@@ -1132,8 +1134,9 @@ Visit.Patient = React.createClass({
 		        			break;
 		        		case "multiselect":
 		        			return (
-		        				<Fields.MultiSelect 
+		        				<Fields.Select 
 		        					{...this.props.fields[fieldID]} 
+		        					multiple={true}
 		        					defaultValue={this.props.patient.hasOwnProperty(fieldID) ? this.props.patient[fieldID] : null}
 		        					onChange={this.handleFieldChange}
 		        					key={fieldID}
@@ -1310,19 +1313,3 @@ Visit.FinishModal = React.createClass({
 	}
 
 });
-
-/*
- *
- */
-Visit.SummaryItem = React.createClass({
-	render: function() {
-		return (
-			<div className="list-group-item" key={this.props.field + "-" + this.props.index}>
-				<dl>
-					<dt>{this.props.icon} &nbsp; {this.props.name}</dt>
-					<dd>{this.props.value}</dd>
-				</dl>
-			</div>
-		);
-	}
-})

@@ -183,97 +183,148 @@ Fields.Select = React.createClass({
 	getInitialState: function() {
 		return {
 			isCustomDataOptionSelected: false,
+			//customDataInputValue: "",
 		};
 	},
 
 	onSelectInputChange: function(event) {
 
-		// Check value before bubbling.
-		switch(event.target.value) {
-			case "__default__":
-				// Spoof event target value
-				this.setState({ isCustomDataOptionSelected: false });
-				this.props.onChange(this.props.id, "");
-				break;
-			case "__custom__":
-				// Set top-level state value to nothing (so it says "No data")
-				this.setState({ isCustomDataOptionSelected: true });
-				this.props.onChange(this.props.id, "");
-				break;
-			default:
-				// Bubble event up to handler passed from Visit
-				// (pass field ID and event)
-				this.setState({ isCustomDataOptionSelected: false });
-				this.props.onChange(this.props.id, event.target.value);
-				break;
+		if(this.props.multiple == true) {
+
+			var options = event.target.options;
+			var values = [];
+			for(var i = 0; i < options.length; i++) {
+				if(options[i].selected) {
+					values.push(options[i].value);
+				}
+			}
+
+			/*var customDataSelectedIndex = values.indexOf("__custom__");
+
+			if(customDataSelectedIndex !== -1) {
+				console.log("onSelectInputChange: found customDataSelectedIndex @ " + customDataSelectedIndex);
+				console.log("Current customDataInputValue is " + customDataInputValue);
+				// Custom data is selected, remove from array and put text input value in its place
+				values.splice(customDataSelectedIndex, 1);
+				values.push(this.state.customDataInputValue);
+			}
+
+			console.log("onSelectInputChange: Values are currently: ");
+			console.log(values);
+
+			this.setState({
+				isCustomDataOptionSelected: customDataSelectedIndex !== -1
+			});*/
+			this.props.onChange(this.props.id, values);
+
+		} else {
+			// Check value before bubbling.
+			switch(event.target.value) {
+				case "__default__":
+					// Spoof event target value
+					this.setState({ isCustomDataOptionSelected: false });
+					this.props.onChange(this.props.id, "");
+					break;
+				case "__custom__":
+					// Set top-level state value to nothing (so it says "No data")
+					this.setState({ isCustomDataOptionSelected: true });
+					this.props.onChange(this.props.id, "");
+					break;
+				default:
+					// Bubble event up to handler passed from Visit
+					// (pass field ID and event)
+					this.setState({ isCustomDataOptionSelected: false });
+					this.props.onChange(this.props.id, event.target.value);
+					break;
+			}
 		}
 	},
 
 	onCustomDataInputChange: function(event) {
+		/*console.log("Caught customDataInputChange: " + event.target.value);
+		this.setState({
+			customDataInputValue: event.target.value
+		});*/
 		this.props.onChange(this.props.id, event.target.value);
 	},
 
 	render: function() {
 
 		var options,
-			displaySelect;
+			optionsKeys,
+			optionsDOM,
+			displaySelect,
+			defaultOption,
+			customDataOption,
+			customDataInput;
 
-		// Default option (prepended to select)
-		var defaultOption = (
-			<option value="__default__" disabled="disabled">Choose an option&hellip;</option>
-		);
-		// Custom data option (appended to select IF allowCustomData is set)
-		var customDataOption = (
-			<option value="__custom__">Enter custom data for this field &raquo;</option>
-		);
-
-		// Custom data input 
-		var customDataInput = (
-			<input type="text" className="form-control" placeholder="Enter custom data here" onChange={this.onCustomDataInputChange} />
-		);
-
-		// Was there an error with options?
-		var optionsError = false;
-
-		// Load options if they are present, otherwise error
-		if(this.props.settings.hasOwnProperty('options') && Array.isArray(this.props.settings.options)) {
-			options = this.props.settings.options.map(function(option, index) {
-				return (
-					<option value={option} key={this.props.id + "-option-" + index}>{option}</option>
-				);
-			}.bind(this));
+		if(this.props.settings.hasOwnProperty('options')) {
+			options = this.props.settings.options;
+			optionsKeys = Object.keys(options);
+		} else {
+			options = {};
+			optionsKeys = [];
 		}
 
-		// If no error, build select input. Otherwise, display an error message.
-		//if(!optionsError) {
-			displaySelect = (
-				<select className="form-control" onChange={this.onSelectInputChange} defaultValue={this.props.defaultValue !== null ? this.props.defaultValue : "__default__"}>
+		// Default option (prepended to select)
+		if(this.props.multiple == false) {
+
+			defaultOption = (
+				<option value="__default__" disabled="disabled">Choose an option&hellip;</option>
+			);
+
+			// Custom data option (appended to select IF allowCustomData is set)
+			if(isTrue(this.props.settings.allowCustomData)) {
+				customDataOption = (
+					<option value="__custom__">Enter custom data for this field &raquo;</option>
+				);
+			}
+
+			// Custom data input (show if custom data option select state is true)
+			if(isTrue(this.state.isCustomDataOptionSelected)) {
+				customDataInput = (
+					<input type="text" className="form-control" placeholder="Enter custom data here" onChange={this.onCustomDataInputChange} />
+				);
+			}
+		}
+
+		// Loop through and push options to optionsDOM
+		optionsDOM = optionsKeys.map(function(optionKey, index) {
+			return (
+				<option value={options[optionKey].value} key={this.props.id + "-option-" + index}>{options[optionKey].value}</option>
+			);
+		}.bind(this));
+
+		// Set size if this is a multiselect input
+		var size = this.props.multiple ? (optionsKeys.length > 30 ? 30 : optionsKeys.length ) : 1;
+		
+		// Build the select input
+		displaySelect = (
+			<select 
+				className="form-control" 
+				onChange={this.onSelectInputChange} 
+				defaultValue={this.props.defaultValue !== null ? this.props.defaultValue : (this.props.multiple ? [] : "__default__")}
+				multiple={this.props.multiple}
+				size={size}>
 					{defaultOption}
-					{options}
-					{isTrue(this.props.settings.allowCustomData) ? customDataOption : ""}
-				</select>
-			);
-		/*} else {
-			displaySelect = (
-				<div className="alert alert-danger">
-					<strong>Warning:</strong> no options defined for select input {this.props.id}
-				</div>
-			);
-		}*/
+					{optionsDOM}
+					{customDataOption}
+			</select>
+		);
 
 		return (
 			<div className="form-group row">
 				<Fields.FieldLabel {...this.props} />
 				<div className={Fields.inputColumnClasses}>
 					{displaySelect}
-					{isTrue(this.state.isCustomDataOptionSelected) ? customDataInput : ""}
+					{customDataInput}
 				</div>
 			</div>
 		);
 	}
 });
 
-Fields.MultiSelect = React.createClass({
+/*Fields.MultiSelect = React.createClass({
 
 	getInitialState: function() {
 		return {};
@@ -337,7 +388,7 @@ Fields.MultiSelect = React.createClass({
 			</div>
 		);
 	}
-});
+});*/
 
 Fields.File = React.createClass({
 	getInitialState: function() {
