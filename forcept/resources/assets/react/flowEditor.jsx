@@ -2,17 +2,6 @@
  * flowEditor.jsx
  */
 
-/* =================================================== */
-
-var flowEditor_CustomizableFields = ["select", "multiselect", "file"];
-var flowEditor_DefaultFieldState = {
-	name: "",
-	type: "text",
-	mutable: true,
-	settings: {},
-};
-
-
 /**
  * Heirarchy
  *
@@ -23,6 +12,12 @@ var flowEditor_DefaultFieldState = {
  *   | Passes down:
  *   |   field type, onChange handler
  *   ==> FlowEditorFieldConfiguratorSettingsDialog
+ *
+ * Properties:
+ *  - stageName: current name of this stage
+ *  - stageType: current type of this stage
+ *  - fields: currently saved fields
+ *  - handleSubmit: handler for submitting fields to server
  */
 
 var FlowEditor = React.createClass({
@@ -58,7 +53,7 @@ var FlowEditor = React.createClass({
 		var fieldValidities = this.state.fieldValidities;
 		var key = new Date().getTime();
 
-		fields[key] = flowEditor_DefaultFieldState; // Default settings for a new input
+		fields[key] = FlowEditor.getDefaultFieldState(this.props.stageType); // Default settings for a new input
 		fieldValidities[key] = false; // Input defaults to invalid
 
 		this.setState({ fields: fields, fieldValidities: fieldValidities });
@@ -174,12 +169,14 @@ var FlowEditor = React.createClass({
 				return (
 					<FlowEditor.Field
 						{...this.state.fields[key]} 
-						onChange={this.checkFieldValidity.bind(this, key)} 
-						onRemove={this.handleRemoveField.bind(this, key)} 
+						stageType={this.props.stageType}
 						key={key} 
 						data-key={key} 
 						ref={key} 
-						index={index} />
+						index={index} 
+
+						onChange={this.checkFieldValidity.bind(this, key)} 
+						onRemove={this.handleRemoveField.bind(this, key)} />
 				);
 			}.bind(this));
 		} else {
@@ -216,9 +213,31 @@ var FlowEditor = React.createClass({
 
 });
 
-
-FlowEditor.DisableTypeChanges = [ "multiselect", "file" ];
-
+FlowEditor.customizableFields 	= [ "select", "multiselect", "file" ];
+FlowEditor.disableTypeChanges 	= [ "multiselect", "file" ];
+FlowEditor.getDefaultFieldState = function(stageType) {
+	switch(stageType) {
+		case "pharmacy":
+			return {
+				name: "",
+				type: "select",
+				mutable: true,
+				settings: {
+					options: [],
+					allowCustomData: false
+				},
+			}
+			break;
+		default:
+			return {
+				name: "",
+				type: "text",
+				mutable: true,
+				settings: {},
+			};
+			break;
+	}
+};
 
 /**
  * Field JSON structure
@@ -248,7 +267,7 @@ FlowEditor.Field = React.createClass({
 	 * Initial state for a field
 	 */
  	getInitialState: function() {
- 		return flowEditor_DefaultFieldState;
+ 		return FlowEditor.getDefaultFieldState(this.props.stageType);
  	},
 
  	/*
@@ -264,7 +283,7 @@ FlowEditor.Field = React.createClass({
  			// Settings
  			description: this.props.hasOwnProperty("description") ? this.props.description : null,
  			settings: 
- 				flowEditor_CustomizableFields.indexOf(this.props.type) !== -1 // If this field is a customizable field
+ 				(FlowEditor.customizableFields).indexOf(this.props.type) !== -1 // If this field is a customizable field
  				&& typeof this.props.settings === "object" // If the settings object exists
  				&& Object.keys(this.props.settings).length > 0  // If the settings object has parameters
  					? this.props.settings // Use the settings object
@@ -347,29 +366,42 @@ FlowEditor.Field = React.createClass({
 
  		var nameInput,
  			description,
- 			disableTypeChangeNotification;
+ 			typeSelect,
+ 			disableTypeChangeNotification,
+ 			fieldContext,
+ 			fieldContextPlural;
+
+ 		var fieldContext = this.props.stageType == "pharmacy" ? "category" : "input";
+ 		if(this.props.stageType == "pharmacy") {
+ 			fieldContext = "Category";
+ 			fieldContextPlural = "categories";
+ 		} else {
+ 			fieldContext = "Input";
+ 			fieldContext = "inputs";
+ 		}
+
 
  		if(this.state.name.length == 0) {
  			nameInputGroup = (
  				<div className="form-group has-error">
- 					<label className="form-control-label" for={"name-" + this.props['data-key']}>Name:</label>
- 					<input type="text" id={"name-" + this.props['data-key']} className="form-control form-control-error" placeholder="Field name" maxLength="30" onChange={this.handleFieldNameChange} defaultValue={this.state.name} />
+ 					<label className="form-control-label" htmlFor={"name-" + this.props['data-key']}>Name:</label>
+ 					<input type="text" id={"name-" + this.props['data-key']} className="form-control form-control-error" placeholder={fieldContext + " name"} maxLength="30" onChange={this.handleFieldNameChange} defaultValue={this.state.name} />
  					<div className="alert alert-danger">
- 						<strong>Heads up:</strong> all inputs require a name.
+ 						<strong>Heads up:</strong> all {fieldContextPlural} require a name.
  					</div>
  				</div>
  			);
  		} else {
  			nameInputGroup = (
  				<div className="form-group">
- 					<label className="form-control-label" for={"name-" + this.props['data-key']}>Name:</label>
+ 					<label className="form-control-label" htmlFor={"name-" + this.props['data-key']}>Name:</label>
  					<input type="text" id={"name-" + this.props['data-key']} className="form-control" placeholder="Field name" maxLength="30" onChange={this.handleFieldNameChange} defaultValue={this.state.name} />	
  				</div>	
  			);
  		}
 
  		// Check if type change should be disabled for this input type
- 		if(FlowEditor.DisableTypeChanges.indexOf(this.state.type) !== -1) {
+ 		if(FlowEditor.disableTypeChanges.indexOf(this.state.type) !== -1) {
  			disableTypeChangeNotification = (
  				<div className="alert alert-info">
  					Once created, the <strong>{this.state.type}</strong> field type cannot be changed to any other type.
@@ -383,6 +415,33 @@ FlowEditor.Field = React.createClass({
  			description = this.props.description;
  		}
 
+ 		// Show option to change field type if NOT pharmacy stage
+ 		if(this.props.stageType !== "pharmacy") {
+ 			typeSelect = (
+				<div className="form-group">
+					<label className="form-control-label">Type:</label>
+ 					<select className="form-control" disabled={!this.state.mutable || FlowEditor.disableTypeChanges.indexOf(this.state.type) !== -1} onChange={this.handleFieldTypeChange} defaultValue={this.state.type}>
+ 						<optgroup label="Inputs">
+	 						<option value="text">Text input</option>
+	 						<option value="textarea">Textarea input</option>
+	 						<option value="number">Number input</option>
+	 						<option value="date">Date input</option>
+	 					</optgroup>
+	 					<optgroup label="Multiple-option fields">
+	 						<option value="select">Select input with options</option>
+	 						<option value="multiselect">Multi-select input with options</option>
+	 						<option value="file">File input</option>
+	 						<option value="yesno">Yes or no buttons</option>
+	 					</optgroup>
+	 					<optgroup label="Other">
+	 						<option value="header">Group fields with a header</option>
+	 					</optgroup>
+ 					</select>
+ 					{disableTypeChangeNotification}
+ 				</div>
+	 		);
+ 		}
+
  		return (
  			<div data-key={this.props['data-key']} data-index={this.props.index} className="row flow-editor-configurator-row p-t"> 
 
@@ -393,12 +452,20 @@ FlowEditor.Field = React.createClass({
 	 						<h4 className="field-title">
 		 						<span className="label label-info">#{this.props.index + 1}</span>
 		 						<span className="label label-default">{this.props['data-key']}</span>
-		 						<span className="title hidden-lg-down">{this.state.name.length > 0 ? '"' + this.state.name + '"' : "Untitled " + this.state.type + " input"}</span>
+		 						<span className="title hidden-lg-down">
+		 							{this.state.name.length > 0 
+		 								? '"' + this.state.name + '"' 
+		 								: (this.props.stageType == "pharmacy")
+		 									? "Untitled category"
+		 									: "Untitled " + this.state.type + " input"}
+		 						</span>
 		 					</h4>
  						</div>
 	 					<div className="col-sm-12 col-md-4">
 		 					<h4 className="field-title m-b">
-		 						<button type="button" className="btn btn-sm btn-danger-outline pull-right" disabled={!this.state.mutable} onClick={this.handleRemoveField}>&times; Remove {this.state.name.length > 0 ? '"' + this.state.name + '"' : 'this input'}</button>
+		 						<button type="button" className="btn btn-sm btn-danger-outline pull-right" disabled={!this.state.mutable} onClick={this.handleRemoveField}>
+		 							&times; Remove {this.state.name.length > 0 ? '"' + this.state.name + '"' : 'this ' + fieldContext.toLowerCase()}
+		 						</button>
 		 					</h4>
 		 				</div>
  					</div>
@@ -407,27 +474,7 @@ FlowEditor.Field = React.createClass({
  				{ /* Configurator: name/type */ }
  				<div className="col-sm-4 col-xs-12">
  					{nameInputGroup}
- 					<div className="form-group">
- 						<label className="form-control-label">Type:</label>
-	 					<select className="form-control" disabled={!this.state.mutable || FlowEditor.DisableTypeChanges.indexOf(this.state.type) !== -1} onChange={this.handleFieldTypeChange} defaultValue={this.state.type}>
-	 						<optgroup label="Inputs">
-		 						<option value="text">Text input</option>
-		 						<option value="textarea">Textarea input</option>
-		 						<option value="number">Number input</option>
-		 						<option value="date">Date input</option>
-		 					</optgroup>
-		 					<optgroup label="Multiple-option fields">
-		 						<option value="select">Select input with options</option>
-		 						<option value="multiselect">Multi-select input with options</option>
-		 						<option value="file">File input</option>
-		 						<option value="yesno">Yes or no buttons</option>
-		 					</optgroup>
-		 					<optgroup label="Other">
-		 						<option value="header">Group fields with a header</option>
-		 					</optgroup>
-	 					</select>
-	 					{disableTypeChangeNotification}
-	 				</div>
+ 					{typeSelect}
 	 				<div className="form-group">
 	 					<label className="form-control-label">Description:</label>
 	 					<textarea 
@@ -444,11 +491,13 @@ FlowEditor.Field = React.createClass({
  				{ /* Configurator: settings */ }
 	            <div className="col-sm-8 col-xs-12">
 	                <FlowEditor.Field.Settings
+	                	stageType={this.props.stageType}
 	                	ref={'settings-' + this.props['data-key']}
 	                	field-key={this.props['data-key']}
 	                	type={this.state.type} 
 	                	mutable={this.state.mutable}
 	                	settings={this.state.settings}
+
 	                	onChange={this.handleFieldSettingsChange} 
 	                	/>
 	            </div>
@@ -460,7 +509,15 @@ FlowEditor.Field = React.createClass({
 
 
 /*
+ * Properties:
+ *  - stageType: 
+ *  - ref
+ *  - field-key
+ *  - type: type of the input for which we are showing options
+ *  - mutable: is the field mutable
+ *  - settings: previously defined settings stage
  *
+ *  - onChange: define handler for when options change
  */
 FlowEditor.Field.Settings = React.createClass({
 
@@ -865,11 +922,11 @@ FlowEditor.Field.Settings = React.createClass({
 
 				return (
 					<div className="field-select-options-contain">
-		            	<h5>Options ({ this.state.hasOwnProperty('options') ? this.state.options.length : 0 })</h5>
+		            	<h5>{this.props.stageType == "pharmacy" ? "Drugs in this category" : "Options"} ({ this.state.hasOwnProperty('options') ? this.state.options.length : 0 })</h5>
 						{optionInputs}
 						{customDataCheckbox}
 						{mutabilityMessage}
-						<button type="button" className="btn btn-primary-outline" onClick={this.handleAddOption}>Add another option</button>
+						<button type="button" className="btn btn-primary-outline" onClick={this.handleAddOption}>Add another {this.props.stageType == "pharmacy" ? "drug" : "option"}</button>
 					</div>
 				);
 

@@ -131,6 +131,8 @@
     var FlowEditorFields = ReactDOM.render(
         React.createElement(FlowEditor, {
             stageName: $("#stage-name").val(),
+            stageType: "{{ $stage->type }}",
+            
             fields: configuration,
             handleSubmit: function() {
                 var submitAJAX = function() {
