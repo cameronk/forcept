@@ -107,7 +107,7 @@ class VisitController extends Controller
 
                 $fieldsToObtain = array();
                 $fieldsToObtain[] = "patient_id"; // Make sure to retrieve the patient ID!
-                
+
                 foreach($stageData->inputFields as $fieldKey => $fieldData) {
                     // Push this field to the summary array
                     $summaryFields[$fieldKey] = $fieldData;

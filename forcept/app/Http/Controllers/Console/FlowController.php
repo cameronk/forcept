@@ -43,7 +43,9 @@ class FlowController extends Controller
     public function index()
     {
         //
-        return view('console/flow/index');
+        return view('console/flow/index', [
+            'stages' => Stage::orderBy('order', 'asc')->get()
+        ]);
     }
 
     /**
@@ -66,28 +68,35 @@ class FlowController extends Controller
     public function store(CreateStageRequest $request)
     {
         //
-        $stage = new Stage;
-            $stage->name = $request->name;
-            $stage->type = $request->type;
-            $stage->fields = [];
+        if($request->type == "pharmacy" && Stage::where('type', 'pharmacy')->count() > 0) {
 
-            // Save stage model
-            if($stage->save()) {
+            return redirect()->route('console::flow::create')->with('alert', ['type' => 'failure', 'message' => 'You can have only one Pharmacy stage.']);
 
-                // Add the order 
-                $stage->order = $stage->id;
-                $stage->save();
+        } else {
 
-                // Create table schema
-                Schema::create($stage->tableName, function(Blueprint $table) {
-                    $table->increments('id');
-                    $table->integer('visit_id');
-                    $table->integer('patient_id');
-                });
+            $stage = new Stage;
+                $stage->name = $request->name;
+                $stage->type = $request->type;
+                $stage->fields = [];
 
-                return redirect()->route('console::flow::index')->with('alert', [ 'type' => 'success', 'message' => 'Stage created. Choose "Edit" below to get started.' ]);
-                
-            } else return redirect()->route('console::flow::index')->with('alert', [ 'type' => 'failure', 'message' => 'An error occurred, and the stage model could not be created.' ]);
+                // Save stage model
+                if($stage->save()) {
+
+                    // Add the order 
+                    $stage->order = $stage->id;
+                    $stage->save();
+
+                    // Create table schema
+                    Schema::create($stage->tableName, function(Blueprint $table) {
+                        $table->increments('id');
+                        $table->integer('visit_id');
+                        $table->integer('patient_id');
+                    });
+
+                    return redirect()->route('console::flow::index')->with('alert', [ 'type' => 'success', 'message' => 'Stage created. Choose "Edit" below to get started.' ]);
+                    
+                } else return redirect()->route('console::flow::index')->with('alert', [ 'type' => 'failure', 'message' => 'An error occurred, and the stage model could not be created.' ]);
+        }
     }
 
     /**
@@ -110,7 +119,9 @@ class FlowController extends Controller
     public function edit($id)
     {
         //
-        return view('console/flow/edit', ['stage' => Stage::where('id', $id)->first()]);
+        return view('console/flow/edit', [
+            'stage' => Stage::where('id', $id)->first()
+        ]);
     }
 
     /**
