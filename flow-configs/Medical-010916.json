@@ -1,1 +1,176 @@
-{"1452365423859":{"name":"Diagnosis","type":"multiselect","mutable":"true","settings":{"options":{"1452365435808":{"value":"Allergies"},"1452365437261":{"value":"Arthritis"},"1452365437635":{"value":"Asthma"},"1452365437968":{"value":"Cataracts"},"1452365438270":{"value":"Ear infection"},"1452365438569":{"value":"Haitian malaise"},"1452365438884":{"value":"Hypertension"},"1452365439181":{"value":"Malnutrition"},"1452365439518":{"value":"Vaginal yeast"},"1452365439845":{"value":"Skin disorder"},"1452365440256":{"value":"Tinea"},"1452365440712":{"value":"Newborn"},"1452365441214":{"value":"Reflux"},"1452365442303":{"value":"Scabies"},"1452365480816":{"value":"STD"},"1452365481727":{"value":"URI"},"1452365483161":{"value":"UTI"},"1452365484232":{"value":"Worms"},"1452365484897":{"value":"Anemia"}},"allowCustomData":"true"},"description":""},"1452365513291":{"name":"Treatment","type":"textarea","mutable":"true","settings":"","description":"Short details about the treatment plan"},"1452365523325":{"name":"Tests","type":"header","mutable":"true","settings":"","description":"Options for further testing"},"1452365534272":{"name":"Urine test","type":"select","mutable":"true","settings":{"allowCustomData":"true"},"description":"Urine test results"},"1452365570164":{"name":"BG test","type":"select","mutable":"true","settings":{"allowCustomData":"true"},"description":"BG test results"},"1452365589549":{"name":"HCG test","type":"select","mutable":"true","settings":{"options":{"1452365612121":{"value":"Positive"},"1452365618400":{"value":"Negative"}},"allowCustomData":"true"},"description":"HCG test results"},"1452365591329":{"name":"HGB test","type":"select","mutable":"true","settings":{"allowCustomData":"true"},"description":"HGB test results"},"1452365595118":{"name":"Mal test","type":"select","mutable":"true","settings":{"options":{"1452365672213":{"value":"Positive"},"1452365672523":{"value":"Negative"}},"allowCustomData":"true"},"description":"Mal test results"},"1452365661467":{"name":"HIV test","type":"select","mutable":"true","settings":{"options":{"1452365684102":{"value":"Positive"},"1452365688099":{"value":"Negative"}},"allowCustomData":"true"},"description":"HIV test results"}}
+{
+  "1452365423859": {
+    "name": "Diagnosis",
+    "type": "multiselect",
+    "mutable": "true",
+    "settings": {
+      "options": {
+        "1452365435808": {
+          "value": "Allergies"
+        },
+        "1452365437261": {
+          "value": "Arthritis"
+        },
+        "1452365437635": {
+          "value": "Asthma"
+        },
+        "1452365437968": {
+          "value": "Cataracts"
+        },
+        "1452365438270": {
+          "value": "Ear infection"
+        },
+        "1452365438569": {
+          "value": "Haitian malaise"
+        },
+        "1452365438884": {
+          "value": "Hypertension"
+        },
+        "1452365439181": {
+          "value": "Malnutrition"
+        },
+        "1452365439518": {
+          "value": "Vaginal yeast"
+        },
+        "1452365439845": {
+          "value": "Skin disorder"
+        },
+        "1452365440256": {
+          "value": "Tinea"
+        },
+        "1452365440712": {
+          "value": "Newborn"
+        },
+        "1452365441214": {
+          "value": "Reflux"
+        },
+        "1452365442303": {
+          "value": "Scabies"
+        },
+        "1452365480816": {
+          "value": "STD"
+        },
+        "1452365481727": {
+          "value": "URI"
+        },
+        "1452365483161": {
+          "value": "UTI"
+        },
+        "1452365484232": {
+          "value": "Worms"
+        },
+        "1452365484897": {
+          "value": "Anemia"
+        }
+      },
+      "allowCustomData": "true"
+    },
+    "description": ""
+  },
+  "1452365513291": {
+    "name": "Treatment",
+    "type": "textarea",
+    "mutable": "true",
+    "settings": "",
+    "description": "Short details about the treatment plan"
+  },
+  "1452369819320": {
+    "name": "Prescription",
+    "type": "pharmacy",
+    "mutable": "true",
+    "settings": "",
+    "description": ""
+  },
+  "1452406945678": {
+  	"name": "Prescription notes",
+  	"type": "textarea",
+  	"mutable": "true",
+  	"settings": "",
+  	"description": ""
+  },
+  "1452365523325": {
+    "name": "Tests",
+    "type": "header",
+    "mutable": "true",
+    "settings": "",
+    "description": "Options for further testing"
+  },
+  "1452365534272": {
+    "name": "Urine test",
+    "type": "select",
+    "mutable": "true",
+    "settings": {
+      "allowCustomData": "true"
+    },
+    "description": "Urine test results"
+  },
+  "1452365570164": {
+    "name": "BG test",
+    "type": "select",
+    "mutable": "true",
+    "settings": {
+      "allowCustomData": "true"
+    },
+    "description": "BG test results"
+  },
+  "1452365589549": {
+    "name": "HCG test",
+    "type": "select",
+    "mutable": "true",
+    "settings": {
+      "options": {
+        "1452365612121": {
+          "value": "Positive"
+        },
+        "1452365618400": {
+          "value": "Negative"
+        }
+      },
+      "allowCustomData": "true"
+    },
+    "description": "HCG test results"
+  },
+  "1452365591329": {
+    "name": "HGB test",
+    "type": "select",
+    "mutable": "true",
+    "settings": {
+      "allowCustomData": "true"
+    },
+    "description": "HGB test results"
+  },
+  "1452365595118": {
+    "name": "Mal test",
+    "type": "select",
+    "mutable": "true",
+    "settings": {
+      "options": {
+        "1452365672213": {
+          "value": "Positive"
+        },
+        "1452365672523": {
+          "value": "Negative"
+        }
+      },
+      "allowCustomData": "true"
+    },
+    "description": "Mal test results"
+  },
+  "1452365661467": {
+    "name": "HIV test",
+    "type": "select",
+    "mutable": "true",
+    "settings": {
+      "options": {
+        "1452365684102": {
+          "value": "Positive"
+        },
+        "1452365688099": {
+          "value": "Negative"
+        }
+      },
+      "allowCustomData": "true"
+    },
+    "description": "HIV test results"
+  }
+}

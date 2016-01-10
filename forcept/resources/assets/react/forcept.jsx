@@ -182,8 +182,7 @@ Fields.Select = React.createClass({
 
 	getInitialState: function() {
 		return {
-			isCustomDataOptionSelected: false,
-			//customDataInputValue: "",
+			isCustomDataOptionSelected: false
 		};
 	},
 
@@ -199,22 +198,6 @@ Fields.Select = React.createClass({
 				}
 			}
 
-			/*var customDataSelectedIndex = values.indexOf("__custom__");
-
-			if(customDataSelectedIndex !== -1) {
-				console.log("onSelectInputChange: found customDataSelectedIndex @ " + customDataSelectedIndex);
-				console.log("Current customDataInputValue is " + customDataInputValue);
-				// Custom data is selected, remove from array and put text input value in its place
-				values.splice(customDataSelectedIndex, 1);
-				values.push(this.state.customDataInputValue);
-			}
-
-			console.log("onSelectInputChange: Values are currently: ");
-			console.log(values);
-
-			this.setState({
-				isCustomDataOptionSelected: customDataSelectedIndex !== -1
-			});*/
 			this.props.onChange(this.props.id, values);
 
 		} else {
@@ -241,10 +224,6 @@ Fields.Select = React.createClass({
 	},
 
 	onCustomDataInputChange: function(event) {
-		/*console.log("Caught customDataInputChange: " + event.target.value);
-		this.setState({
-			customDataInputValue: event.target.value
-		});*/
 		this.props.onChange(this.props.id, event.target.value);
 	},
 
@@ -290,8 +269,12 @@ Fields.Select = React.createClass({
 
 		// Loop through and push options to optionsDOM
 		optionsDOM = optionsKeys.map(function(optionKey, index) {
+			var disabled = false;
+			if(this.props.settings.options[optionKey].hasOwnProperty('available')) {
+				disabled = (this.props.settings.options[optionKey].available == "true");
+			}
 			return (
-				<option value={options[optionKey].value} key={this.props.id + "-option-" + index}>{options[optionKey].value}</option>
+				<option value={options[optionKey].value} key={this.props.id + "-option-" + index} disabled={disabled}>{options[optionKey].value}</option>
 			);
 		}.bind(this));
 
@@ -535,11 +518,14 @@ Fields.Pharmacy = React.createClass({
 										var disabled = thisOption.available == "false";
 										var displayName = thisOption.value + (parseInt(thisOption.count) > 0 && thisOption.available ? "\u2014 " + thisOption.count : "")
 
-										return (
-											<option value={thisOption.value} disabled={disabled}>
-												{displayName}	
-											</option>
-										);
+										if(!disabled) {
+											return (
+												<option value={thisOption.value}>
+													{displayName}	
+												</option>
+											);
+										}
+										
 									}.bind(this))}
 								</optgroup>
 							);

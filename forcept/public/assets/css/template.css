@@ -4594,11 +4594,12 @@ img.loading {
     padding-left: 0.5rem;
     font-size: 62.5%; }
 
+select.form-control option[disabled] {
+  text-decoration: line-through;
+  opacity: 0.625; }
+
 .forcept-field-select-drugs optgroup {
   margin-bottom: 15px; }
-  .forcept-field-select-drugs optgroup option[disabled] {
-    text-decoration: line-through;
-    opacity: 0.5; }
 
 /**
  * _data-displays.scss
