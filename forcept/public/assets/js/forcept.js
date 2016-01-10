@@ -324,72 +324,6 @@ Fields.Select = React.createClass({displayName: "Select",
 	}
 });
 
-/*Fields.MultiSelect = React.createClass({
-
-	getInitialState: function() {
-		return {};
-	},
-
-	onSelectInputChange: function(event) {
-		var options = event.target.options;
-		var values = [];
-
-		for(var i = 0; i < options.length; i++) {
-			if(options[i].selected) {
-				values.push(options[i].value);
-			}
-		}
-
-		this.props.onChange(this.props.id, values);
-	},
-
-	render: function() {
-
-		var options,
-			displaySelect,
-			size;
-
-		// Was there an error with options?
-		var optionsError = false;
-
-		// Load options if they are present, otherwise error
-		if(this.props.settings.hasOwnProperty('options') && Array.isArray(this.props.settings.options)) {
-			size = this.props.settings.options.length > 30 ? 30 : this.props.settings.options.length;
-			options = this.props.settings.options.map(function(option, index) {
-				return (
-					<option value={option} key={this.props.id + "-option-" + index}>{option}</option>
-				);
-			}.bind(this));
-		} else {
-			optionsError = true;
-		}
-
-		// If no error, build select input. Otherwise, display an error message.
-		if(!optionsError) {
-			displaySelect = (
-				<select className="form-control" onChange={this.onSelectInputChange} multiple={true} defaultValue={this.props.defaultValue} size={size}>
-					{options}
-				</select>
-			);
-		} else {
-			displaySelect = (
-				<div className="alert alert-danger">
-					<strong>Warning:</strong> no options defined for select input {this.props.id}
-				</div>
-			);
-		}
-
-		return (
-			<div className="form-group row">
-				<Fields.FieldLabel {...this.props} />
-				<div className={Fields.inputColumnClasses}>
-					{displaySelect}
-				</div>
-			</div>
-		);
-	}
-});*/
-
 Fields.File = React.createClass({displayName: "File",
 	getInitialState: function() {
 		return {
@@ -518,6 +452,110 @@ Fields.Header = React.createClass({displayName: "Header",
 			React.createElement("div", {className: "form-group row"}, 
 				React.createElement("h3", {className: "forcept-fieldset-header"}, this.props.name, " ", description), 
 				React.createElement("hr", null)
+			)
+		);
+	}
+});
+
+Fields.Pharmacy = React.createClass({displayName: "Pharmacy",
+	getInitialState: function() {
+		return {
+			data: {}
+		};
+	},
+	updateList: function() {
+		$.ajax({
+			type: "GET",
+			url: "/data/pharmacy/drugs",
+			data: {
+
+			},
+			success: function(resp) {
+				if(resp.status == "success") {
+					__debug(resp.data);
+					this.setState({
+						data: resp.data
+					});
+				}
+			}.bind(this),
+			error: function() {
+
+			},
+			complete: function() {
+
+			}
+		});
+	},
+	componentWillMount: function() {
+		this.updateList();
+	},
+
+	onSelectedDrugsChange: function(event) {
+		console.log("Selected drugs change:");
+		var options = event.target.options;
+		var values = [];
+		for(var i = 0; i < options.length; i++) {
+			if(options[i].selected) {
+				values.push(options[i].value);
+			}
+		}
+		console.log(values);
+		this.props.onChange(this.props.id, values);
+	},
+
+	render: function() {
+		var dataKeys = Object.keys(this.state.data);
+		var selectDrugs = (
+			React.createElement("div", {className: "alert alert-info"}, 
+				React.createElement("strong", null, "One moment..."), React.createElement("div", null, "loading the latest pharmacy data")
+			)
+		);
+
+		if(dataKeys.length > 0) {
+			selectDrugs = (
+				React.createElement("select", {
+					className: "form-control forcept-field-select-drugs", 
+					multiple: true, 
+					size: 10, 
+					onChange: this.onSelectedDrugsChange}, 
+
+					dataKeys.map(function(drugKey, index) {
+						var thisCategory = this.state.data[drugKey];
+
+						if(thisCategory.hasOwnProperty('settings') 
+							&& thisCategory.settings.hasOwnProperty('options')
+							&& thisCategory.settings.options !== null) {
+
+							var optionKeys = Object.keys(thisCategory.settings.options);
+							return (
+								React.createElement("optgroup", {label: this.state.data[drugKey].name}, 
+									optionKeys.map(function(optionKey, index) {
+										// var size = optionKeys.length > 30 ? 30 : optionKeys.length;
+										var thisOption = thisCategory.settings.options[optionKey];
+										var disabled = thisOption.available == "false";
+										var displayName = thisOption.value + (parseInt(thisOption.count) > 0 && thisOption.available ? "\u2014 " + thisOption.count : "")
+
+										return (
+											React.createElement("option", {value: thisOption.value, disabled: disabled}, 
+												displayName	
+											)
+										);
+									}.bind(this))
+								)
+							);
+						}
+
+					}.bind(this))
+				)
+			);
+		}
+
+		return (
+			React.createElement("div", {className: "form-group row"}, 
+				React.createElement(Fields.FieldLabel, React.__spread({},  this.props)), 
+				React.createElement("div", {className: Fields.inputColumnClasses}, 
+					selectDrugs
+				)
 			)
 		);
 	}

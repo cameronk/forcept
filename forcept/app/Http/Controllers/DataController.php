@@ -188,7 +188,29 @@ class DataController extends Controller
     }
 
     /**
-     * Return a JSON list of patient data
+     * Return a JSON list of pharmacy data
+     *
+     * @return \Illuminate\Http\Response
+     */
+    public function pharmacy(Request $request, $method)
+    {
+        switch($method) {
+            case "drugs":
+                $pharmacy = Stage::where('type', 'pharmacy');
+                if($pharmacy->count() > 0) {
+                    return response()->json(["status" => "success", "data" => $pharmacy->first()->fields]);
+                } else return response()->json(["status" => "failure", "message" => "Pharmacy not configured."]);
+                break;
+            default:
+                return response()->json(["status" => "failure", "message" => "Unknown method"]);
+                break;
+        }
+    }
+
+
+
+    /**
+     * Return array with Carbon dates
      *
      * @return Array
      */

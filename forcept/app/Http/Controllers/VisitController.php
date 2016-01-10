@@ -68,10 +68,27 @@ class VisitController extends Controller
         // Make sure this visit is currently at this stage.
         if($visit->stage == $stage->id) {
 
+            // Get fields for the root stage
+            $rootFields = array();
+            $rootFieldsWithoutFiles = array();
+
             // Generate object full of all the fields up to this stage.
             $allFields = [];
-            $stagesUpToCurrent = Stage::where('order', '<', $stage->order)->orderBy('order', 'asc')->get(['fields']);
-            foreach($stagesUpToCurrent as $thisStage) {
+            $stagesUpToCurrent = Stage::where('order', '<', $stage->order)
+                                        ->orderBy('order', 'asc');
+                                  
+            foreach($stagesUpToCurrent->get(['root', 'fields']) as $thisStage) {
+
+                \Log::debug("-> Looping through stage:");
+                \Log::debug($thisStage);
+
+                // If this is root stage, pass props to rootFields
+                if($thisStage->root == true) {
+                    \Log::debug("Root stage, non-file fields:");
+                    \Log::debug($thisStage->nonFileFields);
+                    $rootFields             = $thisStage->fields;
+                    $rootFieldsWithoutFiles = $thisStage->nonFileFields;
+                }
 
                 // Loop through fields and bubble each up to the top-level allFields array
                 foreach($thisStage->fields as $key => $fieldInfo) {
@@ -80,25 +97,33 @@ class VisitController extends Controller
 
             }
 
-            // // Get patient data from PATIENT table
-            $patients = $visit->patient_models;
+            // Get patient data from PATIENT table
+            $patients = [];
+            //$rootFieldsWithoutFiles = array();
 
-            // // Loop through patients and add data for all stages up to current (skip root stage because that was queried in patient_models)
-            // $stagesUpToCurrent = Stage::where('order', '<', $stage->order)
-            //                     ->where('root', '!=', true)
-            //                     ->orderBy('order', 'asc')
-            //                     ->get(['id']);
+            // Push all non-file root fields to array
+            // foreach($rootFields as $fieldKey => $fieldData) {
+            //     if($fieldData['type'] !== "file"){
+            //         $rootFieldsWithoutFiles[] = $fieldKey;
+            //     }
+            // }
 
+            // Get and apply patient data for all non-file fields
+            foreach($visit->patients as $id) {
+                $patient = Patient::where('id', '=', $id);
+                if($patient->count() > 0) {
+                    \Log::debug("Getting patient {$id}:");
+                    \Log::debug($rootFieldsWithoutFiles);
+                    $patients[$id] = $patient->first(array_keys($rootFieldsWithoutFiles))->toArray();
+                }
+            }
 
+            // Summary fields are from non-root stages beneath the current stage
+            $summaryFields = array();
             $stages = Stage::where('root', '!=', true)
                             ->where('order', '<', $stage->order)
                             ->orderBy('order', 'asc')
                             ->get();
-
-            \Log::debug("STAGES:");
-            \Log::debug($stages);
-
-            $summaryFields = array();
 
             // Add new fields for these patients for all stages up to current stage
             foreach($stages->keyBy("id") as $stageID => $stageData) {
@@ -156,11 +181,7 @@ class VisitController extends Controller
                 'mutableFields' => $stage->rawFields,
 
                 // Fields that should be displayed in the overview sidebar
-                'patientFields' => $stage->root == true 
-                                    ? $stage->rawFields 
-                                    : Stage::where('root', '=', true)
-                                            ->first(['fields'])
-                                            ->rawFields,
+                'patientFields' => json_encode($rootFields),
 
                 // Fields that should be immutable but shown in patientsContainer
                 'summaryFields' => json_encode($summaryFields)
@@ -243,6 +264,7 @@ class VisitController extends Controller
 
                     // Check if we should mutate the data (i.e. multiselect)
                     switch($stage->fields[$key]["type"]) {
+                        case "pharmacy":
                         case "multiselect":
                             // Value is an array, convert to string
                             $data[$key] = json_encode($value);
@@ -336,12 +358,26 @@ class VisitController extends Controller
     public function fetch(Stage $stage) 
     {
         $response;
-        $visits = Visit::where('stage', '=', $stage->id);
-        if($visits->count() > 0) {
+        $visits = Visit::where('stage', '=', $stage->id)->get()->keyBy('id')->toArray();
+
+        $rootStageFields = Stage::where('root', true)->first()->basicFields;
+
+        foreach($visits as $visitID => $visitData) {
+            $models = array();
+            foreach($visitData['patients'] as $patientID) {
+                $patient = Patient::where('id', $patientID);
+                if($patient->count() > 0) {
+                    $models[$patientID] = $patient->first(array_keys($rootStageFields))->toArray();
+                }
+            }
+            $visits[$visitID]['patient_models'] = $models;
+        }
+
+        if(count($visits) > 0) {
             $response = [
                 "status" => "success",
                 "message" => "Visits found.",
-                "visits" => $visits->get()->toArray()
+                "visits" => $visits
             ];
         } else {
             $response = [

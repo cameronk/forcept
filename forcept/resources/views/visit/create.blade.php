@@ -27,6 +27,7 @@ var NewVisit = ReactDOM.render(
         "patients": null,
         "stages": <?php echo $stages; ?>,
         "currentStage": 1,
+        "currentStageType": "basic",
         
         "mutableFields": <?php echo $mutableFields ?>, 
         "patientFields": <?php echo $patientFields ?>,

@@ -8,7 +8,7 @@ use App\Patient;
 class Visit extends Model
 {
 
-	protected $appends = ['patient_models'];
+	// protected $appends = ['patient_models'];
 
 
     public function stage()
@@ -25,16 +25,16 @@ class Visit extends Model
     	$this->attributes['patients'] = json_encode($value);
     }
 
-    public function getPatientModelsAttribute() {
+    // public function getPatientModelsAttribute() {
 
-    	$patients = [];
-    	foreach($this->patients as $id) {
-    		$patient = Patient::where('id', '=', $id);
-    		if($patient->count() > 0) {
-    			$patients[$id] = $patient->first()->toArray();
-    		}
-    	}
+    // 	$patients = [];
+    // 	foreach($this->patients as $id) {
+    // 		$patient = Patient::where('id', '=', $id);
+    // 		if($patient->count() > 0) {
+    // 			$patients[$id] = $patient->first()->toArray();
+    // 		}
+    // 	}
     	
-        return $patients;
-    }
+    //     return $patients;
+    // }
 }

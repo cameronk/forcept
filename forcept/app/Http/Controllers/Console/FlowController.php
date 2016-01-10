@@ -227,7 +227,8 @@ class FlowController extends Controller
                     ) {
                         \Log::debug("DELETION: gettype data = " . gettype($data) );
                         $deletions[$key] = $data;
-                        $deletions[$key]["_destination"] = $key . "_" . str_slug($data['name']) . "_" . time() . "_backup";
+                        $deletions[$key]["_destination"] = $key . "-backup-" . time();
+                        // $deletions[$key]["_destination"] = $key . "_" . str_slug($data['name']) . "_" . time() . "_backup";
                         \Log::debug("Adding " + $key + " as a deletion with destination " + $deletions[$key]["_destination"]);
                     }
                 }

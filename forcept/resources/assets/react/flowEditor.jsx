@@ -220,7 +220,7 @@ FlowEditor.getDefaultFieldState = function(stageType) {
 		case "pharmacy":
 			return {
 				name: "",
-				type: "select",
+				type: "multiselect",
 				mutable: true,
 				settings: {
 					options: {},
@@ -426,13 +426,13 @@ FlowEditor.Field = React.createClass({
 	 					</optgroup>
 	 					<optgroup label="Other">
 	 						<option value="header">Group fields with a header</option>
+	 						<option value="pharmacy">Pharmacy - show available medication</option>
 	 					</optgroup>
  					</select>
  					{disableTypeChangeNotification}
  				</div>
 	 		);
  		}
-
 
  		if(this.state.name.length == 0) {
  			nameInputGroup = (
@@ -442,7 +442,7 @@ FlowEditor.Field = React.createClass({
  						id={"name-" + this.props['data-key']} 
  						className="form-control form-control-error" 
  						placeholder={fieldContext + " name"} 
- 						maxLength="30" 
+ 						maxLength="100" 
  						onChange={this.handleFieldNameChange} 
  						defaultValue={this.state.name} />
  					<div className="alert alert-danger">
@@ -454,7 +454,13 @@ FlowEditor.Field = React.createClass({
  			nameInputGroup = (
  				<div className="form-group">
  					<label className="form-control-label" htmlFor={"name-" + this.props['data-key']}>Name:</label>
- 					<input type="text" id={"name-" + this.props['data-key']} className="form-control" placeholder="Field name" maxLength="30" onChange={this.handleFieldNameChange} defaultValue={this.state.name} />	
+ 					<input type="text" 
+ 						id={"name-" + this.props['data-key']} 
+ 						className="form-control" 
+ 						placeholder="Field name" 
+ 						maxLength="100" 
+ 						onChange={this.handleFieldNameChange} 
+ 						defaultValue={this.state.name} />	
  				</div>	
  			);
  		}
@@ -466,29 +472,32 @@ FlowEditor.Field = React.createClass({
  			description = this.props.description;
  		}
 
+ 		// {this.state.name.length > 0 ? '"' + this.state.name + '"' : 'this ' + fieldContext.toLowerCase()}
  		return (
  			<div data-key={this.props['data-key']} data-index={this.props.index} className="row flow-editor-configurator-row p-t"> 
 
  				{ /* Configurator: field setup header */ }
  				<div className="col-xs-12">
  					<div className="row">
- 						<div className="col-sm-12 col-md-8">
+ 						<div className="col-sm-12 col-md-10">
 	 						<h4 className="field-title">
 		 						<span className="label label-info">#{this.props.index + 1}</span>
 		 						<span className="label label-default">{this.props['data-key']}</span>
 		 						<span className="title hidden-lg-down">
+		 							<small>
 		 							{this.state.name.length > 0 
-		 								? '"' + this.state.name + '"' 
+		 								? this.state.name
 		 								: (this.props.stageType == "pharmacy")
 		 									? "Untitled category"
 		 									: "Untitled " + this.state.type + " input"}
+		 							</small>
 		 						</span>
 		 					</h4>
  						</div>
-	 					<div className="col-sm-12 col-md-4">
+	 					<div className="col-sm-12 col-md-2">
 		 					<h4 className="field-title m-b">
 		 						<button type="button" className="btn btn-sm btn-danger-outline pull-right" disabled={!this.state.mutable} onClick={this.handleRemoveField}>
-		 							&times; Remove {this.state.name.length > 0 ? '"' + this.state.name + '"' : 'this ' + fieldContext.toLowerCase()}
+		 							&times; Remove
 		 						</button>
 		 					</h4>
 		 				</div>
@@ -863,7 +872,6 @@ FlowEditor.Field.Settings = React.createClass({
 		}.bind(this);
 	},
 
-
 	/*
 	 *
 	 */
@@ -910,6 +918,7 @@ FlowEditor.Field.Settings = React.createClass({
 			case "date":
 			case "yesno":
 			case "header":
+			case "pharmacy":
 				return (
 					<div>
 						<div className="alert alert-info m-t">
@@ -937,11 +946,23 @@ FlowEditor.Field.Settings = React.createClass({
 							No options have been defined &mdash; try <a className="alert-link" onClick={this.handleAddOption}>adding one</a>. 
 						</div>
 					);
-					customDataCheckbox = (
-						<span></span>
-					);
 
 				};
+
+				if(this.state.hasOwnProperty('allowCustomData') && this.state.allowCustomData == true) {
+					customDataCheckbox = (
+						<div className="col-sm-12">
+							<div className="checkbox m-t">
+								<label>
+									<input type="checkbox" 
+										checked={this.state.allowCustomData == true} 
+										onChange={this.handleAllowCustomDataChange} />
+										Allow users to enter custom data for this field
+								</label>
+							</div>
+						</div>
+					);
+				}
 
 				// If there are options in the state
 				if(this.state.hasOwnProperty('options')) {
@@ -955,7 +976,8 @@ FlowEditor.Field.Settings = React.createClass({
 
 							var thisOption = this.state.options[optionKey];
 							var upButton, 
-								downButton;
+								downButton,
+								drugOptions;
 
 							if(index !== 0) {
 								upButton = (
@@ -973,24 +995,10 @@ FlowEditor.Field.Settings = React.createClass({
 								);
 							}
 
+							if(this.props.stageType == "pharmacy") {
 
-							return (
-								<div className={(this.props.stageType !== "pharmacy" ? "field-select-option " : "") + "form-group row"} key={index}>
-									<div className="col-sm-12">
-										<div className="input-group input-group-sm">
-											<input type="text" 
-												placeholder="Enter a value for this option" 
-												className="form-control" 
-												value={thisOption.value} 
-												onChange={this.handleChangeOptionText(optionKey)} />
-											<span className="input-group-btn">
-												{upButton}
-												{downButton}
-												<button type="button" className="btn btn-danger" onClick={this.handleRemoveOption.bind(this, optionKey)}>
-												  	<span>&times;</span>
-												</button>
-											</span>
-										</div>
+								drugOptions = (
+									<div className="col-xs-12">
 										<div className="row">
 											<div className="col-xs-12 col-sm-6">
 												<div className="input-group input-group-sm">
@@ -1021,25 +1029,34 @@ FlowEditor.Field.Settings = React.createClass({
 											</div>
 										</div>
 									</div>
+								);
+
+							}
+
+
+							return (
+								<div className={(this.props.stageType !== "pharmacy" ? "field-select-option " : "") + "form-group row"} key={index}>
+									<div className="col-sm-12">
+										<div className="input-group input-group-sm">
+											<input type="text" 
+												placeholder="Enter a value for this option" 
+												className="form-control" 
+												value={thisOption.value} 
+												onChange={this.handleChangeOptionText(optionKey)} />
+											<span className="input-group-btn">
+												{upButton}
+												{downButton}
+												<button type="button" className="btn btn-danger" onClick={this.handleRemoveOption.bind(this, optionKey)}>
+												  	<span>&times;</span>
+												</button>
+											</span>
+										</div>
+									</div>
+									{drugOptions}
 								</div>
 							);
 						}.bind(this));
 
-						// Add a checkbox at the end
-						if(this.props.stageType !== "pharmacy") {
-							customDataCheckbox = (
-								<div className="col-sm-12">
-									<div className="checkbox m-t">
-										<label>
-											<input type="checkbox" 
-												checked={this.state.allowCustomData == true} 
-												onChange={this.handleAllowCustomDataChange} />
-												Allow users to enter custom data for this field
-										</label>
-									</div>
-								</div>
-							);
-						}
 					} else {
 						noOptionsDefined();
 					}
@@ -1048,7 +1065,7 @@ FlowEditor.Field.Settings = React.createClass({
 				}
 
 				return (
-					<div className="field-select-options-contain">
+					<div className="field-select-options-contain p-t">
 		            	<h5>{this.props.stageType == "pharmacy" ? "Drugs in this category" : "Options"} ({ this.state.hasOwnProperty('options') ? Object.keys(this.state.options).length : 0 })</h5>
 						{optionInputs}
 						{customDataCheckbox}

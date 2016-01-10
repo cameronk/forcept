@@ -18,6 +18,7 @@
  *  - patients: Patients object with fieldID => data setup
  *  - stages: Array of stages (in order of 'order') for finish modal
  *  - currentStage: ID of current stage
+ *  - currentStageType: type of current stage (basic, pharmacy)
  *
  *  - mutableFields: NEW Fields which should be mutable for EACH patient in the PatientContainer block.
  *  - patientFields: PREEXISTING Fields which should have their data displayed in the PatientOverview block.
@@ -114,7 +115,6 @@ var Visit = React.createClass({displayName: "Visit",
 				this.setState({ 
 					confirmFinishVisitResponse: resp.responseJSON 
 				});
-
 			}.bind(this)
 		});
 	},
@@ -231,6 +231,8 @@ var Visit = React.createClass({displayName: "Visit",
 			console.log("After generated fields are applied:");
 			console.log(patients[patientID]);
 
+			__debug(patients);
+
 			// Push patients back to state
 			this.setState({ patients: patients });
 
@@ -258,6 +260,7 @@ var Visit = React.createClass({displayName: "Visit",
 					_token: this.props._token, 
 					controlsType: this.props.controlsType, 
 					containerTitle: this.props.containerTitle, 
+					stageType: this.props.currentStageType, 
 
 					summaryFields: this.props.summaryFields, 
 					fields: this.props.mutableFields, 
@@ -280,6 +283,10 @@ var Visit = React.createClass({displayName: "Visit",
  * Variables
  */
 Visit.generatedFields = {
+	"generatedHeader": {
+		name: "Generated",
+		type: "header"
+	},
 	"age": {
 		name: "Age",
 		type: "number"
@@ -306,16 +313,22 @@ Visit.PatientsOverview = React.createClass({displayName: "PatientsOverview",
 		console.log("Rendering patients overview with patient count " + Object.keys(this.props.patients).length);
 		console.log(this.props.patients);
 
-		var patientOverviews;
+		var patientOverviews,
+			iterableFields;
 
 		// Copy the local patient fields property to a new variable
 		// and remove first/last name, so they don't appear in the list
-		var iterableFields = jQuery.extend(jQuery.extend({}, this.props.fields), Visit.generatedFields);
-			delete iterableFields["first_name"];
-			delete iterableFields["last_name"];
-			delete iterableFields["photo"];
+		if(this.props.mini == true) {
+			iterableFields = jQuery.extend({}, this.props.fields);
+		} else {
+			iterableFields = jQuery.extend(jQuery.extend({}, this.props.fields), Visit.generatedFields);
+		}
+		// Remove fields that are displayed differently than normal
+		delete iterableFields["first_name"];
+		delete iterableFields["last_name"];
+		delete iterableFields["photo"];
 
-		__debug(this.props.patients, iterableFields);
+		// __debug(this.props.patients, iterableFields);
 
 		console.log("Rendering PatientsOverview with iterableFields:");
 		console.log(iterableFields);
@@ -375,11 +388,7 @@ Visit.PatientsOverview = React.createClass({displayName: "PatientsOverview",
 		                    	var foundData = false;
 		                    	var isGeneratedField = Visit.generatedFields.hasOwnProperty(field);
 				                var icon;
-		                    	var value = (
-		                    		React.createElement("span", {className: "pull-right"}, 
-		                    			"No data"
-		                    		)
-		                    	);
+		                    	var value = "No data";
 
 		                    	if(
 		                    		thisPatient.hasOwnProperty(field) 	// If this field exists in the patient data
@@ -398,54 +407,53 @@ Visit.PatientsOverview = React.createClass({displayName: "PatientsOverview",
 
 			                    			// We might need to mutate the data
 			                    			switch(iterableFields[field].type) {
+
+			                    				/**
+			                    				 * Things with multiple lines
+			                    				 */
 			                    				case "textarea":
 			                    					value = (
 			                    						React.createElement("p", {dangerouslySetInnerHTML: { __html: thisPatient[field].replace(/\n/g, "<br/>")}})
 			                    					);
 			                    					break;
 
+			                    				/**
+			                    				 * Things stored as arrays
+			                    				 */
 			                    				case "multiselect":
+			                    				case "pharmacy":
 			                    					// Convert from JSON array to nice string
 			                    					var arr = JSON.parse(thisPatient[field]);
 			                    					if(Array.isArray(arr) && arr.length > 0) {
-			                    						value = (
-			                    							React.createElement("span", {className: "pull-right"}, 
-			                    								arr.join(", ")
-			                    							)
-			                    						);
+			                    						value = arr.join(", ");
 			                    					}
 			                    					console.log("Multiselect value: " + value);
 			                    					break;
 
+			                    				/**
+			                    				 * Things stored as base64
+			                    				 */
 			                    				case "file":
-
 			                    					var split = thisPatient[field].toString().split(";");
 			                    					var dataSection = split[0]; // data:image/png
 
 			                    					if(dataSection.split("/")[0] == "data:image") {
-
 				                    					value = (
 				                    						React.createElement("div", {className: "patient-photo-contain"}, 
 				                    							React.createElement("img", {src: thisPatient[field].toString()})
 				                    						)
 				                    					);
-
 			                    					} else {
-			                    						value = (
-			                    							React.createElement("span", {className: "pull-right"}, 
-			                    								"1 file, ", getFileSize(thisPatient[field])
-			                    							)
-			                    						);
+			                    						value = "1 file, " + getFileSize(thisPatient[field]);
 			                    					}
 
 			                    					break;
 
+			                    				/**
+			                    				 * Everything else
+			                    				 */
 			                    				default:
-			                    					value = (
-			                    						React.createElement("span", {className: "pull-right"}, 
-			                    							thisPatient[field].toString()
-			                    						)
-			                    					);
+			                    					value = thisPatient[field].toString();
 			                    					break;
 			                    			}
 			                    		} else {
@@ -491,7 +499,7 @@ Visit.PatientsOverview = React.createClass({displayName: "PatientsOverview",
 		                    	if(iterableFields[field].type == "header") {
 		                    		if(this.props.mini == false) {
 			                    		return (
-			                    			React.createElement("div", {className: "list-group-item", key: field + "-" + index}, 
+			                    			React.createElement("div", {className: "list-group-item forcept-patient-overview-header-item", key: field + "-" + index}, 
 			                    				React.createElement("h5", {className: "text-center m-a-0"}, 
 			                    					iterableFields[field].name
 			                    				)
@@ -1034,7 +1042,6 @@ Visit.Patient = React.createClass({displayName: "Patient",
 		var name = this.props.patient.full_name !== null ? this.props.patient.full_name : "Unnamed patient";
 		var summary;
 
-
 		console.log("Summary fields:");
 		console.log(this.props.summaryFields);
 
@@ -1089,7 +1096,6 @@ Visit.Patient = React.createClass({displayName: "Patient",
 
 		        	// Figure out which type of field we should render
 		        	switch(this.props.fields[fieldID]['type']) {
-
 
 		        		/*
 		        		 * Input field types
@@ -1185,6 +1191,15 @@ Visit.Patient = React.createClass({displayName: "Patient",
 		        				React.createElement(Fields.Header, React.__spread({},  
 		        					this.props.fields[fieldID], 
 		        					{key: fieldID, 
+		        					id: fieldID}))
+		        			);
+		        			break;
+		        		case "pharmacy":
+		        			return (
+		        				React.createElement(Fields.Pharmacy, React.__spread({},  
+		        					this.props.fields[fieldID], 
+		        					{onChange: this.handleFieldChange, 
+		        					key: fieldID, 
 		        					id: fieldID}))
 		        			);
 		        			break;

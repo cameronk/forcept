@@ -23,13 +23,23 @@
 	.card-title {
 		line-height: 27px;
 	}
-    a.list-group-item {
+    .list-group-item {
         p {
             margin: 0;
             width: 100%;
             word-break: break-all;
             word-wrap: break-word;
         }
+        dl {
+            margin-bottom: 0;
+            dd {
+                padding-left: 26px;
+                margin-bottom: 0;
+            }
+        }
+    }
+    .list-group-item.forcept-patient-overview-header-item {
+        background: $gray-lightest;
     }
 }
 .form-group label.file {
@@ -66,5 +76,16 @@ img.loading {
     small {
         padding-left: $spacer-x / 2;
         font-size: 62.5%;
+    }
+}
+
+.forcept-field-select-drugs {
+    optgroup {
+        margin-bottom: 15px;
+
+        option[disabled] {
+            text-decoration: line-through;
+            opacity: 0.5;
+        }
     }
 }

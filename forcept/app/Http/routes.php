@@ -54,9 +54,20 @@ Route::group(['middleware' => 'auth'], function () {
 			'uses' => 'DataController@patients'
 		]);
 
+		/**
+		 *
+		 */
 		Route::get('flow/{method?}', [
 			'as' => 'flow',
 			'uses' => 'DataController@flow'
+		]);
+
+		/**
+		 * Get medications
+		 */
+		Route::any('pharmacy/{method?}', [
+			'as' => 'pharmacy',
+			'uses' => 'DataController@pharmacy'
 		]);
 	});
 

@@ -27,6 +27,7 @@ var HandleVisit = ReactDOM.render(
         "patients": <?php echo $patients; ?>,
         "stages": <?php echo $stages; ?>,
         "currentStage": {{ $stage->id }},
+        "currentStageType": "{{ $stage->type }}",
         
         "mutableFields": <?php echo $mutableFields ?>, 
         "patientFields": <?php echo $patientFields ?>,        

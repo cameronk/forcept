@@ -220,7 +220,7 @@ FlowEditor.getDefaultFieldState = function(stageType) {
 		case "pharmacy":
 			return {
 				name: "",
-				type: "select",
+				type: "multiselect",
 				mutable: true,
 				settings: {
 					options: {},
@@ -425,14 +425,14 @@ FlowEditor.Field = React.createClass({displayName: "Field",
 	 						React.createElement("option", {value: "yesno"}, "Yes or no buttons")
 	 					), 
 	 					React.createElement("optgroup", {label: "Other"}, 
-	 						React.createElement("option", {value: "header"}, "Group fields with a header")
+	 						React.createElement("option", {value: "header"}, "Group fields with a header"), 
+	 						React.createElement("option", {value: "pharmacy"}, "Pharmacy - show available medication")
 	 					)
  					), 
  					disableTypeChangeNotification
  				)
 	 		);
  		}
-
 
  		if(this.state.name.length == 0) {
  			nameInputGroup = (
@@ -442,7 +442,7 @@ FlowEditor.Field = React.createClass({displayName: "Field",
  						id: "name-" + this.props['data-key'], 
  						className: "form-control form-control-error", 
  						placeholder: fieldContext + " name", 
- 						maxLength: "30", 
+ 						maxLength: "100", 
  						onChange: this.handleFieldNameChange, 
  						defaultValue: this.state.name}), 
  					React.createElement("div", {className: "alert alert-danger"}, 
@@ -454,7 +454,13 @@ FlowEditor.Field = React.createClass({displayName: "Field",
  			nameInputGroup = (
  				React.createElement("div", {className: "form-group"}, 
  					React.createElement("label", {className: "form-control-label", htmlFor: "name-" + this.props['data-key']}, "Name:"), 
- 					React.createElement("input", {type: "text", id: "name-" + this.props['data-key'], className: "form-control", placeholder: "Field name", maxLength: "30", onChange: this.handleFieldNameChange, defaultValue: this.state.name})	
+ 					React.createElement("input", {type: "text", 
+ 						id: "name-" + this.props['data-key'], 
+ 						className: "form-control", 
+ 						placeholder: "Field name", 
+ 						maxLength: "100", 
+ 						onChange: this.handleFieldNameChange, 
+ 						defaultValue: this.state.name})	
  				)	
  			);
  		}
@@ -466,29 +472,32 @@ FlowEditor.Field = React.createClass({displayName: "Field",
  			description = this.props.description;
  		}
 
+ 		// {this.state.name.length > 0 ? '"' + this.state.name + '"' : 'this ' + fieldContext.toLowerCase()}
  		return (
  			React.createElement("div", {"data-key": this.props['data-key'], "data-index": this.props.index, className: "row flow-editor-configurator-row p-t"}, 
 
  				/* Configurator: field setup header */ 
  				React.createElement("div", {className: "col-xs-12"}, 
  					React.createElement("div", {className: "row"}, 
- 						React.createElement("div", {className: "col-sm-12 col-md-8"}, 
+ 						React.createElement("div", {className: "col-sm-12 col-md-10"}, 
 	 						React.createElement("h4", {className: "field-title"}, 
 		 						React.createElement("span", {className: "label label-info"}, "#", this.props.index + 1), 
 		 						React.createElement("span", {className: "label label-default"}, this.props['data-key']), 
 		 						React.createElement("span", {className: "title hidden-lg-down"}, 
+		 							React.createElement("small", null, 
 		 							this.state.name.length > 0 
-		 								? '"' + this.state.name + '"' 
+		 								? this.state.name
 		 								: (this.props.stageType == "pharmacy")
 		 									? "Untitled category"
 		 									: "Untitled " + this.state.type + " input"
+		 							)
 		 						)
 		 					)
  						), 
-	 					React.createElement("div", {className: "col-sm-12 col-md-4"}, 
+	 					React.createElement("div", {className: "col-sm-12 col-md-2"}, 
 		 					React.createElement("h4", {className: "field-title m-b"}, 
 		 						React.createElement("button", {type: "button", className: "btn btn-sm btn-danger-outline pull-right", disabled: !this.state.mutable, onClick: this.handleRemoveField}, 
-		 							"× Remove ", this.state.name.length > 0 ? '"' + this.state.name + '"' : 'this ' + fieldContext.toLowerCase()
+		 							"× Remove"
 		 						)
 		 					)
 		 				)
@@ -863,7 +872,6 @@ FlowEditor.Field.Settings = React.createClass({displayName: "Settings",
 		}.bind(this);
 	},
 
-
 	/*
 	 *
 	 */
@@ -910,6 +918,7 @@ FlowEditor.Field.Settings = React.createClass({displayName: "Settings",
 			case "date":
 			case "yesno":
 			case "header":
+			case "pharmacy":
 				return (
 					React.createElement("div", null, 
 						React.createElement("div", {className: "alert alert-info m-t"}, 
@@ -937,11 +946,23 @@ FlowEditor.Field.Settings = React.createClass({displayName: "Settings",
 							"No options have been defined — try ", React.createElement("a", {className: "alert-link", onClick: this.handleAddOption}, "adding one"), "." 
 						)
 					);
-					customDataCheckbox = (
-						React.createElement("span", null)
-					);
 
 				};
+
+				if(this.state.hasOwnProperty('allowCustomData') && this.state.allowCustomData == true) {
+					customDataCheckbox = (
+						React.createElement("div", {className: "col-sm-12"}, 
+							React.createElement("div", {className: "checkbox m-t"}, 
+								React.createElement("label", null, 
+									React.createElement("input", {type: "checkbox", 
+										checked: this.state.allowCustomData == true, 
+										onChange: this.handleAllowCustomDataChange}), 
+										"Allow users to enter custom data for this field"
+								)
+							)
+						)
+					);
+				}
 
 				// If there are options in the state
 				if(this.state.hasOwnProperty('options')) {
@@ -955,7 +976,8 @@ FlowEditor.Field.Settings = React.createClass({displayName: "Settings",
 
 							var thisOption = this.state.options[optionKey];
 							var upButton, 
-								downButton;
+								downButton,
+								drugOptions;
 
 							if(index !== 0) {
 								upButton = (
@@ -973,24 +995,10 @@ FlowEditor.Field.Settings = React.createClass({displayName: "Settings",
 								);
 							}
 
+							if(this.props.stageType == "pharmacy") {
 
-							return (
-								React.createElement("div", {className: (this.props.stageType !== "pharmacy" ? "field-select-option " : "") + "form-group row", key: index}, 
-									React.createElement("div", {className: "col-sm-12"}, 
-										React.createElement("div", {className: "input-group input-group-sm"}, 
-											React.createElement("input", {type: "text", 
-												placeholder: "Enter a value for this option", 
-												className: "form-control", 
-												value: thisOption.value, 
-												onChange: this.handleChangeOptionText(optionKey)}), 
-											React.createElement("span", {className: "input-group-btn"}, 
-												upButton, 
-												downButton, 
-												React.createElement("button", {type: "button", className: "btn btn-danger", onClick: this.handleRemoveOption.bind(this, optionKey)}, 
-												  	React.createElement("span", null, "×")
-												)
-											)
-										), 
+								drugOptions = (
+									React.createElement("div", {className: "col-xs-12"}, 
 										React.createElement("div", {className: "row"}, 
 											React.createElement("div", {className: "col-xs-12 col-sm-6"}, 
 												React.createElement("div", {className: "input-group input-group-sm"}, 
@@ -1021,25 +1029,34 @@ FlowEditor.Field.Settings = React.createClass({displayName: "Settings",
 											)
 										)
 									)
+								);
+
+							}
+
+
+							return (
+								React.createElement("div", {className: (this.props.stageType !== "pharmacy" ? "field-select-option " : "") + "form-group row", key: index}, 
+									React.createElement("div", {className: "col-sm-12"}, 
+										React.createElement("div", {className: "input-group input-group-sm"}, 
+											React.createElement("input", {type: "text", 
+												placeholder: "Enter a value for this option", 
+												className: "form-control", 
+												value: thisOption.value, 
+												onChange: this.handleChangeOptionText(optionKey)}), 
+											React.createElement("span", {className: "input-group-btn"}, 
+												upButton, 
+												downButton, 
+												React.createElement("button", {type: "button", className: "btn btn-danger", onClick: this.handleRemoveOption.bind(this, optionKey)}, 
+												  	React.createElement("span", null, "×")
+												)
+											)
+										)
+									), 
+									drugOptions
 								)
 							);
 						}.bind(this));
 
-						// Add a checkbox at the end
-						if(this.props.stageType !== "pharmacy") {
-							customDataCheckbox = (
-								React.createElement("div", {className: "col-sm-12"}, 
-									React.createElement("div", {className: "checkbox m-t"}, 
-										React.createElement("label", null, 
-											React.createElement("input", {type: "checkbox", 
-												checked: this.state.allowCustomData == true, 
-												onChange: this.handleAllowCustomDataChange}), 
-												"Allow users to enter custom data for this field"
-										)
-									)
-								)
-							);
-						}
 					} else {
 						noOptionsDefined();
 					}
@@ -1048,7 +1065,7 @@ FlowEditor.Field.Settings = React.createClass({displayName: "Settings",
 				}
 
 				return (
-					React.createElement("div", {className: "field-select-options-contain"}, 
+					React.createElement("div", {className: "field-select-options-contain p-t"}, 
 		            	React.createElement("h5", null, this.props.stageType == "pharmacy" ? "Drugs in this category" : "Options", " (",  this.state.hasOwnProperty('options') ? Object.keys(this.state.options).length : 0, ")"), 
 						optionInputs, 
 						customDataCheckbox, 

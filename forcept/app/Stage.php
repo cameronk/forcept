@@ -29,6 +29,26 @@ class Stage extends Model
     public function getFieldsAttribute($value) {
     	return json_decode($value, true);
     }
+    
+    public function getBasicFieldsAttribute() {
+        $newFields = array();
+        if($this->root == true) {
+            $newFields = array('id' => null, 'first_name' => null, 'last_name' => null);
+        } else {
+            $newFields = $this->nonFileFields;
+        }
+        return $newFields;
+    }
+
+    public function getNonFileFieldsAttribute() {
+        $newFields = array();
+        foreach($this->inputFields as $fieldID => $fieldData) {
+            if($fieldData['type'] !== "file") {
+                $newFields[$fieldID] = $fieldData;
+            }
+        }
+        return $newFields;
+    }
 
     public function getInputFieldsAttribute() {
         $fields = [];

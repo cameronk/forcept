@@ -8,7 +8,7 @@ var StageVisits = React.createClass({displayName: "StageVisits",
 	getInitialState: function() {
 		return {
 			isFetching: true,
-			visits: []
+			visits: {}
 		};
 	},
 
@@ -27,10 +27,12 @@ var StageVisits = React.createClass({displayName: "StageVisits",
 				console.log(resp);
 				if(resp.hasOwnProperty('visits')) {
 					console.log("fetchVisits returned visits");
-					this.setState({ visits: resp.visits });
+					this.setState({ visits: resp.visits }, function() {
+						__debug(this.state);
+					}.bind(this));
 				} else {
 					console.log("fetchVisits returned NO visits");
-					this.setState({ visits: [] });
+					this.setState({ visits: {} });
 				}
 			}.bind(this),
 			complete: function(resp) {
@@ -42,37 +44,40 @@ var StageVisits = React.createClass({displayName: "StageVisits",
 	render: function() {
 
 		var visits;
-		if(this.state.visits.length > 0) {
+		var visitKeys = Object.keys(this.state.visits);
+		if(visitKeys.length > 0) {
 
 			// Show visits
-			visitsDOM = this.state.visits.map(function(visit, index) {
+			visitsDOM = visitKeys.map(function(visitID, index) {
+
+				var visit = this.state.visits[visitID];
 
 				// Map patients for this visit
 				var patients = visit.patients.map(function(patientID, patientIndex) {
 
 					// If the patient has a patient_models object
-					if(visit.patient_models.hasOwnProperty(patientID)) {
-						var patient = visit.patient_models[patientID];
+					if(visit.patient_models.hasOwnProperty(patientID.toString())) {
+						var patient = visit.patient_models[patientID.toString()];
 
-						var priorityNotification;
-						if(patient.hasOwnProperty('priority') && patient.priority !== null) {
+						//var priorityNotification;
+						/*if(patient.hasOwnProperty('priority') && patient.priority !== null) {
 							switch(patient['priority'].toLowerCase()) {
 								case "high":
 									priorityNotification = (
-										React.createElement("div", {className: "card-block bg-warning"}, 
-											React.createElement("small", null, "Priority: ", React.createElement("strong", null, "high"))
-										)
+										<div className="card-block bg-warning">
+											<small>Priority: <strong>high</strong></small>
+										</div>
 									);
 									break;
 								case "urgent":
 									priorityNotification = (
-										React.createElement("div", {className: "card-block bg-danger"}, 
-											React.createElement("small", null, "Priority: ", React.createElement("strong", null, "urgent"), "!")
-										)
+										<div className="card-block bg-danger">
+											<small>Priority: <strong>urgent</strong>!</small>
+										</div>
 									);
 									break;
 							}
-						}
+						}*/
 
 						return (
 							React.createElement("div", {className: "col-sm-12 col-md-4", key: "patient-col-" + patientID}, 
@@ -83,8 +88,8 @@ var StageVisits = React.createClass({displayName: "StageVisits",
 											React.createElement("span", {className: "label label-primary pull-right"}, "#", patientIndex + 1), 
 											React.createElement("span", {className: "title-content"}, (patient["full_name"] !== null && patient["full_name"].length > 0) ? patient["full_name"] : "Unnamed patient")
 										)
-									), 
-									priorityNotification
+									)
+									/*priorityNotification*/
 								)
 							)
 						);

@@ -4522,7 +4522,7 @@ a.bg-danger:focus, a.bg-danger:hover {
 #cfg-contain.hidden {
   display: none; }
 
-h4.field-title span.title {
+.field-title span.title {
   padding-left: 1rem; }
 
 #flow-editor-fields-contain .flow-editor-configurator-row {
@@ -4552,11 +4552,18 @@ h4.field-title span.title {
   font-size: 16px; }
   .forcept-patient-summary .card-title {
     line-height: 27px; }
-  .forcept-patient-summary a.list-group-item p {
+  .forcept-patient-summary .list-group-item p {
     margin: 0;
     width: 100%;
     word-break: break-all;
     word-wrap: break-word; }
+  .forcept-patient-summary .list-group-item dl {
+    margin-bottom: 0; }
+    .forcept-patient-summary .list-group-item dl dd {
+      padding-left: 26px;
+      margin-bottom: 0; }
+  .forcept-patient-summary .list-group-item.forcept-patient-overview-header-item {
+    background: #f7f7f9; }
 
 .form-group label.file {
   font-size: 15px; }
@@ -4586,6 +4593,12 @@ img.loading {
   .forcept-fieldset-header small {
     padding-left: 0.5rem;
     font-size: 62.5%; }
+
+.forcept-field-select-drugs optgroup {
+  margin-bottom: 15px; }
+  .forcept-field-select-drugs optgroup option[disabled] {
+    text-decoration: line-through;
+    opacity: 0.5; }
 
 /**
  * _data-displays.scss
