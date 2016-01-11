@@ -5,7 +5,7 @@
 /*
  * Visit container
  *
- * The visit container acts as a state bridge between the 
+ * The visit container acts as a state bridge between the
  * PatientsOverview and PatientsContainer module.
  *
  * Accepted properties:
@@ -35,7 +35,7 @@ var Visit = React.createClass({
 			progress: 0,
 			confirmFinishVisitResponse: null,
 			patients: {},
-		}
+		};
 	},
 
 	/*
@@ -52,7 +52,7 @@ var Visit = React.createClass({
 			for(var patientID in this.props.patients) {
 				patients[patientID] = this.applyGeneratedFields(this.props.patients[patientID]);
 			}
-			this.setState({ 
+			this.setState({
 				patients: patients
 			});
 		}
@@ -112,8 +112,8 @@ var Visit = React.createClass({
 			complete: function(resp) {
 				console.log("Complete:");
 				console.log(resp);
-				this.setState({ 
-					confirmFinishVisitResponse: resp.responseJSON 
+				this.setState({
+					confirmFinishVisitResponse: resp.responseJSON
 				});
 			}.bind(this)
 		});
@@ -133,9 +133,9 @@ var Visit = React.createClass({
 		} else {
 			// Update state with new patient
 			patients[patient.id] = this.applyGeneratedFields(patient);
-			this.setState({ 
-				confirmFinishVisitResponse: null, 
-				patients: patients 
+			this.setState({
+				confirmFinishVisitResponse: null,
+				patients: patients
 			});
 		}
 	},
@@ -157,9 +157,9 @@ var Visit = React.createClass({
 		// Patient full name
 		var fullName = null;
 		if(
-			typeof patient.first_name === "string" 
+			typeof patient.first_name === "string"
 			&& typeof patient.last_name === "string"
-			&& patient.first_name.length > 0 
+			&& patient.first_name.length > 0
 			&& patient.last_name.length > 0
 		) {
 			fullName = patient.first_name + " " + patient.last_name;
@@ -181,7 +181,7 @@ var Visit = React.createClass({
 			typeof patient.birthday === "string"
 			&& patient.birthday.length > 0
 		) {
-			
+
 			// Setup date objects
 			var birthday = +new Date(patient.birthday);
 			var now = Date.now();
@@ -193,25 +193,25 @@ var Visit = React.createClass({
 				var years = ~~((now - birthday) / (31557600000)); // 24 * 3600 * 365.25 * 1000
 
 				// If the birthday is < 1 year, use months
-				if(years == 0) {
+				if(years === 0) {
 					var months = ((now - birthday) / (2629800000)); // 24 * 3600 * 365.25 * 1000 all over 12
-					age = ~~months !== 0 ? months.toFixed(1) + " months" : "<1 month"; // If <1 month, show "<1" instead of zero 
+					age = ~~months !== 0 ? months.toFixed(1) + " months" : "<1 month"; // If <1 month, show "<1" instead of zero
 				} else {
 					age = years + " years";
 				}
 
-				console.log("applyGeneratedFields: age is " + age);	
+				console.log("applyGeneratedFields: age is " + age);
 			}
 		}
 
 		patient.age = age;
-		
+
 		// Return patient object
 		return patient;
 	},
 
 	/*
-	 * 
+	 *
 	 */
 	topLevelPatientStateChange: function(patientID, fieldID, value) {
 		console.log("Top level patient state change");
@@ -247,13 +247,13 @@ var Visit = React.createClass({
 	render: function() {
 		return (
 			<div className="row">
-				<Visit.FinishModal 
+				<Visit.FinishModal
 					stages={this.props.stages}
 					onConfirmFinishVisit={this.handleConfirmFinishVisit} />
 
-				<Visit.PatientsOverview 
+				<Visit.PatientsOverview
 					fields={this.props.patientFields}
-					patients={this.state.patients} 
+					patients={this.state.patients}
 					mini={false} />
 
 				<Visit.PatientsContainer
@@ -271,7 +271,7 @@ var Visit = React.createClass({
 					confirmFinishVisitResponse={this.state.confirmFinishVisitResponse}
 
 					onFinishVisit={this.handleFinishVisit}
-					onPatientAdd={this.handlePatientAdd} 
+					onPatientAdd={this.handlePatientAdd}
 					onPatientDataChange={this.topLevelPatientStateChange} />
 			</div>
 		)
@@ -300,7 +300,7 @@ Visit.generatedFields = {
  * Accepted properties:
  * - fields: Object of ALL fields for ALL stages up to THIS CURRENT STAGE for displaying patient metadata
  * - patients: Object of patients w/ data as pulled from database
- * 
+ *
  * - mini: should this display as a card instead of a column
  */
 Visit.PatientsOverview = React.createClass({
@@ -352,7 +352,7 @@ Visit.PatientsOverview = React.createClass({
 						console.log("Datatype is valid");
 						photo = (
 			                <div className="forcept-patient-photo-contain">
-			                	<img src={dataURI} />	
+			                	<img src={dataURI} />
 			                </div>
 						);
 					}
@@ -364,7 +364,7 @@ Visit.PatientsOverview = React.createClass({
 						<span>
 			               	<div className="card-header">
 			                    <span className="label label-info">#{index + 1}</span>
-			                    <span className="label label-default">{patientID}</span> 
+			                    <span className="label label-default">{patientID}</span>
 			                </div>
 			                <div className="card-block">
 			                	<h4 className="card-title text-xs-center m-a-0">
@@ -395,7 +395,7 @@ Visit.PatientsOverview = React.createClass({
 		                    		&& thisPatient[field] !== null	 	// If the data for this field is null, show "No data"
 		                    		&& thisPatient[field].length > 0	// If string length == 0 or array length == 0, show "No data"
 		                    	) {
-		                    		if(!(this.props.mini == true && isGeneratedField)) // Don't show generated fields in Mini mode 
+		                    		if(!(this.props.mini == true && isGeneratedField)) // Don't show generated fields in Mini mode
 		                    		{
 			                    		if( ["string", "number"].indexOf(typeof thisPatient[field]) !== -1 ) // If the field is a string or number
 			                    		{
@@ -511,7 +511,7 @@ Visit.PatientsOverview = React.createClass({
 										<div className="list-group-item" key={field + "-" + index}>
 											<dl>
 												<dt>{icon} &nbsp; {iterableFields[field].name}</dt>
-												<dd>{value}</dd>
+												<dd>{foundData ? value : ""}</dd>
 											</dl>
 										</div>
 									);
@@ -546,7 +546,7 @@ Visit.PatientsOverview = React.createClass({
 });
 
 
-/* 
+/*
  * Patients management (main content)
  *
  * Properties:
@@ -556,7 +556,7 @@ Visit.PatientsOverview = React.createClass({
  *
  *  - fields: 			All fields for this stage
  *  - patients:  		All patients in this visit
- * 
+ *
  * 	- isSubmitting:  	is the parent form in submission state?
  *
  *  - onFinishVisit:  	Bubble onFinishVisit event up to Visit container
@@ -582,7 +582,7 @@ Visit.PatientsContainer = React.createClass({
 		this.setState({ isLoading: true });
 	},
 
-	/* 
+	/*
 	 * Set state to not loading
 	 */
 	isDoneLoading: function() {
@@ -641,7 +641,7 @@ Visit.PatientsContainer = React.createClass({
 
 		console.log("Rendering patients container with patients " + Object.keys(this.props.patients).length);
 		console.log(this.props.patients);
-		
+
 		var patients,
 			importBlock,
 			controls;
@@ -661,7 +661,7 @@ Visit.PatientsContainer = React.createClass({
 				patients = (Object.keys(this.props.patients)).map(function(patientID, index) {
 					return (
 						<div key={patientID}>
-							<Visit.Patient 
+							<Visit.Patient
 								patient={this.props.patients[patientID]}
 								fields={this.props.fields}
 								summaryFields={this.props.summaryFields}
@@ -688,8 +688,8 @@ Visit.PatientsContainer = React.createClass({
 		// Set up import block
 		if(this.state.showImportBlock) {
 			importBlock = (
-				<Visit.ImportBlock 
-					_token={this.props._token} 
+				<Visit.ImportBlock
+					_token={this.props._token}
 
 					onPatientAdd={this.props.onPatientAdd}
 					onClose={this.handleCloseImportBlock} />
@@ -706,7 +706,7 @@ Visit.PatientsContainer = React.createClass({
 						isImportBlockVisible={this.state.showImportBlock}
 
 						onFinishVisit={this.onFinishVisit}
-						onPatientAddFromScratch={this.handlePatientAddfromScratch} 
+						onPatientAddFromScratch={this.handlePatientAddfromScratch}
 						onShowImportBlock={this.handleShowImportBlock} />
 				);
 				break;
@@ -821,9 +821,9 @@ Visit.ImportBlock = React.createClass({
 				for: this.state[type]
 			},
 			success: function(resp) {
-				this.setState({ 
-					display: 'results', 
-					patientsFound: resp.patients 
+				this.setState({
+					display: 'results',
+					patientsFound: resp.patients
 				});
 			}.bind(this),
 			error: function(resp) {
@@ -892,7 +892,7 @@ Visit.ImportBlock = React.createClass({
 					<h2>
 						<img src="/assets/img/loading.gif" className="m-r" />
 						One moment, searching patients..
-					</h2> 
+					</h2>
 				);
 				break;
 			case "results":
@@ -967,7 +967,7 @@ Visit.ImportBlock = React.createClass({
  * Properties:
  *  - isLoading: boolean, is the container engaged in some sort of loading / modal process
  *  - isImportBlockVisible: if the import block is visible, disable the button
- * 
+ *
  *  - onFinishVisit: callback for finishing visit
  *  - onPatientAddFromScratch: callback for clicking "Create new patient record"
  *  - onShowImportBlock: callback for showing the import block within PatientsContainer
@@ -1049,7 +1049,7 @@ Visit.Patient = React.createClass({
 		if(this.props.summaryFields !== null
 			&& typeof this.props.summaryFields === "object"
 			&& Object.keys(this.props.summaryFields).length > 0) {
-			
+
 			console.log("Generating summary fields");
 
 			var leftColumnFields = {};
@@ -1069,13 +1069,13 @@ Visit.Patient = React.createClass({
 
 			summary = (
 				<div className="row">
-					<Visit.PatientsOverview 
+					<Visit.PatientsOverview
 						fields={leftColumnFields}
-						patients={patientsObjectSpoof} 
+						patients={patientsObjectSpoof}
 						mini={true} />
-					<Visit.PatientsOverview 
+					<Visit.PatientsOverview
 						fields={rightColumnFields}
-						patients={patientsObjectSpoof} 
+						patients={patientsObjectSpoof}
 						mini={true} />
 				</div>
 			);
@@ -1086,7 +1086,7 @@ Visit.Patient = React.createClass({
 			<blockquote className="blockquote">
 				<h3>
 					<span className="label label-info">#{this.props.hasOwnProperty('index') ? this.props.index + 1 : "?"}</span>
-		            <span className="label label-default">{this.props.hasOwnProperty('id') ? this.props.id : "?"}</span> &nbsp; 
+		            <span className="label label-default">{this.props.hasOwnProperty('id') ? this.props.id : "?"}</span> &nbsp;
 		            <span className="hidden-xs-down">{name}</span>
 		            <div className="hidden-sm-up p-t">{name}</div>
 		        </h3>
@@ -1102,8 +1102,8 @@ Visit.Patient = React.createClass({
 		        		 */
 		        		case "text":
 		        			return (
-		        				<Fields.Text 
-		        					{...this.props.fields[fieldID]} 
+		        				<Fields.Text
+		        					{...this.props.fields[fieldID]}
 		        					defaultValue={this.props.patient.hasOwnProperty(fieldID) ? this.props.patient[fieldID] : null}
 		        					onChange={this.handleFieldChange}
 		        					key={fieldID}
@@ -1112,8 +1112,8 @@ Visit.Patient = React.createClass({
 		        			break;
 		        		case "textarea":
 		        			return (
-		        				<Fields.Textarea 
-		        					{...this.props.fields[fieldID]} 
+		        				<Fields.Textarea
+		        					{...this.props.fields[fieldID]}
 		        					defaultValue={this.props.patient.hasOwnProperty(fieldID) ? this.props.patient[fieldID] : null}
 		        					onChange={this.handleFieldChange}
 		        					key={fieldID}
@@ -1123,7 +1123,7 @@ Visit.Patient = React.createClass({
 		        		case "number":
 		        			return (
 		        				<Fields.Number
-		        					{...this.props.fields[fieldID]} 
+		        					{...this.props.fields[fieldID]}
 		        					defaultValue={this.props.patient.hasOwnProperty(fieldID) ? this.props.patient[fieldID] : null}
 		        					onChange={this.handleFieldChange}
 		        					key={fieldID}
@@ -1133,7 +1133,7 @@ Visit.Patient = React.createClass({
 		        		case "date":
 		        			return (
 		        				<Fields.Date
-		        					{...this.props.fields[fieldID]} 
+		        					{...this.props.fields[fieldID]}
 		        					defaultValue={this.props.patient.hasOwnProperty(fieldID) ? this.props.patient[fieldID] : null}
 		        					onChange={this.handleFieldChange}
 		        					key={fieldID}
@@ -1142,8 +1142,8 @@ Visit.Patient = React.createClass({
 		        			break;
 		        		case "select":
 							return (
-		        				<Fields.Select 
-		        					{...this.props.fields[fieldID]} 
+		        				<Fields.Select
+		        					{...this.props.fields[fieldID]}
 		        					multiple={false}
 		        					defaultValue={this.props.patient.hasOwnProperty(fieldID) ? this.props.patient[fieldID] : null}
 		        					onChange={this.handleFieldChange}
@@ -1153,8 +1153,8 @@ Visit.Patient = React.createClass({
 		        			break;
 		        		case "multiselect":
 		        			return (
-		        				<Fields.Select 
-		        					{...this.props.fields[fieldID]} 
+		        				<Fields.Select
+		        					{...this.props.fields[fieldID]}
 		        					multiple={true}
 		        					defaultValue={this.props.patient.hasOwnProperty(fieldID) ? this.props.patient[fieldID] : null}
 		        					onChange={this.handleFieldChange}
@@ -1165,7 +1165,7 @@ Visit.Patient = React.createClass({
 		        		case "file":
 		        			return (
 								<Fields.File
-		        					{...this.props.fields[fieldID]} 
+		        					{...this.props.fields[fieldID]}
 		        					defaultValue={this.props.patient.hasOwnProperty(fieldID) ? this.props.patient[fieldID] : null}
 		        					onChange={this.handleFieldChange}
 		        					key={fieldID}
@@ -1175,7 +1175,7 @@ Visit.Patient = React.createClass({
 		        		case "yesno":
 		        			return (
 								<Fields.YesNo
-		        					{...this.props.fields[fieldID]} 
+		        					{...this.props.fields[fieldID]}
 		        					defaultValue={this.props.patient.hasOwnProperty(fieldID) ? this.props.patient[fieldID] : null}
 		        					onChange={this.handleFieldChange}
 		        					key={fieldID}
@@ -1188,16 +1188,16 @@ Visit.Patient = React.createClass({
 		        		 */
 		        		case "header":
 		        			return (
-		        				<Fields.Header 
-		        					{...this.props.fields[fieldID]} 
+		        				<Fields.Header
+		        					{...this.props.fields[fieldID]}
 		        					key={fieldID}
 		        					id={fieldID} />
 		        			);
 		        			break;
 		        		case "pharmacy":
 		        			return (
-		        				<Fields.Pharmacy 
-		        					{...this.props.fields[fieldID]} 
+		        				<Fields.Pharmacy
+		        					{...this.props.fields[fieldID]}
 		        					onChange={this.handleFieldChange}
 		        					key={fieldID}
 		        					id={fieldID} />
@@ -1242,8 +1242,8 @@ Visit.FinishModal = React.createClass({
 	 * onComplete
 	 */
 	onComplete: function() {
-		this.setState({ 
-			isSubmitting: true 
+		this.setState({
+			isSubmitting: true
 		});
 		this.props.onConfirmFinishVisit(this.state.destination, this);
 	},
