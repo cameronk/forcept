@@ -35,6 +35,7 @@ var Visit = React.createClass({displayName: "Visit",
 			progress: 0,
 			confirmFinishVisitResponse: null,
 			patients: {},
+			resources: {},
 		};
 	},
 
@@ -42,11 +43,11 @@ var Visit = React.createClass({displayName: "Visit",
 	 * Deploy necessary state changes prior to mount
 	 */
 	componentWillMount: function() {
-		console.log("Preparing to mount Visit with properties:");
+		console.log("[Visit] Mounting...");
 		console.log(this.props);
 
 		if(this.props.hasOwnProperty("patients") && this.props.patients !== null) {
-			console.log("Pre-existing patients detected, loading into state:");
+			console.log("[Visit] Pre-existing patients detected, loading into state.");
 
 			var patients = {};
 			for(var patientID in this.props.patients) {
@@ -214,10 +215,7 @@ var Visit = React.createClass({displayName: "Visit",
 	 *
 	 */
 	topLevelPatientStateChange: function(patientID, fieldID, value) {
-		console.log("Top level patient state change");
-		console.log("Patient ID: " + patientID);
-		console.log("Field ID: " + fieldID);
-		console.log("Value: " + value);
+		console.log("[Visit]->topLevelPatientStateChange(): patientID=" + patientID + ", fieldID=" + fieldID + ", value=" + value);
 
 		// Check if patient is in our patients array
 		if(this.state.patients.hasOwnProperty(patientID)) {
@@ -228,17 +226,27 @@ var Visit = React.createClass({displayName: "Visit",
 			// Apply generated fields to patient object
 			patients[patientID] = this.applyGeneratedFields(patients[patientID]);
 
-			console.log("After generated fields are applied:");
-			console.log(patients[patientID]);
-
 			__debug(patients);
 
 			// Push patients back to state
 			this.setState({ patients: patients });
 
 		} else {
-			console.error("Missing patient ID " + patientID + " in Visit patients state");
+			console.error("[Visit]->topLevelPatientStateChange(): Missing patient ID " + patientID + " in Visit patients state");
 		}
+	},
+
+	/*
+	 *
+	 */
+	topLevelStoreResource: function(resourceID, resource) {
+		console.log("[Visit]->topLevelStoreResource(): resourceID=" + resourceID + ", resource=" + resource);
+		var resources = this.state.resources;
+			resources[resourceID] = resource;
+
+		this.setState({
+			resources: resources
+		});
 	},
 
 	/*
@@ -254,6 +262,7 @@ var Visit = React.createClass({displayName: "Visit",
 				React.createElement(Visit.PatientsOverview, {
 					fields: this.props.patientFields, 
 					patients: this.state.patients, 
+					resources: this.state.resources, 
 					mini: false}), 
 
 				React.createElement(Visit.PatientsContainer, {
@@ -272,7 +281,8 @@ var Visit = React.createClass({displayName: "Visit",
 
 					onFinishVisit: this.handleFinishVisit, 
 					onPatientAdd: this.handlePatientAdd, 
-					onPatientDataChange: this.topLevelPatientStateChange})
+					onPatientDataChange: this.topLevelPatientStateChange, 
+					onStoreResource: this.topLevelStoreResource})
 			)
 		)
 	}
@@ -323,17 +333,13 @@ Visit.PatientsOverview = React.createClass({displayName: "PatientsOverview",
 		} else {
 			iterableFields = jQuery.extend(jQuery.extend({}, this.props.fields), Visit.generatedFields);
 		}
+
 		// Remove fields that are displayed differently than normal
 		delete iterableFields["first_name"];
 		delete iterableFields["last_name"];
 		delete iterableFields["photo"];
 
-		// __debug(this.props.patients, iterableFields);
-
-		console.log("Rendering PatientsOverview with iterableFields:");
-		console.log(iterableFields);
-		console.log("and patient properties:");
-		console.log(this.props.patients);
+		console.log("[Visit.PatientOverview]->render(): Rendering PatientsOverview..");
 
 		// If there are patients in the props object
 		if(Object.keys(this.props.patients).length > 0) {
@@ -343,19 +349,28 @@ Visit.PatientsOverview = React.createClass({displayName: "PatientsOverview",
 					photo;
 
 				if(thisPatient.hasOwnProperty('photo') && thisPatient.photo !== null) {
-					console.log("Patient overview: " + patientID + " has photo");
-					var dataURI = thisPatient.photo.toString();
-					var split = dataURI.split(";");
-					var dataType = split[0].split('/');
 
-					if(dataType[0] == "data:image") {
-						console.log("Datatype is valid");
-						photo = (
-			                React.createElement("div", {className: "forcept-patient-photo-contain"}, 
-			                	React.createElement("img", {src: dataURI})
-			                )
-						);
+					var resourceKeys = thisPatient.photo;
+
+					if(resourceKeys.length > 0) {
+						// For the immutable Photo input, the one and only file is the patient photo.
+						var photoData = this.props.resources[resourceKeys[0]];
+
+						console.log("[Visit.PatientOverview]->render(patientID=" + patientID + "): has photo");
+						// var dataURI = thisPatient.photo.toString();
+						// var split = dataURI.split(";");
+						// var dataType = split[0].split('/');
+
+						if(photoData.hasOwnProperty('data') && photoData.hasOwnProperty('type') && photoData.type.match('image.*')) {
+							console.log("[Visit.PatientOverview]->render(patientID=" + patientID + "): photo datatype is valid");
+							photo = (
+				                React.createElement("div", {className: "forcept-patient-photo-contain"}, 
+				                	React.createElement("img", {src: photoData.data})
+				                )
+							);
+						}
 					}
+
 				}
 
 				// Show header if we're not in Mini mode
@@ -562,6 +577,7 @@ Visit.PatientsOverview = React.createClass({displayName: "PatientsOverview",
  *  - onFinishVisit:  	Bubble onFinishVisit event up to Visit container
  *  - onPatientAdd: 	Bubble onPatientAdd event up to Visit container
  *  - onPatientDataChange: Bubble onPatientDataChange event up to Visit container
+ *  - onStoreResource: Bubble onStoreResource event up to Visit container
  */
 Visit.PatientsContainer = React.createClass({displayName: "PatientsContainer",
 
@@ -668,7 +684,8 @@ Visit.PatientsContainer = React.createClass({displayName: "PatientsContainer",
 								id: patientID, 
 								index: index, 
 
-								onPatientDataChange: this.props.onPatientDataChange}), 
+								onPatientDataChange: this.props.onPatientDataChange, 
+								onStoreResource: this.props.onStoreResource}), 
 							React.createElement("hr", null)
 						)
 					);
@@ -1029,12 +1046,27 @@ Visit.StageVisitControls = React.createClass({displayName: "StageVisitControls",
  */
 Visit.Patient = React.createClass({displayName: "Patient",
 
+	/*
+	 *
+	 */
 	handleFieldChange: function(fieldID, value) {
 		// Continue bubbling event from Fields.whatever to top-level Visit container
 		// (this element passes along the patient ID to modify)
 		this.props.onPatientDataChange(this.props.id, fieldID, value);
 	},
 
+	/*
+	 *
+	 */
+	handleStoreResource: function(resourceID, resource) {
+		// Continue bubbling event from Fields.whatever to top-level Visit container
+		// (this element passes along the patient ID to modify)
+		this.props.onStoreResource(resourceID, resource);
+	},
+
+	/*
+	 *
+	 */
 	render: function() {
 		console.log("Preparing to render Visit.Patient with " + Object.keys(this.props.fields).length + " fields");
 		console.log(this.props);
@@ -1168,6 +1200,7 @@ Visit.Patient = React.createClass({displayName: "Patient",
 		        					this.props.fields[fieldID], 
 		        					{defaultValue: this.props.patient.hasOwnProperty(fieldID) ? this.props.patient[fieldID] : null, 
 		        					onChange: this.handleFieldChange, 
+									onStore: this.handleStoreResource, 
 		        					key: fieldID, 
 		        					id: fieldID}))
 		        			);

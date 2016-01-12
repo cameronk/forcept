@@ -36,13 +36,13 @@ rm -rf /etc/nginx/sites-available/default
 service nginx restart > /dev/null
 
 echo " > Running database migrations and seeding..."
-mysql -u root -pf0rc3pt -e "create database forcept"; 
-cd /vagrant/forcept
+mysql -u root -pf0rc3pt -e "create database forcept";
+cd /vagrant
 php artisan migrate --force --seed
 
 # echo " > Installing Node..."
 # apt-get install nodejs npm -y > /dev/null
-# npm install --global gulp -y 
+# npm install --global gulp -y
 # cd /vagrant/src
 # npm install -y
 # gulp watch

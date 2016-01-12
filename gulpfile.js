@@ -34,12 +34,12 @@ var react = require('gulp-react');
 gulp.task('default', function () {
   // gulp.watch('./forcept/resources/assets/sass/**/*.scss', ['sass']);
   // gulp.watch('./forcept/resources/assets/react/**/*.jsx', ['react']);
-    gulp.src('./forcept/resources/assets/react/**/*.jsx')
+    gulp.src('./resources/assets/react/**/*.jsx')
         .pipe(react())
-        .pipe(gulp.dest('./forcept/public/assets/js'));
+        .pipe(gulp.dest('./public/assets/js'));
 
-    gulp.src('./forcept/resources/assets/sass/**/*.scss')
+    gulp.src('./resources/assets/sass/**/*.scss')
         .pipe(sass().on('error', sass.logError))
-        .pipe(gulp.dest('./forcept/public/assets/css'));
+        .pipe(gulp.dest('./public/assets/css'));
 
 });

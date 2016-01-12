@@ -313,11 +313,12 @@ Fields.File = React.createClass({displayName: "File",
 		return {
 			isUploading: false,	// Are we uploading to the server?
 			isParsing: false, 	// Are we parsing the file?
-			resources: {}, 		// Already-uploaded objects
+			resources: [], 		// Already-uploaded objects
 			files: [],			// Files pending upload
 			uploadProgress: 0,	// Progress percentage of the current upload
 			status: "",
 			message: "",
+			_storage: {},		// Store resources by their ID
 		};
 	},
 
@@ -460,10 +461,13 @@ Fields.File = React.createClass({displayName: "File",
 			xhr: function() {
 				var xhr = new window.XMLHttpRequest();
 
-				xhr.upload.addEventListener("progress", function(evt) {
+				// TODO fix this
+				xhr.addEventListener("progress", function(evt) {
 					if(evt.lengthComputable) {
+						var progress = Math.round(evt.loaded / evt.total);
+						console.log("[Fields.File]->handleUploadFiles(): progress=" + progress);
 						this.setState({
-							uploadProgress: Math.round((evt.loaded * 100) / evt.total)
+							uploadProgress: progress
 						});
 					}
 		       }.bind(this), false);
@@ -472,15 +476,23 @@ Fields.File = React.createClass({displayName: "File",
 
 			}.bind(this),
 			success: function(resp) {
-				var message = resp.hasOwnProperty("message") && typeof resp.message === "object" && resp.message !== null ? resp.message : {};
+				var resources = resp.hasOwnProperty("message") && typeof resp.message === "object" && resp.message !== null ? resp.message : {};
+				var resourceKeys = Object.keys(resources);
 				this.setState({
 					isUploading: false,
 					uploadProgress: 0,
 					files: [],
-					resources: message,
+					resources: resourceKeys,
+					_storage: resources,
 					status: "success",
 					message: "File(s) uploaded successfully!"
-				});
+				}, function() {
+					this.props.onChange(this.props.id, resourceKeys);
+					for(i = 0; i < resourceKeys.length; i++) {
+						var k = resourceKeys[i];
+						this.props.onStore(k, resources[k]);
+					}
+				}.bind(this));
 			}.bind(this),
 			error: function(resp) {
 				this.setState({
@@ -495,16 +507,25 @@ Fields.File = React.createClass({displayName: "File",
 	},
 
 	handleRemoveResource: function(resourceID) {
-		var resources = this.state.resources;
-		if(resources.hasOwnProperty(resourceID)) {
-			delete resources[resourceID];
+		var storage = this.state._storage,
+			resources = this.state.resources,
+			index = resources.indexOf(resourceID);
+
+		if(storage.hasOwnProperty(resourceID)) {
+			delete storage[resourceID];
+		}
+		if(index !== -1) {
+			resources.splice(index, 1);
 		}
 
 		this.setState({
 			resources: resources,
+			_storage: storage,
 			status: "",
 			message: ""
-		});
+		}, function() {
+			this.props.onChange(this.props.id, resources);
+		}.bind(this));
 	},
 
 	render: function() {
@@ -512,7 +533,8 @@ Fields.File = React.createClass({displayName: "File",
 			files = this.state.files,
 			filesCount = files.length,
 			resources = this.state.resources,
-			resourcesCount = Object.keys(resources).length,
+			storage = this.state._storage,
+			resourcesCount = resources.length,
 			fileDisplay,
 			statusMessage;
 
@@ -533,10 +555,10 @@ Fields.File = React.createClass({displayName: "File",
 		// Figure out what to display.
 		if(resourcesCount > 0) {
 			// We have resources - don't show file input.
-			var fileList = Object.keys(resources).map(function(resource, index) {
+			var fileList = resources.map(function(resource, index) {
 				return (
 					React.createElement("div", {className: "list-group-item", key: ["file-", resource, "-", index].join()}, 
-						"#", resource, " - ", resources[resource].type, 
+						React.createElement("small", null, "#", resource, " - ", storage[resource].type), 
 						React.createElement("button", {onMouseUp: this.handleRemoveResource.bind(this, resource), className: "close pull-right"}, 
 							"×"
 						)

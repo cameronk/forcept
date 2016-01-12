@@ -39,7 +39,7 @@ class VisitController extends Controller
             'visit' => null, // Creating a visit so no visit ID
             'patients' => null, // No patients are in the visit yet
             'stages' => Stage::where('root', '!=', true)->orderBy('order', 'asc')->get(['id', 'order', 'name'])->toJson(),
-            
+
             'patientFields' => $patientFields,
             'mutableFields' => $patientFields
         ]);
@@ -76,7 +76,7 @@ class VisitController extends Controller
             $allFields = [];
             $stagesUpToCurrent = Stage::where('order', '<', $stage->order)
                                         ->orderBy('order', 'asc');
-                                  
+
             foreach($stagesUpToCurrent->get(['root', 'fields']) as $thisStage) {
 
                 \Log::debug("-> Looping through stage:");
@@ -264,12 +264,13 @@ class VisitController extends Controller
 
                     // Check if we should mutate the data (i.e. multiselect)
                     switch($stage->fields[$key]["type"]) {
+                        case "file":
                         case "pharmacy":
                         case "multiselect":
                             // Value is an array, convert to string
                             $data[$key] = json_encode($value);
                             break;
-                        default: 
+                        default:
                             $data[$key] = $value;
                             break;
                     }
@@ -295,7 +296,7 @@ class VisitController extends Controller
                 if($stage->root) {
 
                     // All data is relative to Patient record
-                    $data['concrete'] = true; 
+                    $data['concrete'] = true;
                     $data['current_visit'] = $visit->id;
 
                     // Add this visit ID to patient all-time visits array
@@ -355,7 +356,7 @@ class VisitController extends Controller
     /**
      * Fetch visits for specified stage ID
      */
-    public function fetch(Stage $stage) 
+    public function fetch(Stage $stage)
     {
         $response;
         $visits = Visit::where('stage', '=', $stage->id)->get()->keyBy('id')->toArray();
