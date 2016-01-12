@@ -82,7 +82,7 @@ class FlowController extends Controller
                 // Save stage model
                 if($stage->save()) {
 
-                    // Add the order 
+                    // Add the order
                     $stage->order = $stage->id;
                     $stage->save();
 
@@ -94,7 +94,7 @@ class FlowController extends Controller
                     });
 
                     return redirect()->route('console::flow::index')->with('alert', [ 'type' => 'success', 'message' => 'Stage created. Choose "Edit" below to get started.' ]);
-                    
+
                 } else return redirect()->route('console::flow::index')->with('alert', [ 'type' => 'failure', 'message' => 'An error occurred, and the stage model could not be created.' ]);
         }
     }
@@ -196,8 +196,8 @@ class FlowController extends Controller
                         if($data['name'] !== $cachedFields[$key]['name']) {
 
                             $nameChanges[$key] = [
-                                "old" => $cachedFields[$key]['name'], 
-                                "new" => $data['name'] 
+                                "old" => $cachedFields[$key]['name'],
+                                "new" => $data['name']
                             ];
                             \Log::debug("Adding " + $key + " as a name change");
                         }
@@ -266,8 +266,8 @@ class FlowController extends Controller
 
                         switch($data['type']) {
                             case "file":
-                                // Create MEDIUMTEXT column for storing base64 file info
-                                $table->mediumText($columnName)->nullable();
+                                // Create JSON column for storing file identifiers
+                                $table->json($columnName)->nullable();
                                 break;
                             default:
                                 // Create  VARCHAR(255) column for storing most inputs
@@ -294,7 +294,7 @@ class FlowController extends Controller
                         $allGood = false;
                         $failedColumns[] = $columnName;
                         $errors[] = $data['name'] . " (" . $columnName . ") was unable to be moved to backup location ". $data['destination'];
-                    
+
                         \Log::debug("Deletion of " . $columnName . " seems to have failed");
                     } else {
                         // Succeeded, put a record in the StageModifications table
@@ -335,7 +335,7 @@ class FlowController extends Controller
                                 // Sweet, it saved
                                 \Log::debug("Addition of " . $columnName . " suceeded and saved to StageModifications");
                             } else {
-                                $failedSaves[] = $columnName;                                
+                                $failedSaves[] = $columnName;
                                 \Log::debug("Addition of " . $columnName . " succeeded but did not save to StageModifications");
                             }
                     }
@@ -388,7 +388,7 @@ class FlowController extends Controller
                     "status" => "failure",
                     "message" => "Failed to save stage."
                 ], 422);
-            } 
+            }
 
 
         } else {
@@ -423,8 +423,8 @@ class FlowController extends Controller
                 if($stage->delete()) {
                     return redirect()->route('console::flow::index')->with('alert', [ 'type' => 'success', 'message' => 'Stage deleted.' ]);
                 } else return redirect()->route('console::flow::index')->with('alert', [ 'type' => 'failure', 'message' => 'An error occurred during deletion.'  ]);
-            } else return redirect()->route('console::flow::index')->with('alert', [ 'type' => 'failure', 'message' => 'This is the root stage, and cannot be deleted.' ]);     
+            } else return redirect()->route('console::flow::index')->with('alert', [ 'type' => 'failure', 'message' => 'This is the root stage, and cannot be deleted.' ]);
         } else return redirect()->route('console::flow::index')->with('alert', [ 'type' => 'failure', 'message' => 'Stage with ID ' . $id . 'does not exist.' ]);
-    
+
     }
 }

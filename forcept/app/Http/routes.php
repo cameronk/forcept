@@ -39,7 +39,7 @@ Route::group(['middleware' => 'auth'], function () {
 	], function() {
 
 		/**
-		 * 
+		 *
 		 */
 		Route::get('visits/{method?}', [
 			'as' => 'visits',
@@ -69,6 +69,14 @@ Route::group(['middleware' => 'auth'], function () {
 			'as' => 'pharmacy',
 			'uses' => 'DataController@pharmacy'
 		]);
+
+		/**
+		 * Work with resources
+		 */
+		Route::any('resources/{method?}', [
+			'as' => 'resources',
+			'uses' => 'DataController@resources'
+		]);
 	});
 
 	/**
@@ -95,7 +103,7 @@ Route::group(['middleware' => 'auth'], function () {
 		/**
 		 * Display the visit creation page
 		 * @returns View
-		 * 
+		 *
 		 * => visits::create
 		 */
 		Route::get('new', [
@@ -105,7 +113,7 @@ Route::group(['middleware' => 'auth'], function () {
 
 		/**
 		 * Handle visit creation/updating as necessary
-		 * @returns JSON 
+		 * @returns JSON
 		 *
 		 * => visits::handle
 		 */
@@ -148,7 +156,7 @@ Route::group(['middleware' => 'auth'], function () {
 			Route::get('{stage}/handle/{visit}', [
 				'uses' => 'VisitController@handle'
 			]);
-			
+
 		});
 
 	});
@@ -164,7 +172,7 @@ Route::group(['middleware' => 'auth'], function () {
 	], function() {
 
 		/**
-		 * Make a new patient record 
+		 * Make a new patient record
 		 * @returns JSON
 		 *
 		 * => patients::create
@@ -189,12 +197,12 @@ Route::group(['middleware' => 'auth'], function () {
 	});
 
 
-	/** 
+	/**
 	 * Console
 	 */
 	Route::group([
-		'prefix'=> 'console', 
-		'as' => 'console::', 
+		'prefix'=> 'console',
+		'as' => 'console::',
 		'namespace' => 'Console'
 	], function() {
 
@@ -243,7 +251,7 @@ Route::group(['middleware' => 'auth'], function () {
 		 */
 		Route::group([
 			'prefix' => 'flow',
-			'as' => 'flow::', 
+			'as' => 'flow::',
 		], function() {
 
 			// Flow index
@@ -289,7 +297,7 @@ Route::group(['middleware' => 'auth'], function () {
  * Auth
  */
 Route::get('auth/login', [
-	'as' => 'auth::login', 
+	'as' => 'auth::login',
 	'uses' => 'Auth\AuthController@getLogin'
 ]);
 Route::get('auth/logout', [

@@ -22,20 +22,24 @@ var gulp = require('gulp');
 var sass = require('gulp-sass');
 var react = require('gulp-react');
 
-gulp.task('sass', function () {
-  gulp.src('./resources/assets/sass/**/*.scss')
-    .pipe(sass().on('error', sass.logError))
-    .pipe(gulp.dest('./public/assets/css'));
-    // { outputStyle: 'compressed' }
-});
- 
-gulp.task('react', function () {
-	return gulp.src('./resources/assets/react/**/*.jsx')
-		.pipe(react())
-		.pipe(gulp.dest('./public/assets/js'));
-});
+// gulp.task('sass', function () {
+//
+//     // { outputStyle: 'compressed' }
+// });
+//
+// gulp.task('react', function () {
+// 	return
+// });
 
 gulp.task('default', function () {
-  gulp.watch('./resources/assets/sass/**/*.scss', ['sass']);
-  gulp.watch('./resources/assets/react/**/*.jsx', ['react']);
+  // gulp.watch('./forcept/resources/assets/sass/**/*.scss', ['sass']);
+  // gulp.watch('./forcept/resources/assets/react/**/*.jsx', ['react']);
+    gulp.src('./forcept/resources/assets/react/**/*.jsx')
+        .pipe(react())
+        .pipe(gulp.dest('./forcept/public/assets/js'));
+
+    gulp.src('./forcept/resources/assets/sass/**/*.scss')
+        .pipe(sass().on('error', sass.logError))
+        .pipe(gulp.dest('./forcept/public/assets/css'));
+
 });

@@ -5,6 +5,7 @@ namespace App\Providers;
 use Illuminate\Support\ServiceProvider;
 
 use App\Patient;
+use App\Resource;
 use Auth;
 use View;
 
@@ -27,6 +28,12 @@ class AppServiceProvider extends ServiceProvider
         Patient::saving(function($patient) {
             if(Auth::check()) {
                 $patient->last_modified_by = Auth::user()->id;
+            }
+        });
+
+        Resource::creating(function($resource) {
+            if(Auth::check()) {
+                $resource->uploaded_by = Auth::user()->id;
             }
         });
     }

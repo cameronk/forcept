@@ -20,7 +20,7 @@ class CreatePatientsTable extends Migration
             $table->string('first_name')->nullable();
             $table->string('last_name')->nullable();
             $table->string("birthday")->nullable();
-            $table->mediumText('photo')->nullable();
+            $table->json('photo')->nullable();
             //$table->string('full_name')->nullable(); // Not shown as a property in the admin panel, used for searching
             // $table->string('priority')->nullable();
 
@@ -32,7 +32,7 @@ class CreatePatientsTable extends Migration
             $table->integer('created_by');
             $table->integer('last_modified_by')->default(0);
             $table->boolean('concrete')->default(false)->comment("Patient created but data not yet gathered from NewVisit");
-            
+
             // Timestamps
             $table->timestamps();
             $table->softDeletes();

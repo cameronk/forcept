@@ -6,7 +6,7 @@
  * Add debug data to tooltip
  */
 function __debug() {
-	var compile = ""
+	var compile = "";
 	for(var i = 0; i < arguments.length; i++) {
 		var data = arguments[i];
 		if(typeof data == "object" && data !== null) {
@@ -20,14 +20,11 @@ function __debug() {
 function isTrue(statement) {
 	switch(typeof statement) {
 		case "boolean":
-			return statement == true;
-			break;
+			return statement === true;
 		case "string":
 			return statement === "true";
-			break;
 		default:
 			return false;
-			break;
 	}
 }
 
@@ -55,7 +52,11 @@ Fields.FieldLabel = React.createClass({
 		var description;
 		if(this.props.hasOwnProperty("description") && this.props.description !== null && this.props.description.length > 0) {
 			description = (
-				<div><small className="text-muted">{this.props.description}</small></div>
+				<div>
+					<small className="text-muted">
+						{this.props.description}
+					</small>
+				</div>
 			);
 		}
 		return (
@@ -79,14 +80,14 @@ Fields.Text = React.createClass({
 			<div className="form-group row">
 				<Fields.FieldLabel {...this.props} />
 				<div className={Fields.inputColumnClasses}>
-					<input 
-						type="text" 
-						className="form-control" 
+					<input
+						type="text"
+						className="form-control"
 						autoComplete="off"
 						maxLength="255"
 
-						id={this.props.id} 
-						placeholder={this.props.name + " goes here"} 
+						id={this.props.id}
+						placeholder={this.props.name + " goes here"}
 						defaultValue={this.props.defaultValue !== null ? this.props.defaultValue : null}
 						onChange={this.onTextInputChange} />
 				</div>
@@ -112,8 +113,8 @@ Fields.Textarea = React.createClass({
 						autoComplete="off"
 						maxLength="255"
 
-						id={this.props.id} 
-						placeholder={this.props.name + " goes here"} 
+						id={this.props.id}
+						placeholder={this.props.name + " goes here"}
 						defaultValue={this.props.defaultValue !== null ? this.props.defaultValue : null}
 						onChange={this.onTextareaInputChange} />
 				</div>
@@ -134,14 +135,14 @@ Fields.Number = React.createClass({
 			<div className="form-group row">
 				<Fields.FieldLabel {...this.props} />
 				<div className={Fields.inputColumnClasses}>
-					<input 
-						type="number" 
-						className="form-control" 
+					<input
+						type="number"
+						className="form-control"
 						autoComplete="off"
 						maxLength="255"
 
-						id={this.props.id} 
-						placeholder={this.props.name + " goes here"} 
+						id={this.props.id}
+						placeholder={this.props.name + " goes here"}
 						defaultValue={this.props.defaultValue !== null ? this.props.defaultValue : null}
 						onChange={this.onNumberInputChange} />
 				</div>
@@ -162,13 +163,13 @@ Fields.Date = React.createClass({
 			<div className="form-group row">
 				<Fields.FieldLabel {...this.props} />
 				<div className={Fields.inputColumnClasses}>
-					<input 
-						type="date" 
-						className="form-control" 
-						autoComplete="off" 
+					<input
+						type="date"
+						className="form-control"
+						autoComplete="off"
 						maxLength="255"
 
-						id={this.props.id} 
+						id={this.props.id}
 						placeholder={this.props.name + " goes here"}
 						defaultValue={this.props.defaultValue !== null ? this.props.defaultValue : null}
 						onChange={this.onDateInputChange} />
@@ -280,12 +281,12 @@ Fields.Select = React.createClass({
 
 		// Set size if this is a multiselect input
 		var size = this.props.multiple ? (optionsKeys.length > 30 ? 30 : optionsKeys.length ) : 1;
-		
+
 		// Build the select input
 		displaySelect = (
-			<select 
-				className="form-control" 
-				onChange={this.onSelectInputChange} 
+			<select
+				className="form-control"
+				onChange={this.onSelectInputChange}
 				defaultValue={this.props.defaultValue !== null ? this.props.defaultValue : (this.props.multiple ? [] : "__default__")}
 				multiple={this.props.multiple}
 				size={size}>
@@ -310,52 +311,300 @@ Fields.Select = React.createClass({
 Fields.File = React.createClass({
 	getInitialState: function() {
 		return {
-			fileCount: 0,
-			fileSize: 0,
+			isUploading: false,	// Are we uploading to the server?
+			isParsing: false, 	// Are we parsing the file?
+			resources: {}, 		// Already-uploaded objects
+			files: [],			// Files pending upload
+			uploadProgress: 0,	// Progress percentage of the current upload
+			status: "",
+			message: "",
 		};
 	},
 
 	componentWillMount: function() {
 		if(this.props.hasOwnProperty("defaultValue") && this.props.defaultValue !== null) {
 			this.setState({
-				fileCount: 1,
-				fileSize: base64bytes(this.props.defaultValue)
+				resources: this.props.defaultValue
 			});
 		}
 	},
 
 	onFileInputChange: function(event) {
-		var reader = new FileReader();
-		var file = event.target.files[0];
 
-		reader.onload = function(upload) {
-			console.log("Reader onload return upload target result:");
-			console.log(upload.target.result);
-			this.setState({ 
-				fileCount: 1, 
-				fileSize: base64bytes(upload.target.result)
-			});
-			this.props.onChange(this.props.id, upload.target.result);
-		}.bind(this);
+		// Remove any previous messages
+		this.setState({
+			status: "",
+			message: "",
+			isParsing: true
+		});
 
-		reader.readAsDataURL(file);
+		var files = event.target.files,
+			filesLength = files.length,
+			modifiedFiles = [],
+			done = function() {
+				console.log("[Fields.File] modifiedFiles count: " + modifiedFiles.length);
+				this.setState({
+					files: modifiedFiles,
+					isParsing: false
+				});
+			}.bind(this);
+
+		setTimeout(function() {
+			for(var i = 0; i < filesLength; i++) {
+				var thisFile = files[i],
+					reader = new FileReader(),
+					n = i;
+
+				console.log("[Fields.File] working with file " + i);
+
+				if(thisFile.type.match('image.*')) {
+
+					var maxWidth = (this.props.hasOwnProperty("maxWidth") ? this.props.maxWidth : 310),
+						maxHeight = (this.props.hasOwnProperty("maxHeight") ? this.props.maxHeight : 310);
+
+					// onLoad: reader
+					reader.onload = function(readerEvent) {
+
+						console.log("[Fields.File][" + n + "] caught reader.onload");
+
+						// Create a new image and load our data into it
+						var image = new Image();
+
+						// onLoad: image
+						image.onload = function(imageEvent) {
+
+							console.log("[Fields.File][" + n + "] caught image.onload");
+
+							// Setup canvas element, grab width/height of image
+							var canvas = document.createElement("canvas"),
+								width = image.width,
+								height = image.height;
+
+							// Figure out what our final width / height should be
+							if (width > height) {
+								if (width > maxWidth) {
+									height *= maxWidth / width;
+									width = maxWidth;
+								}
+							} else {
+								if (height > maxHeight) {
+									width *= maxHeight / height;
+									height = maxHeight;
+								}
+							}
+
+							// Size our canvas appropriately
+							canvas.width = width;
+							canvas.height = height;
+
+							console.log("[Fields.File][" + n + "] " + width + "x" + height);
+
+							// Push image to canvas context
+							canvas.getContext("2d").drawImage(image, 0, 0, width, height);
+
+							console.log("[Fields.File][" + n + "] image/jpeg @ 0.5 is:");
+							console.log(canvas.toDataURL("image/jpeg", 0.5));
+
+							modifiedFiles[n] = canvas.toDataURL("image/jpeg", 0.5);
+
+							if((n + 1) == filesLength) {
+								done();
+							}
+						};
+
+						image.src = readerEvent.target.result;
+
+					};
+
+					reader.readAsDataURL(thisFile);
+
+				} else {
+					reader.onload = function(evt) {
+						modifiedFiles[n] = evt.target.result;
+					};
+
+					reader.readAsDataURL(thisFile);
+				}
+
+			}
+		}.bind(this), 100);
+	},
+
+	/*
+	 *
+	 */
+	handleUploadFiles: function() {
+		// Set state as uploading this file.
+		this.setState({
+			isUploading: true,
+			status: "",
+			statusMessage: ""
+		});
+
+		var data = {};
+
+		// Push all files loaded as inputs
+		for(var i = 0; i < this.state.files.length; i++) {
+			console.log("[Fields.File](handleUploadFiles) file " + i + " has data");
+			console.log(this.state.files[i]);
+			data["file-" + i] = this.state.files[i];
+		}
+
+		// Add CSRF token.
+		data._token = document.querySelector("meta[name='csrf-token']").getAttribute('value');
+
+		$.ajax({
+			type: "POST",
+			url: "/data/resources/upload",
+			data: data,
+			xhr: function() {
+				var xhr = new window.XMLHttpRequest();
+
+				xhr.upload.addEventListener("progress", function(evt) {
+					if(evt.lengthComputable) {
+						this.setState({
+							uploadProgress: Math.round((evt.loaded * 100) / evt.total)
+						});
+					}
+		       }.bind(this), false);
+
+				return xhr;
+
+			}.bind(this),
+			success: function(resp) {
+				var message = resp.hasOwnProperty("message") && typeof resp.message === "object" && resp.message !== null ? resp.message : {};
+				this.setState({
+					isUploading: false,
+					uploadProgress: 0,
+					files: [],
+					resources: message,
+					status: "success",
+					message: "File(s) uploaded successfully!"
+				});
+			}.bind(this),
+			error: function(resp) {
+				this.setState({
+					isUploading: false,
+					uploadProgress: 0,
+					status: "failure",
+					message: "An error occurred during upload."
+				});
+			}.bind(this)
+		});
+
+	},
+
+	handleRemoveResource: function(resourceID) {
+		var resources = this.state.resources;
+		if(resources.hasOwnProperty(resourceID)) {
+			delete resources[resourceID];
+		}
+
+		this.setState({
+			resources: resources,
+			status: "",
+			message: ""
+		});
 	},
 
 	render: function() {
-		var accept = "";
+		var accept = "",
+			files = this.state.files,
+			filesCount = files.length,
+			resources = this.state.resources,
+			resourcesCount = Object.keys(resources).length,
+			fileDisplay,
+			statusMessage;
+
+		// If we have an accept array, join it
 		if(this.props.settings.hasOwnProperty("accept")) {
 			accept = this.props.settings.accept.join();
 		}
 
+		if(this.state.status.length > 0 && this.state.message.length > 0) {
+			var type = (this.state.status == "success" ? "success" : (this.state.status == "failure" ? "danger" : "info"));
+			statusMessage = (
+				<div className={"alert alert-" + type}>
+					<small>{this.state.message}</small>
+				</div>
+			);
+		}
+
+		// Figure out what to display.
+		if(resourcesCount > 0) {
+			// We have resources - don't show file input.
+			var fileList = Object.keys(resources).map(function(resource, index) {
+				return (
+					<div className="list-group-item" key={["file-", resource, "-", index].join()}>
+						#{resource} - {resources[resource].type}
+						<button onMouseUp={this.handleRemoveResource.bind(this, resource)} className="close pull-right">
+							&times;
+						</button>
+					</div>
+				);
+			}.bind(this));
+
+			fileDisplay = (
+				<div className="card">
+					<ul className="list-group list-group-flush">
+						{fileList}
+					</ul>
+				</div>
+			)
+		} else {
+			// Check if we're currently uploading
+			if(!this.state.isUploading) {
+				// No resources found - show file input.
+				var uploadButton;
+
+				if(filesCount > 0 || this.state.isParsing) {
+					uploadButton = (
+						<div>
+							<button type="button" disabled={this.state.isParsing} className="btn btn-sm btn-primary btn-block" onClick={this.handleUploadFiles}>
+								{'\u21d1'} {this.state.isParsing ? "Preparing files..." : "Upload"}
+							</button>
+						</div>
+					);
+				}
+
+				fileDisplay = (
+					<div>
+						<label className="file">
+							<input type="file" className="form-control" accept={accept} onChange={this.onFileInputChange} />
+							<span className="file-custom">
+								{filesCount > 0 ? filesCount + " files - " : ""}
+							</span>
+						</label>
+						{uploadButton}
+					</div>
+				);
+			} else {
+				// No resources found - show file input.
+				fileDisplay = (
+					<div>
+						<h6 className="text-muted text-center m-t">
+							Uploading {filesCount} {filesCount === 1 ? "file" : "files"}...
+						</h6>
+						<progress className="progress" value={this.state.uploadProgress} max={100}>
+							<div className="progress">
+								<span className="progress-bar" style={{ width: this.state.uploadProgress + "%" }}>
+									{this.state.uploadProgress}%
+								</span>
+							</div>
+						</progress>
+					</div>
+				);
+			}
+
+		}
+
+		// <h6>{this.state.fileSize > 0 ? getFileSize(this.state.fileSize) : ""}</h6>
 		return (
 			<div className="form-group row">
 				<Fields.FieldLabel {...this.props} />
 				<div className={Fields.inputColumnClasses}>
-					<label className="file">
-						<input type="file" className="form-control" accept={accept} onChange={this.onFileInputChange} />
-						<span className="file-custom">{this.state.fileCount == 0 ? "No files - " : this.state.fileCount + " file - " + (this.state.fileCount == 1 ? "" : "s")}</span>
-					</label>
-					<h6>{this.state.fileSize > 0 ? getFileSize(this.state.fileSize) : ""}</h6>
+					{fileDisplay}
+					{statusMessage}
 				</div>
 			</div>
 		);
@@ -372,7 +621,7 @@ Fields.YesNo = React.createClass({
 
 	componentWillMount: function() {
 		// If data, set
-		if(this.props.hasOwnProperty('defaultValue') 
+		if(this.props.hasOwnProperty('defaultValue')
 			&& this.props.defaultValue !== null
 			&& ["yes", "no"].indexOf(this.props.defaultValue.toLowerCase()) !== -1) {
 			this.setState({
@@ -401,19 +650,19 @@ Fields.YesNo = React.createClass({
 				<div className={Fields.inputColumnClasses}>
 					<div className="btn-group btn-group-block" data-toggle="buttons">
 						<label className={"btn btn-primary-outline" + (this.state.yes == true ? " active" : "")} onClick={this.onYesNoInputChange(true)}>
-							<input type="radio" 
-								name={this.props.name + "-options"} 
-								autoComplete="off" 
-									
-								defaultChecked={this.state.yes == true} /> 
+							<input type="radio"
+								name={this.props.name + "-options"}
+								autoComplete="off"
+
+								defaultChecked={this.state.yes == true} />
 							Yes
 						</label>
 						<label className={"btn btn-primary-outline" + (this.state.yes == false ? " active" : "")} onClick={this.onYesNoInputChange(false)} >
-							<input type="radio" 
-								name={this.props.name + "-options"} 
-								autoComplete="off" 
+							<input type="radio"
+								name={this.props.name + "-options"}
+								autoComplete="off"
 
-								defaultChecked={this.state.yes == false} /> 
+								defaultChecked={this.state.yes == false} />
 							No
 						</label>
 					</div>
@@ -496,16 +745,16 @@ Fields.Pharmacy = React.createClass({
 
 		if(dataKeys.length > 0) {
 			selectDrugs = (
-				<select 
-					className="form-control forcept-field-select-drugs" 
-					multiple={true} 
-					size={10} 
+				<select
+					className="form-control forcept-field-select-drugs"
+					multiple={true}
+					size={10}
 					onChange={this.onSelectedDrugsChange}>
 
 					{dataKeys.map(function(drugKey, index) {
 						var thisCategory = this.state.data[drugKey];
 
-						if(thisCategory.hasOwnProperty('settings') 
+						if(thisCategory.hasOwnProperty('settings')
 							&& thisCategory.settings.hasOwnProperty('options')
 							&& thisCategory.settings.options !== null) {
 
@@ -521,11 +770,11 @@ Fields.Pharmacy = React.createClass({
 										if(!disabled) {
 											return (
 												<option value={thisOption.value}>
-													{displayName}	
+													{displayName}
 												</option>
 											);
 										}
-										
+
 									}.bind(this))}
 								</optgroup>
 							);

@@ -11,6 +11,7 @@ use App\Http\Controllers\Controller;
 use App\Visit;
 use App\Stage;
 use App\Patient;
+use App\Resource;
 use DB;
 use Storage;
 
@@ -26,7 +27,7 @@ class DataController extends Controller
      */
     public function visits(Request $request, $method)
     {
-        
+
         $dates = $this->getCarbonDates($request);
 
         switch(strtolower($method)) {
@@ -150,7 +151,7 @@ class DataController extends Controller
                         }
                     })->collapse();
 
-                    return $stage; 
+                    return $stage;
                 });
 
                 return response()->json([
@@ -207,7 +208,62 @@ class DataController extends Controller
         }
     }
 
+    /**
+     * Handles interaction with file resources
+     *
+     * @return \Illuminate\Http\Response
+     */
+    public function resources(Request $request, $method)
+    {
+        switch ($method) {
+            case 'upload':
 
+                $i = 0;
+                $files = array();
+                $message = array();
+
+                while($request->has('file-' . $i)) {
+                    $key = time() . "-" . mt_rand();
+                    $inputName = 'file-' . $i;
+                    $files[$key] = $request->input($inputName);
+                    $i++;
+                }
+
+                foreach($files as $fileKey => $fileData) {
+                    $splitTypeAndBase64 = explode(";", $fileData);
+                    \Log::debug($splitTypeAndBase64);
+                    $dataType = explode(":", $splitTypeAndBase64[0]);
+                    $splitType = explode("/", $dataType[1]);
+                    $base64 = explode(",", $splitTypeAndBase64[1]);
+                    $base64 = $base64[1];
+
+                    $resource = new Resource;
+                        $resource->type = $dataType[1];
+                        $resource->base64 = $base64;
+                        $resource->save();
+
+                        $message[$resource->id] = array(
+                            "type" => $resource->type,
+                            "data" => $splitType[0] == "image" ? $this->constructBase64File($resource) : null
+                        );
+                }
+
+                return response()->json(["status" => "success", "message" => $message]);
+                break;
+            default:
+                return response()->json(["status" => "failure", "message" => "Unknown method"]);
+                break;
+        }
+    }
+
+    /**
+     * Return array with Carbon dates
+     *
+     * @return String
+     */
+    public function constructBase64File($resource) {
+        return "data:" . $resource->type . ";base64," . $resource->base64;
+    }
 
     /**
      * Return array with Carbon dates
