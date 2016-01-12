@@ -1,17 +1,17 @@
 server {
     listen 80;
     server_name ~^(?<subdomain>.+)\.localhost$ localhost;
-     
-    root /vagrant/forcept/public;
+
+    root /vagrant/public;
     index index.php index.html;
-    
-    # Raise max POST body size for uploading base64 images     
+
+    # Raise max POST body size for uploading base64 images
     client_max_body_size 100m;
 
 
     # Important for VirtualBox
     sendfile off;
-     
+
     location / {
         try_files $uri $uri/ /index.php?$query_string;
     }
