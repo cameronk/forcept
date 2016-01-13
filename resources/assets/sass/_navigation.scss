@@ -1,0 +1,50 @@
+/**
+ * _navigation.scss
+ */
+
+
+#navbar-mobile, #navbar-desktop {
+    
+    .nav-link {
+        color: $component-active-color;
+    }
+    
+    .nav-link.active {
+        color: $component-active-bg;
+        background-color: $gray-lightest;
+    }
+}
+
+#navbar-desktop {
+    
+    height: $forcept-navbar-height;
+    
+    .nav {
+        
+        .nav-item {
+            
+            position: relative;
+            height: $forcept-navbar-height;
+            
+            .nav-link {
+                padding: 0 $spacer-x;
+                height: $forcept-navbar-height;  
+                line-height: $forcept-navbar-height;
+            }
+            
+        }
+    }
+
+}
+
+.nav-item > a.disabled {
+    opacity: 0.5;
+}
+
+#footer {
+    background: $component-active-bg;
+    color: $gray-lightest;
+//    text-align: right;
+    padding: $spacer * 2;
+    margin-top: $spacer-y * 2;
+}

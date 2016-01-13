@@ -1,0 +1,28 @@
+server {
+    listen 80;
+    server_name ~^(?<subdomain>.+)\.localhost$ localhost;
+
+    root /vagrant/public;
+    index index.php index.html;
+
+    # Raise max POST body size for uploading base64 images
+    client_max_body_size 100m;
+
+
+    # Important for VirtualBox
+    sendfile off;
+
+    location / {
+        try_files $uri $uri/ /index.php?$query_string;
+    }
+
+    # pass the PHP scripts to FastCGI server listening on /var/run/php5-fpm.sock
+    location ~ \.php$ {
+        try_files $uri /index.php =404;
+        fastcgi_split_path_info ^(.+\.php)(/.+)$;
+        fastcgi_pass unix:/var/run/php5-fpm.sock;
+        fastcgi_index index.php;
+        fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
+        include fastcgi_params;
+    }
+}
