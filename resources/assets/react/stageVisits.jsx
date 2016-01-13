@@ -59,8 +59,20 @@ var StageVisits = React.createClass({
 					if(visit.patient_models.hasOwnProperty(patientID.toString())) {
 						var patient = visit.patient_models[patientID.toString()];
 
-						//var priorityNotification;
-						/*if(patient.hasOwnProperty('priority') && patient.priority !== null) {
+						var priorityNotification;
+						if(patient.hasOwnProperty('photo') && patient.photo !== null) {
+							var resources = [];
+							try {
+								resources = JSON.encode(patient.photo);
+							} catch(e) {
+								resources = [];
+							}
+
+							if(typeof resources === "array" && resources.length > 0) {
+								
+							}
+						}
+						if(patient.hasOwnProperty('priority') && patient.priority !== null) {
 							switch(patient['priority'].toLowerCase()) {
 								case "high":
 									priorityNotification = (
@@ -77,7 +89,7 @@ var StageVisits = React.createClass({
 									);
 									break;
 							}
-						}*/
+						}
 
 						return (
 							<div className="col-sm-12 col-md-4" key={"patient-col-" + patientID}>
@@ -89,7 +101,7 @@ var StageVisits = React.createClass({
 											<span className="title-content">{(patient["full_name"] !== null && patient["full_name"].length > 0) ? patient["full_name"] : "Unnamed patient"}</span>
 										</h5>
 									</div>
-									{/*priorityNotification*/}
+									{priorityNotification}
 								</div>
 							</div>
 						);
@@ -106,16 +118,16 @@ var StageVisits = React.createClass({
 							</div>
 						);
 					}
-					
+
 				}.bind(visit));
-	
+
 				// Return the visit block
 				return (
 					<blockquote className="blockquote" key={"visit-" + index}>
 						<div className="row">
 							<div className="col-xs-12 col-sm-8">
 								<h2>
-									<label className="label label-default" data-toggle="tooltip" data-placement="top" title="Visit ID">{visit.id}</label> 
+									<label className="label label-default" data-toggle="tooltip" data-placement="top" title="Visit ID">{visit.id}</label>
 									&nbsp; {visit.patients.length} patient{visit.patients.length == 1 ? "" : "s"}
 								</h2>
 							</div>
@@ -129,7 +141,7 @@ var StageVisits = React.createClass({
 						<hr className="m-b-0" />
 					</blockquote>
 				);
-				
+
 			}.bind(this));
 
 		} else {
@@ -143,7 +155,7 @@ var StageVisits = React.createClass({
 		var fetching;
 		if(this.state.isFetching) {
 			fetching = (
-				<img src="/assets/img/loading.gif" /> 
+				<img src="/assets/img/loading.gif" />
 			);
 		}
 

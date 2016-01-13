@@ -70,7 +70,7 @@ class VisitController extends Controller
 
             // Get fields for the root stage
             $rootFields = array();
-            $rootFieldsWithoutFiles = array();
+            $rootInputFields = array();
 
             // Generate object full of all the fields up to this stage.
             $allFields = [];
@@ -85,9 +85,9 @@ class VisitController extends Controller
                 // If this is root stage, pass props to rootFields
                 if($thisStage->root == true) {
                     \Log::debug("Root stage, non-file fields:");
-                    \Log::debug($thisStage->nonFileFields);
-                    $rootFields             = $thisStage->fields;
-                    $rootFieldsWithoutFiles = $thisStage->nonFileFields;
+                    \Log::debug($thisStage->inputFields);
+                    $rootFields      = $thisStage->fields;
+                    $rootInputFields = $thisStage->inputFields;
                 }
 
                 // Loop through fields and bubble each up to the top-level allFields array
@@ -113,8 +113,8 @@ class VisitController extends Controller
                 $patient = Patient::where('id', '=', $id);
                 if($patient->count() > 0) {
                     \Log::debug("Getting patient {$id}:");
-                    \Log::debug($rootFieldsWithoutFiles);
-                    $patients[$id] = $patient->first(array_keys($rootFieldsWithoutFiles))->toArray();
+                    \Log::debug($rootInputFields);
+                    $patients[$id] = $patient->first(array_keys($rootInputFields))->toArray();
                 }
             }
 

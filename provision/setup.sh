@@ -35,9 +35,13 @@ ln -s /etc/nginx/sites-available/nginx_vhost /etc/nginx/sites-enabled/
 rm -rf /etc/nginx/sites-available/default
 service nginx restart > /dev/null
 
+echo " > Updating + installing dependencies through Composer..."
+cd /vagrant
+php composer.phar update
+php composer.phar install
+
 echo " > Running database migrations and seeding..."
 mysql -u root -pf0rc3pt -e "create database forcept";
-cd /vagrant
 php artisan migrate --force --seed
 
 # echo " > Installing Node..."

@@ -59,25 +59,37 @@ var StageVisits = React.createClass({displayName: "StageVisits",
 					if(visit.patient_models.hasOwnProperty(patientID.toString())) {
 						var patient = visit.patient_models[patientID.toString()];
 
-						//var priorityNotification;
-						/*if(patient.hasOwnProperty('priority') && patient.priority !== null) {
+						var priorityNotification;
+						if(patient.hasOwnProperty('photo') && patient.photo !== null) {
+							var resources = [];
+							try {
+								resources = JSON.encode(patient.photo);
+							} catch(e) {
+								resources = [];
+							}
+
+							if(typeof resources === "array" && resources.length > 0) {
+								
+							}
+						}
+						if(patient.hasOwnProperty('priority') && patient.priority !== null) {
 							switch(patient['priority'].toLowerCase()) {
 								case "high":
 									priorityNotification = (
-										<div className="card-block bg-warning">
-											<small>Priority: <strong>high</strong></small>
-										</div>
+										React.createElement("div", {className: "card-block bg-warning"}, 
+											React.createElement("small", null, "Priority: ", React.createElement("strong", null, "high"))
+										)
 									);
 									break;
 								case "urgent":
 									priorityNotification = (
-										<div className="card-block bg-danger">
-											<small>Priority: <strong>urgent</strong>!</small>
-										</div>
+										React.createElement("div", {className: "card-block bg-danger"}, 
+											React.createElement("small", null, "Priority: ", React.createElement("strong", null, "urgent"), "!")
+										)
 									);
 									break;
 							}
-						}*/
+						}
 
 						return (
 							React.createElement("div", {className: "col-sm-12 col-md-4", key: "patient-col-" + patientID}, 
@@ -88,8 +100,8 @@ var StageVisits = React.createClass({displayName: "StageVisits",
 											React.createElement("span", {className: "label label-primary pull-right"}, "#", patientIndex + 1), 
 											React.createElement("span", {className: "title-content"}, (patient["full_name"] !== null && patient["full_name"].length > 0) ? patient["full_name"] : "Unnamed patient")
 										)
-									)
-									/*priorityNotification*/
+									), 
+									priorityNotification
 								)
 							)
 						);
@@ -106,9 +118,9 @@ var StageVisits = React.createClass({displayName: "StageVisits",
 							)
 						);
 					}
-					
+
 				}.bind(visit));
-	
+
 				// Return the visit block
 				return (
 					React.createElement("blockquote", {className: "blockquote", key: "visit-" + index}, 
@@ -129,7 +141,7 @@ var StageVisits = React.createClass({displayName: "StageVisits",
 						React.createElement("hr", {className: "m-b-0"})
 					)
 				);
-				
+
 			}.bind(this));
 
 		} else {
@@ -143,7 +155,7 @@ var StageVisits = React.createClass({displayName: "StageVisits",
 		var fetching;
 		if(this.state.isFetching) {
 			fetching = (
-				React.createElement("img", {src: "/assets/img/loading.gif"}) 
+				React.createElement("img", {src: "/assets/img/loading.gif"})
 			);
 		}
 

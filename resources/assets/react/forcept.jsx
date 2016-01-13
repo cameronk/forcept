@@ -817,3 +817,89 @@ Fields.Pharmacy = React.createClass({
 		);
 	}
 });
+
+
+Fields.Resource = React.createClass({
+	getInitialState: function() {
+		return {
+			isFetching: false,
+			resource:{}
+		};
+	},
+	componentWillMount: function() {
+		if(this.props.hasOwnProperty('resource')
+		&& this.props.resource !== null
+		&& typeof this.props.resource === "object") {
+
+			if(!this.props.resource.hasOwnProperty('data')) {
+				// No data found for this resource. We must load it.
+				this.fetchData();
+			}
+
+			this.setState({
+				resource: this.props.resource
+			});
+		}
+	},
+
+	fetchData: function() {
+		console.log("[Fields.Resource][" + this.props.id + "]: fetching data");
+		this.setState({
+			isFetching: true,
+		});
+
+		$.ajax({
+			method: "GET",
+			url: "/data/resources/fetch?id=" + this.props.id,
+			success: function(resp) {
+				var resource = this.state.resource;
+					resource['base64'] = resp.message;
+				this.setState({
+					isFetching: false,
+					resource: resource
+				});
+			}.bind(this),
+			error: function(resp) {
+
+			}.bind(this),
+		});
+	},
+
+	render: function() {
+		console.log("[Fields.Resource][" + this.props.id + "]: rendering resource");
+		console.log(this.state);
+		var resource = this.state.resource,
+			renderResource;
+
+		if(resource !== null && typeof resource === "object") {
+
+			if(this.state.isFetching) {
+				renderResource = "Loading...";
+			} else {
+				if(this.state.resource.hasOwnProperty('type')) {
+					var type = this.state.resource.type;
+					if(type.match("image/*")) {
+						console.log("[Fields.Resource][" + this.props.id + "]: type matches image");
+
+						if(this.state.resource.hasOwnProperty('base64')) {
+							renderResource = (
+								<img src={this.state.resource.base64} />
+							);
+						}
+
+					} else {
+						// renderResource = (
+						//
+						// );
+					}
+				}
+			}
+		}
+
+		return (
+			<div className={"forcept-patient-photo-contain " + (this.props.hasOwnProperty("className") ? this.props.className : "")}>
+				{renderResource}
+			</div>
+		);
+	},
+});

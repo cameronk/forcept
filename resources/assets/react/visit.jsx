@@ -51,10 +51,13 @@ var Visit = React.createClass({
 
 			var patients = {};
 			for(var patientID in this.props.patients) {
+				console.log("[Visit] setting up patient " + patientID);
 				patients[patientID] = this.applyGeneratedFields(this.props.patients[patientID]);
 			}
 			this.setState({
 				patients: patients
+			}, function() {
+				__debug(patients);
 			});
 		}
 	},
@@ -320,11 +323,12 @@ Visit.PatientsOverview = React.createClass({
 	 */
 	render: function() {
 
-		console.log("Rendering patients overview with patient count " + Object.keys(this.props.patients).length);
-		console.log(this.props.patients);
-
-		var patientOverviews,
+		var patientKeys = Object.keys(this.props.patients),
+			countPatients = patientKeys.length,
+			patientOverviews,
 			iterableFields;
+
+		console.log("[Visit.PatientsOverview]->render()):" + countPatients);
 
 		// Copy the local patient fields property to a new variable
 		// and remove first/last name, so they don't appear in the list
@@ -339,34 +343,67 @@ Visit.PatientsOverview = React.createClass({
 		delete iterableFields["last_name"];
 		delete iterableFields["photo"];
 
-		console.log("[Visit.PatientOverview]->render(): Rendering PatientsOverview..");
-
 		// If there are patients in the props object
-		if(Object.keys(this.props.patients).length > 0) {
-			patientOverviews = Object.keys(this.props.patients).map(function(patientID, index) {
-				var thisPatient = this.props.patients[patientID];
+		if(countPatients > 0) {
+			patientOverviews = patientKeys.map(function(patientID, index) {
 				var cardHeader,
-					photo;
+					photo,
+					thisPatient = this.props.patients[patientID];
 
 				if(thisPatient.hasOwnProperty('photo') && thisPatient.photo !== null) {
 
-					var resourceKeys = thisPatient.photo;
+					console.log("[Visit.PatientOverview][" + patientID + "]: has photo");
+
+					var resourceKeys;
+					try {
+						if(typeof thisPatient.photo === "string") {
+							console.log("[Visit.PatientOverview][" + patientID + "]: photo is STRING");
+							// Parse JSON from database as string
+							resourceKeys = JSON.parse(thisPatient.photo);
+						} else {
+							console.log("[Visit.PatientOverview][" + patientID + "]: photo is NOT STRING");
+							// Otherwise, just push the object
+							resourceKeys = thisPatient.photo;
+						}
+					} catch(e) {
+						console.log("[Visit.PatientOverview][" + patientID + "]: error parsing photo string");
+						resourceKeys = [];
+					}
 
 					if(resourceKeys.length > 0) {
-						// For the immutable Photo input, the one and only file is the patient photo.
-						var photoData = this.props.resources[resourceKeys[0]];
 
-						console.log("[Visit.PatientOverview]->render(patientID=" + patientID + "): has photo");
-						// var dataURI = thisPatient.photo.toString();
-						// var split = dataURI.split(";");
-						// var dataType = split[0].split('/');
 
-						if(photoData.hasOwnProperty('data') && photoData.hasOwnProperty('type') && photoData.type.match('image.*')) {
-							console.log("[Visit.PatientOverview]->render(patientID=" + patientID + "): photo datatype is valid");
+						console.log("[Visit.PatientOverview][" + patientID + "]: Valid resources array found, looking for photo...");
+
+
+						// Check if we have this resource in storage already.
+						if(this.props.resources.hasOwnProperty(resourceKeys[0])) {
+
+							console.log("[Visit.PatientOverview][" + patientID + "]: Photo found in our pre-loaded resources.");
+
+							// For the immutable Photo input, the one and only file is the patient photo.
+							var photoData = this.props.resources[resourceKeys[0]];
+
+							console.log("[Visit.PatientOverview]->render(patientID=" + patientID + "): has photo");
+							// var dataURI = thisPatient.photo.toString();
+							// var split = dataURI.split(";");
+							// var dataType = split[0].split('/');
+
+							if(photoData.hasOwnProperty('data') && photoData.hasOwnProperty('type') && photoData.type.match('image.*')) {
+								console.log("[Visit.PatientOverview]->render(patientID=" + patientID + "): photo datatype is valid");
+								photo = (
+					                <div className="forcept-patient-photo-contain">
+					                	<img src={photoData.data} />
+					                </div>
+								);
+							}
+						} else {
+							console.log("[Visit.PatientOverview][" + patientID + "]: photo not in resources, preparing to grab via AJAX");
+
 							photo = (
-				                <div className="forcept-patient-photo-contain">
-				                	<img src={photoData.data} />
-				                </div>
+								<Fields.Resource
+									id={resourceKeys[0]}
+									resource={{ type: "image/jpeg" }} />
 							);
 						}
 					}
@@ -1068,34 +1105,36 @@ Visit.Patient = React.createClass({
 	 *
 	 */
 	render: function() {
-		console.log("Preparing to render Visit.Patient with " + Object.keys(this.props.fields).length + " fields");
-		console.log(this.props);
 
-		var name = this.props.patient.full_name !== null ? this.props.patient.full_name : "Unnamed patient";
-		var summary;
+		var fields = this.props.fields,
+			fieldKeys = Object.keys(fields),
+			countFields = fields.length,
 
-		console.log("Summary fields:");
-		console.log(this.props.summaryFields);
+			summaryFields = this.props.summaryFields,
+			summaryFieldsKeys = Object.keys(summaryFields),
+			countSummaryFields = summaryFieldsKeys.length,
+
+			name = this.props.patient.full_name !== null ? this.props.patient.full_name : "Unnamed patient",
+			summary;
+
+		console.log("[Visit.Patient] Rendering Preparing to render - " + countFields + " iterable fields, " + countSummaryFields + " fields to summarize");
 
 		// Build summary DOM
-		if(this.props.summaryFields !== null
-			&& typeof this.props.summaryFields === "object"
-			&& Object.keys(this.props.summaryFields).length > 0) {
+		if(summaryFields !== null
+			&& typeof summaryFields === "object"
+			&& countSummaryFields > 0) {
 
-			console.log("Generating summary fields");
+			var leftColumnFields = {},
+				rightColumnFields = {},
+				patientsObjectSpoof = {};
 
-			var leftColumnFields = {};
-			var rightColumnFields = {};
-			var patientsObjectSpoof = {};
-				patientsObjectSpoof[this.props.patient.id] = this.props.patient;
+			patientsObjectSpoof[this.props.patient.id] = this.props.patient;
 
-			var countSummaryFields = Object.keys(this.props.summaryFields).length;
-
-			Object.keys(this.props.summaryFields).map(function(key, index) {
+			summaryFieldsKeys.map(function(key, index) {
 				if(index > (countSummaryFields - 1) / 2) {
-					rightColumnFields[key] = this.props.summaryFields[key];
+					rightColumnFields[key] = summaryFields[key];
 				} else {
-					leftColumnFields[key] = this.props.summaryFields[key];
+					leftColumnFields[key] = summaryFields[key];
 				}
 			}.bind(this));
 
@@ -1124,10 +1163,10 @@ Visit.Patient = React.createClass({
 		        </h3>
 		        {summary}
 		        <hr/>
-		        {Object.keys(this.props.fields).map(function(fieldID, index) {
+		        {fieldKeys.map(function(fieldID, index) {
 
 		        	// Figure out which type of field we should render
-		        	switch(this.props.fields[fieldID]['type']) {
+		        	switch(fields[fieldID]['type']) {
 
 		        		/*
 		        		 * Input field types
