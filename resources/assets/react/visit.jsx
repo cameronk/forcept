@@ -45,16 +45,19 @@ var Visit = React.createClass({
 	 * Deploy necessary state changes prior to mount
 	 */
 	componentWillMount: function() {
-		console.log("[Visit] Mounting...");
-		console.log(this.props);
 
-		if(this.props.hasOwnProperty("patients") && this.props.patients !== null) {
+		var props = this.props;
+
+		console.log("[Visit] Mounting...");
+		console.log(props);
+
+		if(props.hasOwnProperty("patients") && props.patients !== null) {
 			console.log("[Visit] Pre-existing patients detected, loading into state.");
 
 			var patients = {};
-			for(var patientID in this.props.patients) {
+			for(var patientID in props.patients) {
 				console.log("[Visit] ...setting up patient " + patientID);
-				patients[patientID] = Utilities.applyGeneratedFields(this.props.patients[patientID]);
+				patients[patientID] = Utilities.applyGeneratedFields(props.patients[patientID]);
 			}
 
 			console.log("[Visit] Done setting up patients:");
@@ -75,6 +78,8 @@ var Visit = React.createClass({
 	 */
 	handleConfirmFinishVisit: function( destination, modalObject ) {
 
+		var props = this.props;
+
 		// Update state to submitting
 		this.setState({
 			isSubmitting: true,
@@ -93,10 +98,10 @@ var Visit = React.createClass({
 			type: "POST",
 			url: "/visits/store",
 			data: {
-				"_token": this.props._token,
-				visit: this.props.visitID,
+				"_token": props._token,
+				visit: props.visitID,
 				patients: this.state.patients,
-				stage: this.props.currentStage,
+				stage: props.currentStage,
 				destination: destination
 			},
 			xhr: function() {
@@ -105,7 +110,7 @@ var Visit = React.createClass({
 				xhr.upload.addEventListener("progress", function(evt) {
 		            if (evt.lengthComputable) {
 		                var percentComplete = evt.loaded / evt.total;
-		                console.log(percentComplete * 100);
+
 		                //Do something with upload progress here
 		                this.setState({
 		                	progress: percentComplete * 100
@@ -122,8 +127,6 @@ var Visit = React.createClass({
 
 			},
 			complete: function(resp) {
-				console.log("Complete:");
-				console.log(resp);
 				this.setState({
 					confirmFinishVisitResponse: resp.responseJSON
 				});
@@ -171,15 +174,18 @@ var Visit = React.createClass({
 		if(this.state.patients.hasOwnProperty(patientID)) {
 
 			var patients = this.state.patients; // Grab patients from state
-				patients[patientID][fieldID] = value; // Find our patient and set fieldID = passed value
+				patient = patients[patientID], // Grab patient object
+				patient[fieldID] = value; // Find our patient and set fieldID = passed value
 
 			// Apply generated fields to patient object
-			patients[patientID] = Utilities.applyGeneratedFields(patients[patientID]);
+			patient = Utilities.applyGeneratedFields(patient);
 
 			// __debug(patients);
 
 			// Push patients back to state
-			this.setState({ patients: patients });
+			this.setState({
+				patients: patients
+			});
 
 		} else {
 			console.error("[Visit]->topLevelPatientStateChange(): Missing patient ID " + patientID + " in Visit patients state");
@@ -191,6 +197,7 @@ var Visit = React.createClass({
 	 */
 	topLevelStoreResource: function(resourceID, resource) {
 		console.log("[Visit]->topLevelStoreResource(): resourceID=" + resourceID + ", resource=" + resource);
+
 		var resources = this.state.resources;
 			resources[resourceID] = resource;
 
@@ -248,32 +255,35 @@ var Visit = React.createClass({
 		console.log(this.state.resources);
 		console.log(" ");
 
+		var props = this.props,
+			state = this.state;
+
 		return (
 			<div className="row">
 				<Visit.FinishModal
-					stages={this.props.stages}
+					stages={props.stages}
 					onConfirmFinishVisit={this.handleConfirmFinishVisit} />
 
 				<Visit.PatientsOverview
-					fields={this.props.patientFields}
-					patients={this.state.patients}
+					fields={props.patientFields}
+					patients={state.patients}
 					mini={false}
-					resources={this.state.resources} />
+					resources={state.resources} />
 
 				<Visit.PatientsContainer
-					_token={this.props._token}
-					controlsType={this.props.controlsType}
-					containerTitle={this.props.containerTitle}
-					stageType={this.props.currentStageType}
+					_token={props._token}
+					controlsType={props.controlsType}
+					containerTitle={props.containerTitle}
+					stageType={props.currentStageType}
 
-					summaryFields={this.props.summaryFields}
-					fields={this.props.mutableFields}
-					patients={this.state.patients}
-					prescriptions={this.state.prescriptions}
+					summaryFields={props.summaryFields}
+					fields={props.mutableFields}
+					patients={state.patients}
+					prescriptions={state.prescriptions}
 
-					isSubmitting={this.state.isSubmitting}
-					progress={this.state.progress}
-					confirmFinishVisitResponse={this.state.confirmFinishVisitResponse}
+					isSubmitting={state.isSubmitting}
+					progress={state.progress}
+					confirmFinishVisitResponse={state.confirmFinishVisitResponse}
 
 					onFinishVisit={this.handleFinishVisit}
 					onPatientAdd={this.handlePatientAdd}
@@ -318,20 +328,21 @@ Visit.PatientsOverview = React.createClass({
 	 */
 	render: function() {
 
-		var patientKeys = Object.keys(this.props.patients),
+		var props = this.props,
+			patientKeys = Object.keys(props.patients),
 			countPatients = patientKeys.length,
 			patientOverviews,
 			iterableFields;
 
-		console.log("[Visit.PatientsOverview]->render(): " + countPatients + " (mini=" + this.props.mini + ")");
-		console.log(this.props);
+		console.log("[Visit.PatientsOverview]->render(): " + countPatients + " (mini=" + props.mini + ")");
+		console.log(props);
 
 		// Copy the local patient fields property to a new variable
 		// and remove first/last name, so they don't appear in the list
-		if(this.props.mini == true) {
-			iterableFields = jQuery.extend({}, this.props.fields);
+		if(props.mini == true) {
+			iterableFields = jQuery.extend({}, props.fields);
 		} else {
-			iterableFields = jQuery.extend(jQuery.extend({}, this.props.fields), Visit.generatedFields);
+			iterableFields = jQuery.extend(jQuery.extend({}, props.fields), Visit.generatedFields);
 		}
 
 		// Remove fields that are displayed differently than normal
@@ -344,14 +355,14 @@ Visit.PatientsOverview = React.createClass({
 			patientOverviews = patientKeys.map(function(patientID, index) {
 				var cardHeader,
 					photo,
-					thisPatient = this.props.patients[patientID];
+					thisPatient = props.patients[patientID];
 
 				if(thisPatient.hasOwnProperty('photo') && thisPatient.photo !== null) {
 
 					console.log("[Visit.PatientOverview][" + patientID + "]: has photo");
 
 					var resourceKeys,
-						resources = this.props.hasOwnProperty("resources") ? this.props.resources : {};
+						resources = props.hasOwnProperty("resources") ? props.resources : {};
 
 					try {
 						if(typeof thisPatient.photo === "string") {
@@ -404,7 +415,7 @@ Visit.PatientsOverview = React.createClass({
 				}
 
 				// Show header if we're not in Mini mode
-				if(this.props.mini == false) {
+				if(props.mini == false) {
 					cardHeader = (
 						<span>
 			               	<div className="card-header">
@@ -431,7 +442,8 @@ Visit.PatientsOverview = React.createClass({
 		              	<div className="list-group list-group-flush">
 		                    {Object.keys(iterableFields).map(function(field, index) {
 
-		                    	var foundData = false,
+		                    	var thisIterableField = iterableFields[field],
+									foundData = false,
 									isGeneratedField = Visit.generatedFields.hasOwnProperty(field),
 									value = "No data",
 									icon;
@@ -442,20 +454,21 @@ Visit.PatientsOverview = React.createClass({
 		                    		&& thisPatient[field].length > 0	// If string length == 0 or array length == 0, show "No data"
 		                    	) {
 
-									var thisField = thisPatient[field];
+									var thisPatientField = thisPatient[field];
 
-		                    		if(!(this.props.mini == true && isGeneratedField)) // Don't show generated fields in Mini mode
+		                    		if(!(props.mini == true && isGeneratedField)) // Don't show generated fields in Mini mode
 		                    		{
-			                    		if( ["string", "number"].indexOf(typeof thisField) !== -1 ) // If the field is a string or number
+			                    		if( ["string", "number"].indexOf(typeof thisPatientField) !== -1 ) // If the field is a string or number
 			                    		{
-			                    			console.log(" | Field " + iterableFields[field]["name"] + " is string or number");
-			                    			console.log(" | -> type: " + iterableFields[field].type);
 
 			                    			// We found data!
 			                    			foundData = true;
 
 											// Grab field types
-											var fieldType = iterableFields[field].type;
+											var fieldType = thisIterableField.type;
+
+			                    			console.log(" | Field " + thisIterableField.name + " is string or number");
+			                    			console.log(" | -> type: " + fieldType);
 
 			                    			// We might need to mutate the data
 			                    			switch(fieldType) {
@@ -465,7 +478,7 @@ Visit.PatientsOverview = React.createClass({
 			                    				 */
 			                    				case "textarea":
 			                    					value = (
-			                    						<p dangerouslySetInnerHTML={{ __html: thisPatient[field].replace(/\n/g, "<br/>") }}></p>
+			                    						<p dangerouslySetInnerHTML={{ __html: thisPatientField.replace(/\n/g, "<br/>") }}></p>
 			                    					);
 			                    					break;
 
@@ -477,20 +490,21 @@ Visit.PatientsOverview = React.createClass({
 			                    					// Convert from JSON array to nice string
 													var arr;
 			                    					try {
-														arr = JSON.parse(thisPatient[field]);
+														arr = JSON.parse(thisPatientField);
 													} catch(e) {
 														arr = [];
 													}
 
 													// Make sure it worked
 			                    					if(Array.isArray(arr) && arr.length > 0) {
-														console.log("[Visit.PatientsOverview] Found " + arr.length + " prescriptions for patient #" + patientID);
-														console.log(this.props.hasOwnProperty("onFindPrescription"));
-														if(fieldType === "pharmacy" && this.props.hasOwnProperty("onFindPrescription")) {
-															this.props.onFindPrescription(patientID, arr);
-														}
+														// console.log("[Visit.PatientsOverview] Found " + arr.length + " prescriptions for patient #" + patientID);
+														// console.log(props.hasOwnProperty("onFindPrescription"));
+														// if(fieldType === "pharmacy" && props.hasOwnProperty("onFindPrescription")) {
+															// props.onFindPrescription(patientID, arr);
+														// }
 			                    						value = arr.join(", ");
 			                    					}
+
 			                    					console.log(" | Multiselect value: " + value);
 
 			                    					break;
@@ -518,19 +532,19 @@ Visit.PatientsOverview = React.createClass({
 			                    				 * Everything else
 			                    				 */
 			                    				default:
-			                    					value = thisField.toString();
+			                    					value = thisPatientField.toString();
 			                    					break;
 			                    			}
 			                    		} else {
-			                    			console.log(" | Field " + iterableFields[field]["name"] + " is NOT string or number");
-			                    			console.log(" | -> type: " + iterableFields[field].type);
-			                    			if( Array.isArray(thisField) ) // If the data is an array
+			                    			console.log(" | Field " + thisIterableField["name"] + " is NOT string or number");
+			                    			console.log(" | -> type: " + thisIterableField.type);
+			                    			if( Array.isArray(thisPatientField) ) // If the data is an array
 			                    			{
 			                    				// We found data!
 			                    				foundData = true;
 			                    				value = (
 			                    					<span className="pull-right">
-			                    						{thisPatient[field].join(", ")}
+			                    						{thisPatientField.join(", ")}
 			                    					</span>
 			                    				);
 			                    			} else {
@@ -561,12 +575,12 @@ Visit.PatientsOverview = React.createClass({
 		                    	}
 
 		                    	// Render the list item
-		                    	if(iterableFields[field].type == "header") {
-		                    		if(this.props.mini == false) {
+		                    	if(thisIterableField.type == "header") {
+		                    		if(props.mini == false) {
 			                    		return (
 			                    			<div className="list-group-item forcept-patient-overview-header-item" key={field + "-" + index}>
 			                    				<h5 className="text-center m-a-0">
-			                    					{iterableFields[field].name}
+			                    					{thisIterableField.name}
 			                    				</h5>
 			                    			</div>
 			                    		);
@@ -575,7 +589,7 @@ Visit.PatientsOverview = React.createClass({
 									return (
 										<div className="list-group-item" key={field + "-" + index}>
 											<dl>
-												<dt>{icon} &nbsp; {iterableFields[field].name}</dt>
+												<dt>{icon} &nbsp; {thisIterableField.name}</dt>
 												<dd>{foundData ? value : ""}</dd>
 											</dl>
 										</div>
@@ -595,7 +609,7 @@ Visit.PatientsOverview = React.createClass({
 		}
 
 		// If we're in mini mode, use different column structure
-		if(this.props.mini == true) {
+		if(props.mini == true) {
 			return (
 		        <div className="col-xs-12 col-lg-6">
 		           {patientOverviews}
@@ -644,15 +658,10 @@ Visit.PatientsContainer = React.createClass({
 	/*
 	 * Set state to loading
 	 */
-	isLoading: function() {
-		this.setState({ isLoading: true });
-	},
-
-	/*
-	 * Set state to not loading
-	 */
-	isDoneLoading: function() {
-		this.setState({ isLoading: false });
+	isLoading: function(val) {
+		this.setState({
+			isLoading: val
+		});
 	},
 
 	/*
@@ -660,8 +669,8 @@ Visit.PatientsContainer = React.createClass({
 	 */
 	onFinishVisit: function() {
 		console.log("PatientsContainer: onFinishVisit");
-		this.isLoading();
-		this.props.onFinishVisit(this.isDoneLoading());
+		this.isLoading(true);
+		this.props.onFinishVisit(this.isLoading(false));
 	},
 
 	/*
@@ -670,7 +679,7 @@ Visit.PatientsContainer = React.createClass({
 	handlePatientAddfromScratch: function() {
 
 		// Set state as loading
-		this.isLoading();
+		this.isLoading(true);
 
 		$.ajax({
 			type: "POST",
@@ -690,25 +699,30 @@ Visit.PatientsContainer = React.createClass({
 				// console.log(resp);
 			},
 			complete: function() {
-				this.isDoneLoading();
+				this.isLoading(false);
 			}.bind(this)
 		});
 
 	},
 
 	handleShowImportBlock: function() {
-		this.setState({ showImportBlock: true });
+		this.setState({
+			showImportBlock: true
+		});
 	},
 	handleCloseImportBlock: function() {
-		this.setState({ showImportBlock: false });
+		this.setState({
+			showImportBlock: false
+		});
 	},
 
 	render: function() {
 
 		console.log("[Visit.PatientsContainer]->render(): Rendering patients container.");
-		console.log(this.props);
-
-		var patients = (this.props.hasOwnProperty('patients') ? this.props.patients : {}),
+		var props = this.props,
+			state = this.state,
+			isLoading = (state.isLoading || props.isSubmitting),
+			patients = (props.hasOwnProperty('patients') ? props.patients : {}),
 			patientIDs = Object.keys(patients),
 			patientsCount = patientIDs.length,
 			patientsDOM,
@@ -716,52 +730,54 @@ Visit.PatientsContainer = React.createClass({
 			controls;
 
 		console.log("[Visit.PatientsContainer]->render(): patientIDs=" + patientIDs + ", patientsCount=" + patientsCount);
+
 		// Loading state can be triggered by:
-		// 		isLoading 	-> provided by controls, procs when adding new patient / importing
-		// 		isSubmitting -> provided by container, procs when visit is submitted to next stage
-		var isLoading = false;
-		if(this.state.isLoading || this.props.isSubmitting) {
-			isLoading = true;
-		}
+		// 		isLoading 		-> provided by controls, procs when adding new patient / importing
+		// 		isSubmitting 	-> provided by container, procs when visit is submitted to next stage
 
 		// If we're submitting, don't show patients block
-		if(!this.props.isSubmitting) {
+		if(!props.isSubmitting) {
+
 			// Set up patients block
 			if(patientsCount > 0) {
+
+				// Build patients DOM
 				patientsDOM = patientIDs.map(function(patientID, index) {
+
+					var thisPatient = patients[patientID];
+
 					console.log("[Visits.PatientsContainer]->render(): ...#" + patientID);
-					console.log("[Visits.PatientsContainer]->render(): ...fields=" + this.props.fields);
+					console.log("[Visits.PatientsContainer]->render(): ...fields=" + props.fields);
 					console.log("[Visits.PatientsContainer]->render(): ...patient=" + patients[patientID]);
+
 					return (
 						<div key={patientID}>
 							<Visit.Patient
 								/*
 								 * Patient record
 								 */
-								patient={patients[patientID]}
+								patient={thisPatient}
 								id={patientID}
 								index={index}
 
 								/*
 								 * All available fields
 								 */
-								fields={this.props.fields}
+								fields={props.fields}
 
 								/*
 								 * Fields to summarize at the top of each patient
 								 */
-								summaryFields={this.props.summaryFields}
+								summaryFields={props.summaryFields}
 
 								/*
 								 * Event handlers
 								 */
-								onPatientDataChange={this.props.onPatientDataChange}
-								onStoreResource={this.props.onStoreResource} />
+								onPatientDataChange={props.onPatientDataChange}
+								onStoreResource={props.onStoreResource} />
 							<hr/>
 						</div>
 					);
-
-					/*onFindPrescription={this.props.onFindPrescription}*/
 				}.bind(this));
 			} else {
 				patientsDOM = (
@@ -776,24 +792,24 @@ Visit.PatientsContainer = React.createClass({
 		}
 
 		// Set up import block
-		if(this.state.showImportBlock) {
+		if(state.showImportBlock) {
 			importBlock = (
 				<Visit.ImportBlock
-					_token={this.props._token}
+					_token={props._token}
 
-					onPatientAdd={this.props.onPatientAdd}
+					onPatientAdd={props.onPatientAdd}
 					onClose={this.handleCloseImportBlock} />
 			);
 		}
 
 		// Set up controls block
-		switch(this.props.controlsType) {
+		switch(props.controlsType) {
 			case "new-visit":
 				// We're on the new visit page
 				controls = (
 					<Visit.NewVisitControls
 						isLoading={isLoading}
-						isImportBlockVisible={this.state.showImportBlock}
+						isImportBlockVisible={state.showImportBlock}
 
 						onFinishVisit={this.onFinishVisit}
 						onPatientAddFromScratch={this.handlePatientAddfromScratch}
@@ -816,8 +832,8 @@ Visit.PatientsContainer = React.createClass({
 		if(isLoading == true) {
 
 			// If we have a progress value
-			if(this.props.progress > 0) {
-				var percent = this.props.progress.toFixed(1);
+			if(props.progress > 0) {
+				var percent = props.progress.toFixed(1);
 				message = (
 					<div>
 						<div className="alert alert-info">
@@ -838,8 +854,8 @@ Visit.PatientsContainer = React.createClass({
 
 		} else {
 			// We aren't loading, perhaps there was already a response?
-			if(this.props.confirmFinishVisitResponse !== null) {
-				var response = this.props.confirmFinishVisitResponse;
+			var response = props.confirmFinishVisitResponse;
+			if(response !== null) {
 				if(response.status == "success") {
 					var link;
 					if(response.toStage !== "__checkout__") {
@@ -874,7 +890,7 @@ Visit.PatientsContainer = React.createClass({
 
 		return (
 			<div className="col-xs-12 col-sm-12 col-md-8 col-xl-9">
-	            <h1 className="p-t text-xs-center">{this.props.containerTitle}</h1>
+	            <h1 className="p-t text-xs-center">{props.containerTitle}</h1>
 	            <hr/>
             	{message}
             	{patientsDOM}
@@ -909,7 +925,9 @@ Visit.ImportBlock = React.createClass({
 
 	handleSearch: function(type) {
 		console.log("Handling click" + type);
-		this.setState({ display: 'searching' });
+		this.setState({
+			display: 'searching'
+		});
 
 		$.ajax({
 			type: "POST",
@@ -956,31 +974,33 @@ Visit.ImportBlock = React.createClass({
 
 	render: function() {
 
-		var display;
+		var state = this.state,
+			props = this.props,
+			display;
 
-		switch(this.state.display) {
+		switch(state.display) {
 			case "form":
 				display = (
 					<fieldset className="form-group m-b-0">
 						<label className="form-control-label hidden-sm-up">...by field number:</label>
 						<div className="input-group input-group-lg m-b">
-	      					<input type="number" className="form-control" placeholder="Search for a patient by field number..." value={this.state.fieldNumber} onChange={this.handleInputChange("fieldNumber")} />
+	      					<input type="number" className="form-control" placeholder="Search for a patient by field number..." value={state.fieldNumber} onChange={this.handleInputChange("fieldNumber")} />
 							<span className="input-group-btn">
-								<button className="btn btn-secondary" type="button" disabled={this.state.fieldNumber == null} onClick={this.doSearchFieldNumber}>Search</button>
+								<button className="btn btn-secondary" type="button" disabled={state.fieldNumber == null} onClick={this.doSearchFieldNumber}>Search</button>
 							</span>
 						</div>
 						<label className="form-control-label hidden-sm-up">...by Forcept ID:</label>
 						<div className="input-group input-group-lg m-b">
-	      					<input type="number" className="form-control" placeholder="Search for a patient by Forcept ID..." min="100000" value={this.state.forceptID} onChange={this.handleInputChange("forceptID")} />
+	      					<input type="number" className="form-control" placeholder="Search for a patient by Forcept ID..." min="100000" value={state.forceptID} onChange={this.handleInputChange("forceptID")} />
 							<span className="input-group-btn">
-								<button className="btn btn-secondary" type="button" disabled={this.state.forceptID == null} onClick={this.doSearchForceptID}>Search</button>
+								<button className="btn btn-secondary" type="button" disabled={state.forceptID == null} onClick={this.doSearchForceptID}>Search</button>
 							</span>
 						</div>
 						<label className="form-control-label hidden-sm-up">...by first or last name:</label>
 						<div className="input-group input-group-lg">
-	      					<input type="text" className="form-control" placeholder="Search for a patient by first or last name..." value={this.state.name} onChange={this.handleInputChange("name")} />
+	      					<input type="text" className="form-control" placeholder="Search for a patient by first or last name..." value={state.name} onChange={this.handleInputChange("name")} />
 							<span className="input-group-btn">
-								<button className="btn btn-secondary" type="button" disabled={this.state.name == null || this.state.name.length == 0} onClick={this.doSearchName}>Search</button>
+								<button className="btn btn-secondary" type="button" disabled={state.name == null || state.name.length == 0} onClick={this.doSearchName}>Search</button>
 							</span>
 						</div>
 					</fieldset>
@@ -996,7 +1016,7 @@ Visit.ImportBlock = React.createClass({
 				break;
 			case "results":
 
-				if(this.state.patientsFound.length == 0) {
+				if(state.patientsFound.length == 0) {
 					display = (
 						<div className="alert alert-info">
 							No patients found. <a className="alert-link" onClick={this.resetDisplay}>Try again?</a>
@@ -1005,7 +1025,7 @@ Visit.ImportBlock = React.createClass({
 				} else {
 					display = (
 						<div className="row">
-							{this.state.patientsFound.map(function(patient, index) {
+							{state.patientsFound.map(function(patient, index) {
 								var currentVisit;
 								if(patient['current_visit'] !== null) {
 									currentVisit = (
@@ -1048,7 +1068,7 @@ Visit.ImportBlock = React.createClass({
 			<blockquote className="blockquote">
 				<h3>
 					{'\u21af'} Import a patient
-					<button type="button" className="close pull-right" aria-label="Close" onClick={this.props.onClose}>
+					<button type="button" className="close pull-right" aria-label="Close" onClick={props.onClose}>
 					    <span aria-hidden="true">&times;</span>
 					 </button>
 				</h3>
@@ -1074,17 +1094,18 @@ Visit.ImportBlock = React.createClass({
 Visit.NewVisitControls = React.createClass({
 	render: function() {
 
-		var loadingGifClasses = ("m-x loading" + (this.props.isLoading == false ? " invisible" : ""));
+		var props = this.props,
+			loadingGifClasses = ("m-x loading" + (props.isLoading == false ? " invisible" : ""));
 
 		return (
 			<div className="btn-toolbar" role="toolbar">
 				<div className="btn-group btn-group-lg p-b">
-		        	<button type="button" className="btn btn-primary" disabled={this.props.isLoading} onClick={this.props.onPatientAddFromScratch}>{'\u002b'} New</button>
-		        	<button type="button" className="btn btn-default" disabled={this.props.isLoading || this.props.isImportBlockVisible} onClick={this.props.onShowImportBlock}>{'\u21af'} Import</button>
+		        	<button type="button" className="btn btn-primary" disabled={props.isLoading} onClick={props.onPatientAddFromScratch}>{'\u002b'} New</button>
+		        	<button type="button" className="btn btn-default" disabled={props.isLoading || props.isImportBlockVisible} onClick={props.onShowImportBlock}>{'\u21af'} Import</button>
 		        	</div>
 	        	<div className="btn-group btn-group-lg">
 	        		<img src="/assets/img/loading.gif" className={loadingGifClasses} width="52" height="52" />
-	        		<button type="button" className="btn btn-success" disabled={this.props.isLoading} onClick={this.props.onFinishVisit}>{'\u2713'} Finish visit</button>
+	        		<button type="button" className="btn btn-success" disabled={props.isLoading} onClick={props.onFinishVisit}>{'\u2713'} Finish visit</button>
 	        	</div>
 	        </div>
 	    );
@@ -1105,13 +1126,14 @@ Visit.StageVisitControls = React.createClass({
 
 	render: function() {
 
-		var loadingGifClasses = ("m-x" + (this.props.isLoading == false ? " invisible" : ""));
+		var props = this.props,
+			loadingGifClasses = ("m-x" + (props.isLoading == false ? " invisible" : ""));
 
 		return (
 			<div className="btn-toolbar" role="toolbar">
 				<div className="btn-group btn-group-lg">
 		        	<img src="/assets/img/loading.gif" className={loadingGifClasses} width="52" height="52" />
-	        		<button type="button" className="btn btn-success" disabled={this.props.isLoading} onClick={this.props.onFinishVisit}>Finish visit &raquo;</button>
+	        		<button type="button" className="btn btn-success" disabled={props.isLoading} onClick={props.onFinishVisit}>Finish visit &raquo;</button>
 		        </div>
 	        </div>
 	    );
@@ -1151,15 +1173,18 @@ Visit.Patient = React.createClass({
 	 */
 	render: function() {
 
-		var fields = this.props.fields,
+		var props = this.props,
+			state = this.state,
+
+			fields = props.fields,
 			fieldKeys = Object.keys(fields),
 			countFields = fieldKeys.length,
 
-			summaryFields = this.props.summaryFields,
+			summaryFields = props.summaryFields,
 			summaryFieldsKeys = Object.keys(summaryFields),
 			countSummaryFields = summaryFieldsKeys.length,
 
-			name = this.props.patient.full_name !== null ? this.props.patient.full_name : "Unnamed patient",
+			name = props.patient.full_name !== null ? props.patient.full_name : "Unnamed patient",
 			summary;
 
 		console.log("[Visit.Patient] Preparing to render " + countFields + " iterable fields, " + countSummaryFields + " fields to summarize");
@@ -1171,7 +1196,7 @@ Visit.Patient = React.createClass({
 				rightColumnFields = {},
 				patientsObjectSpoof = {};
 
-			patientsObjectSpoof[this.props.patient.patient_id] = this.props.patient;
+			patientsObjectSpoof[props.patient.patient_id] = props.patient;
 
 			summaryFieldsKeys.map(function(key, index) {
 				if(index > (countSummaryFields - 1) / 2) {
@@ -1196,15 +1221,14 @@ Visit.Patient = React.createClass({
 						mini={true} />
 				</div>
 			);
-			// onFindPrescription={this.props.onFindPrescription}
 		}
 
 
 		return (
 			<blockquote className="blockquote">
 				<h3>
-					<span className="label label-info">#{this.props.hasOwnProperty('index') ? this.props.index + 1 : "?"}</span>
-		            <span className="label label-default">{this.props.hasOwnProperty('id') ? this.props.id : "?"}</span> &nbsp;
+					<span className="label label-info">#{props.hasOwnProperty('index') ? props.index + 1 : "?"}</span>
+		            <span className="label label-default">{props.hasOwnProperty('id') ? props.id : "?"}</span> &nbsp;
 		            <span className="hidden-xs-down">{name}</span>
 		            <div className="hidden-sm-up p-t">{name}</div>
 		        </h3>
@@ -1212,8 +1236,11 @@ Visit.Patient = React.createClass({
 		        <hr/>
 		        {fieldKeys.map(function(fieldID, index) {
 
+					var thisField = fields[fieldID];
+					var thisPatient = props.patient;
+
 		        	// Figure out which type of field we should render
-		        	switch(fields[fieldID]['type']) {
+		        	switch(thisField.type) {
 
 		        		/*
 		        		 * Input field types
@@ -1221,8 +1248,8 @@ Visit.Patient = React.createClass({
 		        		case "text":
 		        			return (
 		        				<Fields.Text
-		        					{...this.props.fields[fieldID]}
-		        					defaultValue={this.props.patient.hasOwnProperty(fieldID) ? this.props.patient[fieldID] : null}
+		        					{...thisField}
+		        					defaultValue={thisPatient.hasOwnProperty(fieldID) ? thisPatient[fieldID] : null}
 		        					onChange={this.handleFieldChange}
 		        					key={fieldID}
 		        					id={fieldID} />
@@ -1231,8 +1258,8 @@ Visit.Patient = React.createClass({
 		        		case "textarea":
 		        			return (
 		        				<Fields.Textarea
-		        					{...this.props.fields[fieldID]}
-		        					defaultValue={this.props.patient.hasOwnProperty(fieldID) ? this.props.patient[fieldID] : null}
+		        					{...thisField}
+		        					defaultValue={thisPatient.hasOwnProperty(fieldID) ? thisPatient[fieldID] : null}
 		        					onChange={this.handleFieldChange}
 		        					key={fieldID}
 		        					id={fieldID} />
@@ -1241,8 +1268,8 @@ Visit.Patient = React.createClass({
 		        		case "number":
 		        			return (
 		        				<Fields.Number
-		        					{...this.props.fields[fieldID]}
-		        					defaultValue={this.props.patient.hasOwnProperty(fieldID) ? this.props.patient[fieldID] : null}
+		        					{...thisField}
+		        					defaultValue={thisPatient.hasOwnProperty(fieldID) ? thisPatient[fieldID] : null}
 		        					onChange={this.handleFieldChange}
 		        					key={fieldID}
 		        					id={fieldID} />
@@ -1251,8 +1278,8 @@ Visit.Patient = React.createClass({
 		        		case "date":
 		        			return (
 		        				<Fields.Date
-		        					{...this.props.fields[fieldID]}
-		        					defaultValue={this.props.patient.hasOwnProperty(fieldID) ? this.props.patient[fieldID] : null}
+		        					{...thisField}
+		        					defaultValue={thisPatient.hasOwnProperty(fieldID) ? thisPatient[fieldID] : null}
 		        					onChange={this.handleFieldChange}
 		        					key={fieldID}
 		        					id={fieldID} />
@@ -1261,9 +1288,9 @@ Visit.Patient = React.createClass({
 		        		case "select":
 							return (
 		        				<Fields.Select
-		        					{...this.props.fields[fieldID]}
+		        					{...thisField}
 		        					multiple={false}
-		        					defaultValue={this.props.patient.hasOwnProperty(fieldID) ? this.props.patient[fieldID] : null}
+		        					defaultValue={thisPatient.hasOwnProperty(fieldID) ? thisPatient[fieldID] : null}
 		        					onChange={this.handleFieldChange}
 		        					key={fieldID}
 		        					id={fieldID} />
@@ -1272,9 +1299,9 @@ Visit.Patient = React.createClass({
 		        		case "multiselect":
 		        			return (
 		        				<Fields.Select
-		        					{...this.props.fields[fieldID]}
+		        					{...thisField}
 		        					multiple={true}
-		        					defaultValue={this.props.patient.hasOwnProperty(fieldID) ? this.props.patient[fieldID] : null}
+		        					defaultValue={thisPatient.hasOwnProperty(fieldID) ? thisPatient[fieldID] : null}
 		        					onChange={this.handleFieldChange}
 		        					key={fieldID}
 		        					id={fieldID} />
@@ -1283,8 +1310,8 @@ Visit.Patient = React.createClass({
 		        		case "file":
 		        			return (
 								<Fields.File
-		        					{...this.props.fields[fieldID]}
-		        					defaultValue={this.props.patient.hasOwnProperty(fieldID) ? this.props.patient[fieldID] : null}
+		        					{...thisField}
+		        					defaultValue={thisPatient.hasOwnProperty(fieldID) ? thisPatient[fieldID] : null}
 		        					onChange={this.handleFieldChange}
 									onStore={this.handleStoreResource}
 		        					key={fieldID}
@@ -1294,8 +1321,8 @@ Visit.Patient = React.createClass({
 		        		case "yesno":
 		        			return (
 								<Fields.YesNo
-		        					{...this.props.fields[fieldID]}
-		        					defaultValue={this.props.patient.hasOwnProperty(fieldID) ? this.props.patient[fieldID] : null}
+		        					{...thisField}
+		        					defaultValue={thisPatient.hasOwnProperty(fieldID) ? thisPatient[fieldID] : null}
 		        					onChange={this.handleFieldChange}
 		        					key={fieldID}
 		        					id={fieldID} />
@@ -1308,7 +1335,7 @@ Visit.Patient = React.createClass({
 		        		case "header":
 		        			return (
 		        				<Fields.Header
-		        					{...this.props.fields[fieldID]}
+		        					{...thisField}
 		        					key={fieldID}
 		        					id={fieldID} />
 		        			);
@@ -1316,7 +1343,7 @@ Visit.Patient = React.createClass({
 		        		case "pharmacy":
 		        			return (
 		        				<Fields.Pharmacy
-		        					{...this.props.fields[fieldID]}
+		        					{...thisField}
 		        					onChange={this.handleFieldChange}
 		        					key={fieldID}
 		        					id={fieldID} />
@@ -1329,7 +1356,7 @@ Visit.Patient = React.createClass({
 		        		default:
 		        			return (
 		        				<div className="alert alert-danger">
-		        					<strong>Warning:</strong> Unrecognized input type {this.props.fields[fieldID]['type']}
+		        					<strong>Warning:</strong> Unrecognized input type {thisField['type']}
 		        				</div>
 		        			);
 		        			break;
@@ -1372,9 +1399,10 @@ Visit.FinishModal = React.createClass({
 	 */
 	handleDestinationChange: function(destination) {
 		return function(event) {
-			console.log("Changing destination to ");
-			console.log(destination);
-			this.setState({ destination: destination });
+			console.log("[Visit.FinishModal] Changing destination to " + destination);
+			this.setState({
+				destination: destination
+			});
 		}.bind(this);
 	},
 
@@ -1386,9 +1414,12 @@ Visit.FinishModal = React.createClass({
 	},
 
 	resetSelectState: function() {
+
+		var props = this.props;
+
 		// Set default value as the first stage in the array (the next stage in order above the current one)
-		if(this.props.hasOwnProperty('stages') && this.props.stages !== null && this.props.stages.length > 0) {
-			this.setState({ destination: this.props.stages[0].id });
+		if(props.hasOwnProperty('stages') && props.stages !== null && props.stages.length > 0) {
+			this.setState({ destination: props.stages[0].id });
 		} else {
 			this.setState({ destination: "__checkout__" });
 		}
@@ -1399,33 +1430,35 @@ Visit.FinishModal = React.createClass({
 	 */
 	render: function() {
 
-		var destinations,
+		var props = this.props,
+			state = this.state,
+			destinations,
 			buttonText,
 			defaultValue,
 			stageNameKeyPairs = {};
 
 		// Check if stages are defined, use them as destinations
 		// NOTE: stages are in order of ORDER, not ID
-		if(this.props.hasOwnProperty('stages') && this.props.stages.length > 0) {
-			destinations = this.props.stages.map(function(stage, index) {
-				stageNameKeyPairs[stage['id']] = stage['name'];
+		if(props.hasOwnProperty('stages') && props.stages.length > 0) {
+			destinations = props.stages.map(function(stage, index) {
+				stageNameKeyPairs[stage.id] = stage.name;
 				return (
-					<label className={"btn btn-secondary btn-block" + (stage['id'] == this.state.destination ? " active" : "")} key={"finish-modal-option" + index} onClick={this.handleDestinationChange(stage['id'])}>
-						<input type="radio" name="destination" defaultChecked={stage['id'] == this.state.destination} />
-						{stage['id'] == this.state.destination ? "\u2713" : ""} {stage['name']}
+					<label className={"btn btn-secondary btn-block" + (stage.id == state.destination ? " active" : "")} key={"finish-modal-option" + index} onClick={this.handleDestinationChange(stage['id'])}>
+						<input type="radio" name="destination" defaultChecked={stage.id == state.destination} />
+						{stage.id == state.destination ? "\u2713" : ""} {stage.name}
 					</label>
 				);
 			}.bind(this));
 		}
 
 		// Change button text based on modal state
-		if(this.state.isSubmitting == true) {
+		if(state.isSubmitting == true) {
 			buttonText = "Working...";
 		} else {
-			if(this.state.destination == "__checkout__") {
+			if(state.destination == "__checkout__") {
 				buttonText = "Check-out patients";
 			} else {
-				buttonText = "Move patients to " + (this.state.destination !== null ? stageNameKeyPairs[this.state.destination] : stageNameKeyPairs[defaultValue]);
+				buttonText = "Move patients to " + (state.destination !== null ? stageNameKeyPairs[state.destination] : stageNameKeyPairs[defaultValue]);
 			}
 		}
 
@@ -1442,14 +1475,14 @@ Visit.FinishModal = React.createClass({
 			            <div className="modal-body">
 			            	<div className="btn-group-vertical btn-group-lg" style={{display: "block"}} data-toggle="buttons">
 			            		{destinations}
-								<label className={"btn btn-secondary btn-block" + ("__checkout__" == this.state.destination ? " active" : "")} onClick={this.handleDestinationChange("__checkout__")}>
-									<input type="radio" name="destination" defaultChecked={"__checkout__" == this.state.destination} />
-									{"__checkout__" == this.state.destination ? "\u2713" : ""} Check-out
+								<label className={"btn btn-secondary btn-block" + ("__checkout__" == state.destination ? " active" : "")} onClick={this.handleDestinationChange("__checkout__")}>
+									<input type="radio" name="destination" defaultChecked={"__checkout__" == state.destination} />
+									{"__checkout__" == state.destination ? "\u2713" : ""} Check-out
 								</label>
 			            	</div>
 			            </div>
 			            <div className="modal-footer">
-			                <button type="button" className="btn btn-success" disabled={this.state.isSubmitting == true} onClick={this.onComplete}>
+			                <button type="button" className="btn btn-success" disabled={state.isSubmitting == true} onClick={this.onComplete}>
 			                	{buttonText}
 			                </button>
 			            </div>

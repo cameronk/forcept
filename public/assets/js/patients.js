@@ -106,6 +106,26 @@ var PatientsTable = React.createClass({displayName: "PatientsTable",
                 } else {
                     photo = "No photo";
                 }
+
+                var visitLabel = (
+                    React.createElement("em", null, "Checked out")
+                ),
+                    visitsCount = thisPatient.visits.length;
+
+                if(visitsCount > 0) {
+                    if(thisPatient.hasOwnProperty("visit") && thisPatient.visit !== null) {
+                        visitLabel = (
+                            React.createElement("a", {href: ["/visits/stage/", thisPatient.visit.stage, "/handle/", thisPatient.visit.id].join("")}, 
+                                React.createElement("h4", null, 
+                                    React.createElement("span", {className: "label label-success"}, 
+                                        thisPatient.visit.id, " »"
+                                    )
+                                )
+                            )
+                        );
+                    }
+                }
+
                 return (
                     React.createElement("tr", null, 
                         React.createElement("td", {width: 200}, 
@@ -121,6 +141,9 @@ var PatientsTable = React.createClass({displayName: "PatientsTable",
                         ), 
                         React.createElement("td", null, 
                             thisPatient.visits.length
+                        ), 
+                        React.createElement("td", null, 
+                            visitLabel
                         ), 
                         React.createElement("td", null, 
                             thisPatient.created_at
@@ -186,6 +209,9 @@ var PatientsTable = React.createClass({displayName: "PatientsTable",
                                     ), 
                                     React.createElement("th", null, 
                                         "Visits"
+                                    ), 
+                                    React.createElement("th", null, 
+                                        "Location"
                                     ), 
                                     React.createElement("th", null, 
                                         "Created at"

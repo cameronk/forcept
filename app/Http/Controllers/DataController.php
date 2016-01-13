@@ -255,7 +255,7 @@ class DataController extends Controller
                     $resource = Resource::where('id', $request->id);
                     if($resource->count() > 0) {
                         $resource = $resource->first(["id", "type", "base64"]);
-                        return response()->json(["status" => "success", "message" => $this->constructBase64File($resource)]);
+                        return response()->json(["status" => "success", "type" => $resource->type, "base64" => $this->constructBase64File($resource)]);
                     }
                 } else return response()->json(["status" => "failure", "message" => "Missing ID parameter."]);
                 break;

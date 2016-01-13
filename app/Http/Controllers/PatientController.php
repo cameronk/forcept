@@ -102,7 +102,7 @@ class PatientController extends Controller
     public function fetch(Request $request) {
         return response()->json([
             "status" => "success",
-            "patients" => Patient::limit(50)->where('concrete', true)->orderBy('id', 'desc')->get()->toArray()
+            "patients" => Patient::with('visit')->concrete()->limit(50)->orderBy('id', 'desc')->get()->toArray()
         ]);
     }
 

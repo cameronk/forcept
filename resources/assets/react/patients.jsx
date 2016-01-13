@@ -106,6 +106,26 @@ var PatientsTable = React.createClass({
                 } else {
                     photo = "No photo";
                 }
+
+                var visitLabel = (
+                    <em>Checked out</em>
+                ),
+                    visitsCount = thisPatient.visits.length;
+
+                if(visitsCount > 0) {
+                    if(thisPatient.hasOwnProperty("visit") && thisPatient.visit !== null) {
+                        visitLabel = (
+                            <a href={["/visits/stage/", thisPatient.visit.stage, "/handle/", thisPatient.visit.id].join("")}>
+                                <h4>
+                                    <span className="label label-success">
+                                        {thisPatient.visit.id} &raquo;
+                                    </span>
+                                </h4>
+                            </a>
+                        );
+                    }
+                }
+
                 return (
                     <tr>
                         <td width={200}>
@@ -121,6 +141,9 @@ var PatientsTable = React.createClass({
                         </td>
                         <td>
                             {thisPatient.visits.length}
+                        </td>
+                        <td>
+                            {visitLabel}
                         </td>
                         <td>
                             {thisPatient.created_at}
@@ -186,6 +209,9 @@ var PatientsTable = React.createClass({
                                     </th>
                                     <th>
                                         Visits
+                                    </th>
+                                    <th>
+                                        Location
                                     </th>
                                     <th>
                                         Created at

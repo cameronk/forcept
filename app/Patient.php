@@ -21,6 +21,11 @@ class Patient extends Model
     	} else return $name;
     }
 
+    public function visit() {
+        // if(property_exists($this, "current_visit") && $this->current_visit !== null && strlen($this->current_visit) > 0) {
+            return $this->hasOne('App\Visit', 'id', 'current_visit');
+        // }
+    }
 
     public function getVisitsAttribute($value)
     {
@@ -32,12 +37,7 @@ class Patient extends Model
         $this->attributes['visits'] = json_encode($value);
     }
 
-    // public function setFullNameAttribute()
-    // {
-    //      $name = $this->first_name . " " . $this->last_name;
-    //      if(strlen(trim($name)) == 0) {
-    //         $name = "";
-    //      }
-    //     $this->attributes['full_name'] = $name;
-    // }
+    public function scopeConcrete($query) {
+        return $query->where('concrete', true);
+    }
 }

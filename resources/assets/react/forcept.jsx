@@ -264,17 +264,21 @@ Fields.Select = React.createClass({
 
 	onSelectInputChange: function(event) {
 
-		if(this.props.multiple == true) {
+		var props = this.props;
 
-			var options = event.target.options;
-			var values = [];
+		// Is this a multiselect input?
+		if(props.multiple == true) {
+
+			var options = event.target.options,
+				values = [];
+
 			for(var i = 0; i < options.length; i++) {
 				if(options[i].selected) {
 					values.push(options[i].value);
 				}
 			}
 
-			this.props.onChange(this.props.id, values);
+			props.onChange(props.id, values);
 
 		} else {
 			// Check value before bubbling.
@@ -282,18 +286,18 @@ Fields.Select = React.createClass({
 				case "__default__":
 					// Spoof event target value
 					this.setState({ isCustomDataOptionSelected: false });
-					this.props.onChange(this.props.id, "");
+					props.onChange(props.id, "");
 					break;
 				case "__custom__":
 					// Set top-level state value to nothing (so it says "No data")
 					this.setState({ isCustomDataOptionSelected: true });
-					this.props.onChange(this.props.id, "");
+					props.onChange(props.id, "");
 					break;
 				default:
 					// Bubble event up to handler passed from Visit
 					// (pass field ID and event)
 					this.setState({ isCustomDataOptionSelected: false });
-					this.props.onChange(this.props.id, event.target.value);
+					props.onChange(props.id, event.target.value);
 					break;
 			}
 		}
@@ -305,7 +309,9 @@ Fields.Select = React.createClass({
 
 	render: function() {
 
-		var options,
+		var props = this.props,
+			state = this.state,
+			options,
 			optionsKeys,
 			optionsDOM,
 			displaySelect,
@@ -313,8 +319,8 @@ Fields.Select = React.createClass({
 			customDataOption,
 			customDataInput;
 
-		if(this.props.settings.hasOwnProperty('options')) {
-			options = this.props.settings.options;
+		if(props.settings.hasOwnProperty('options')) {
+			options = props.settings.options;
 			optionsKeys = Object.keys(options);
 		} else {
 			options = {};
@@ -322,21 +328,21 @@ Fields.Select = React.createClass({
 		}
 
 		// Default option (prepended to select)
-		if(this.props.multiple == false) {
+		if(props.multiple == false) {
 
 			defaultOption = (
 				<option value="__default__" disabled="disabled">Choose an option&hellip;</option>
 			);
 
 			// Custom data option (appended to select IF allowCustomData is set)
-			if(isTrue(this.props.settings.allowCustomData)) {
+			if(isTrue(props.settings.allowCustomData)) {
 				customDataOption = (
 					<option value="__custom__">Enter custom data for this field &raquo;</option>
 				);
 			}
 
 			// Custom data input (show if custom data option select state is true)
-			if(isTrue(this.state.isCustomDataOptionSelected)) {
+			if(isTrue(state.isCustomDataOptionSelected)) {
 				customDataInput = (
 					<input type="text" className="form-control" placeholder="Enter custom data here" onChange={this.onCustomDataInputChange} />
 				);
@@ -345,25 +351,28 @@ Fields.Select = React.createClass({
 
 		// Loop through and push options to optionsDOM
 		optionsDOM = optionsKeys.map(function(optionKey, index) {
-			var disabled = false;
-			if(this.props.settings.options[optionKey].hasOwnProperty('available')) {
-				disabled = (this.props.settings.options[optionKey].available === "false");
+			var disabled = false,
+				thisOption = props.settings.options[optionKey];
+			if(thisOption.hasOwnProperty('available')) {
+				disabled = (thisOption.available === "false");
 			}
 			return (
-				<option value={options[optionKey].value} key={this.props.id + "-option-" + index} disabled={disabled}>{options[optionKey].value}</option>
+				<option value={options[optionKey].value} key={this.props.id + "-option-" + index} disabled={disabled}>
+					{options[optionKey].value}
+				</option>
 			);
 		}.bind(this));
 
 		// Set size if this is a multiselect input
-		var size = this.props.multiple ? (optionsKeys.length > 30 ? 30 : optionsKeys.length ) : 1;
+		var size = props.multiple ? (optionsKeys.length > 30 ? 30 : optionsKeys.length ) : 1;
 
 		// Build the select input
 		displaySelect = (
 			<select
 				className="form-control"
 				onChange={this.onSelectInputChange}
-				defaultValue={this.props.defaultValue !== null ? this.props.defaultValue : (this.props.multiple ? [] : "__default__")}
-				multiple={this.props.multiple}
+				defaultValue={props.defaultValue !== null ? props.defaultValue : (props.multiple ? [] : "__default__")}
+				multiple={props.multiple}
 				size={size}>
 					{defaultOption}
 					{optionsDOM}
@@ -373,7 +382,7 @@ Fields.Select = React.createClass({
 
 		return (
 			<div className="form-group row">
-				<Fields.FieldLabel {...this.props} />
+				<Fields.FieldLabel {...props} />
 				<div className={Fields.inputColumnClasses}>
 					{displaySelect}
 					{customDataInput}
@@ -398,9 +407,10 @@ Fields.File = React.createClass({
 	},
 
 	componentWillMount: function() {
-		if(this.props.hasOwnProperty("defaultValue") && this.props.defaultValue !== null) {
+		var props = this.props;
+		if(props.hasOwnProperty("defaultValue") && props.defaultValue !== null) {
 			this.setState({
-				resources: this.props.defaultValue
+				resources: props.defaultValue
 			});
 		}
 	},
@@ -517,13 +527,14 @@ Fields.File = React.createClass({
 			statusMessage: ""
 		});
 
-		var data = {};
+		var data = {},
+			state = this.state;
 
 		// Push all files loaded as inputs
-		for(var i = 0; i < this.state.files.length; i++) {
+		for(var i = 0; i < state.files.length; i++) {
 			console.log("[Fields.File](handleUploadFiles) file " + i + " has data");
-			console.log(this.state.files[i]);
-			data["file-" + i] = this.state.files[i];
+			console.log(state.files[i]);
+			data["file-" + i] = state.files[i];
 		}
 
 		// Add CSRF token.
@@ -562,10 +573,11 @@ Fields.File = React.createClass({
 					status: "success",
 					message: "File(s) uploaded successfully!"
 				}, function() {
-					this.props.onChange(this.props.id, resourceKeys);
+					var props = this.props;
+					props.onChange(props.id, resourceKeys);
 					for(i = 0; i < resourceKeys.length; i++) {
 						var k = resourceKeys[i];
-						this.props.onStore(k, resources[k]);
+						props.onStore(k, resources[k]);
 					}
 				}.bind(this));
 			}.bind(this),
@@ -604,7 +616,10 @@ Fields.File = React.createClass({
 	},
 
 	render: function() {
-		var accept = "",
+		var props = this.props,
+			state = this.state,
+			settings = props.settings,
+			accept = "",
 			files = this.state.files,
 			filesCount = files.length,
 			resources = this.state.resources,
@@ -614,15 +629,15 @@ Fields.File = React.createClass({
 			statusMessage;
 
 		// If we have an accept array, join it
-		if(this.props.settings.hasOwnProperty("accept")) {
-			accept = this.props.settings.accept.join();
+		if(settings.hasOwnProperty("accept")) {
+			accept = settings.accept.join();
 		}
 
-		if(this.state.status.length > 0 && this.state.message.length > 0) {
-			var type = (this.state.status == "success" ? "success" : (this.state.status == "failure" ? "danger" : "info"));
+		if(state.status.length > 0 && state.message.length > 0) {
+			var type = (state.status == "success" ? "success" : (state.status == "failure" ? "danger" : "info"));
 			statusMessage = (
 				<div className={"alert alert-" + type}>
-					<small>{this.state.message}</small>
+					<small>{state.message}</small>
 				</div>
 			);
 		}
@@ -650,15 +665,15 @@ Fields.File = React.createClass({
 			)
 		} else {
 			// Check if we're currently uploading
-			if(!this.state.isUploading) {
+			if(!state.isUploading) {
 				// No resources found - show file input.
 				var uploadButton;
 
-				if(filesCount > 0 || this.state.isParsing) {
+				if(filesCount > 0 || state.isParsing) {
 					uploadButton = (
 						<div>
-							<button type="button" disabled={this.state.isParsing} className="btn btn-sm btn-primary btn-block" onClick={this.handleUploadFiles}>
-								{'\u21d1'} {this.state.isParsing ? "Preparing files..." : "Upload"}
+							<button type="button" disabled={state.isParsing} className="btn btn-sm btn-primary btn-block" onClick={this.handleUploadFiles}>
+								{'\u21d1'} {state.isParsing ? "Preparing files..." : "Upload"}
 							</button>
 						</div>
 					);
@@ -682,10 +697,10 @@ Fields.File = React.createClass({
 						<h6 className="text-muted text-center m-t">
 							Uploading {filesCount} {filesCount === 1 ? "file" : "files"}...
 						</h6>
-						<progress className="progress" value={this.state.uploadProgress} max={100}>
+						<progress className="progress" value={state.uploadProgress} max={100}>
 							<div className="progress">
-								<span className="progress-bar" style={{ width: this.state.uploadProgress + "%" }}>
-									{this.state.uploadProgress}%
+								<span className="progress-bar" style={{ width: state.uploadProgress + "%" }}>
+									{state.uploadProgress}%
 								</span>
 							</div>
 						</progress>
@@ -698,7 +713,7 @@ Fields.File = React.createClass({
 		// <h6>{this.state.fileSize > 0 ? getFileSize(this.state.fileSize) : ""}</h6>
 		return (
 			<div className="form-group row">
-				<Fields.FieldLabel {...this.props} />
+				<Fields.FieldLabel {...props} />
 				<div className={Fields.inputColumnClasses}>
 					{fileDisplay}
 					{statusMessage}
@@ -717,12 +732,15 @@ Fields.YesNo = React.createClass({
 	},
 
 	componentWillMount: function() {
+
+		var props = this.props;
+
 		// If data, set
-		if(this.props.hasOwnProperty('defaultValue')
-			&& this.props.defaultValue !== null
-			&& ["yes", "no"].indexOf(this.props.defaultValue.toLowerCase()) !== -1) {
+		if(props.hasOwnProperty('defaultValue')
+			&& props.defaultValue !== null
+			&& ["yes", "no"].indexOf(props.defaultValue.toLowerCase()) !== -1) {
 			this.setState({
-				yes: this.props.defaultValue.toLowerCase() == "yes"
+				yes: props.defaultValue.toLowerCase() == "yes"
 			});
 		}
 	},
@@ -741,25 +759,29 @@ Fields.YesNo = React.createClass({
 	},
 
 	render: function() {
+
+		var props = this.props,
+			state = this.state;
+
 		return (
 			<div className="form-group row">
-				<Fields.FieldLabel {...this.props} />
+				<Fields.FieldLabel {...props} />
 				<div className={Fields.inputColumnClasses}>
 					<div className="btn-group btn-group-block" data-toggle="buttons">
-						<label className={"btn btn-primary-outline" + (this.state.yes == true ? " active" : "")} onClick={this.onYesNoInputChange(true)}>
+						<label className={"btn btn-primary-outline" + (state.yes == true ? " active" : "")} onClick={this.onYesNoInputChange(true)}>
 							<input type="radio"
-								name={this.props.name + "-options"}
+								name={props.name + "-options"}
 								autoComplete="off"
 
-								defaultChecked={this.state.yes == true} />
+								defaultChecked={state.yes == true} />
 							Yes
 						</label>
-						<label className={"btn btn-primary-outline" + (this.state.yes == false ? " active" : "")} onClick={this.onYesNoInputChange(false)} >
+						<label className={"btn btn-primary-outline" + (state.yes == false ? " active" : "")} onClick={this.onYesNoInputChange(false)} >
 							<input type="radio"
-								name={this.props.name + "-options"}
+								name={props.name + "-options"}
 								autoComplete="off"
 
-								defaultChecked={this.state.yes == false} />
+								defaultChecked={state.yes == false} />
 							No
 						</label>
 					</div>
@@ -771,15 +793,16 @@ Fields.YesNo = React.createClass({
 
 Fields.Header = React.createClass({
 	render: function() {
-		var description;
-		if(this.props.hasOwnProperty('description') && description !== null) {
+		var description,
+			props = this.props;
+		if(props.hasOwnProperty('description') && description !== null) {
 			description = (
-				<small className="text-muted">{this.props.description}</small>
+				<small className="text-muted">{props.description}</small>
 			);
 		}
 		return (
 			<div className="form-group row">
-				<h3 className="forcept-fieldset-header">{this.props.name} {description}</h3>
+				<h3 className="forcept-fieldset-header">{props.name} {description}</h3>
 				<hr/>
 			</div>
 		);
@@ -796,9 +819,6 @@ Fields.Pharmacy = React.createClass({
 		$.ajax({
 			type: "GET",
 			url: "/data/pharmacy/drugs",
-			data: {
-
-			},
 			success: function(resp) {
 				if(resp.status == "success") {
 					__debug(resp.data);
@@ -821,8 +841,9 @@ Fields.Pharmacy = React.createClass({
 
 	onSelectedDrugsChange: function(event) {
 		console.log("Selected drugs change:");
-		var options = event.target.options;
-		var values = [];
+		var options = event.target.options,
+			values = [];
+
 		for(var i = 0; i < options.length; i++) {
 			if(options[i].selected) {
 				values.push(options[i].value);
@@ -833,7 +854,10 @@ Fields.Pharmacy = React.createClass({
 	},
 
 	render: function() {
-		var dataKeys = Object.keys(this.state.data);
+		var props = this.props,
+			state = this.state,
+			dataKeys = Object.keys(this.state.data);
+
 		var selectDrugs = (
 			<div className="alert alert-info">
 				<strong>One moment...</strong><div>loading the latest pharmacy data</div>
@@ -849,20 +873,21 @@ Fields.Pharmacy = React.createClass({
 					onChange={this.onSelectedDrugsChange}>
 
 					{dataKeys.map(function(drugKey, index) {
-						var thisCategory = this.state.data[drugKey];
+						var thisCategory = state.data[drugKey];
 
 						if(thisCategory.hasOwnProperty('settings')
 							&& thisCategory.settings.hasOwnProperty('options')
 							&& thisCategory.settings.options !== null) {
 
 							var optionKeys = Object.keys(thisCategory.settings.options);
+
 							return (
-								<optgroup label={this.state.data[drugKey].name}>
+								<optgroup key={thisCategory.name} label={thisCategory.name}>
 									{optionKeys.map(function(optionKey, optionIndex) {
-										// var size = optionKeys.length > 30 ? 30 : optionKeys.length;
-										var thisOption = thisCategory.settings.options[optionKey];
-										var disabled = thisOption.available == "false";
-										var displayName = thisOption.value + (parseInt(thisOption.count) > 0 && thisOption.available ? "\u2014 " + thisOption.count : "")
+
+										var thisOption = thisCategory.settings.options[optionKey],
+											disabled = thisOption.available == "false",
+											displayName = thisOption.value + (parseInt(thisOption.count) > 0 && thisOption.available ? "\u2014 " + thisOption.count : "")
 
 										if(!disabled) {
 											return (
@@ -876,7 +901,6 @@ Fields.Pharmacy = React.createClass({
 								</optgroup>
 							);
 						}
-
 					}.bind(this))}
 				</select>
 			);
@@ -884,7 +908,7 @@ Fields.Pharmacy = React.createClass({
 
 		return (
 			<div className="form-group row">
-				<Fields.FieldLabel {...this.props} />
+				<Fields.FieldLabel {...props} />
 				<div className={Fields.inputColumnClasses}>
 					{selectDrugs}
 				</div>
@@ -902,35 +926,42 @@ Fields.Resource = React.createClass({
 		};
 	},
 	componentWillMount: function() {
-		if(this.props.hasOwnProperty('resource')
-		&& this.props.resource !== null
-		&& typeof this.props.resource === "object") {
 
-			if(!this.props.resource.hasOwnProperty('data')) {
+		var props = this.props;
+
+		if(props.hasOwnProperty('resource')
+		&& props.resource !== null
+		&& typeof props.resource === "object") {
+
+			if(!props.resource.hasOwnProperty('data')) {
 				// No data found for this resource. We must load it.
 				this.fetchData();
 			}
 
 			this.setState({
-				resource: this.props.resource
+				resource: props.resource
 			});
 		}
 	},
 
 	fetchData: function() {
-		console.log("[Fields.Resource][" + this.props.id + "]: fetching data");
+
+		var props = this.props,
+			state = this.state;
+
+		console.log("[Fields.Resource][" + props.id + "]: fetching data");
 		this.setState({
 			isFetching: true,
 		});
 
-		// setTimeout(function() {
-
 		$.ajax({
 			method: "GET",
-			url: "/data/resources/fetch?id=" + this.props.id,
+			url: "/data/resources/fetch?id=" + props.id,
 			success: function(resp) {
-				var resource = this.state.resource;
-					resource['base64'] = resp.message;
+				var resource = state.resource;
+					resource['type'] = resp.type;
+					resource['base64'] = resp.base64;
+
 				this.setState({
 					isFetching: false,
 					resource: resource
@@ -940,28 +971,32 @@ Fields.Resource = React.createClass({
 
 			}.bind(this),
 		});
-
-		// }.bind(this), 4000);
 	},
 
 	render: function() {
-		console.log("[Fields.Resource][" + this.props.id + "]->render() with state:");
-		console.log(this.state);
-		var resource = this.state.resource,
-			renderResource
-			loading = function() {
-				renderResource = "Loading";
-			};
+
+		var props = this.props,
+			state = this.state;
+			resource = state.resource;
+
+		var renderResource;
+		var loading = function() {
+			renderResource = "Loading";
+		};
+
+
+		console.log("[Fields.Resource][" + props.id + "]->render() with state:");
+		console.log(state);
 
 		if(resource !== null && typeof resource === "object") {
 
-			if(this.state.isFetching) {
+			if(state.isFetching) {
 				loading();
 			} else {
 				if(resource.hasOwnProperty('type')) {
 					var type = resource.type;
 					if(type.match("image/*")) {
-						console.log("[Fields.Resource][" + this.props.id + "]: type matches image");
+						console.log("[Fields.Resource][" + props.id + "]: type matches image");
 
 						if(resource.hasOwnProperty('base64')) {
 							try {
@@ -986,7 +1021,7 @@ Fields.Resource = React.createClass({
 		}
 
 		return (
-			<div className={"forcept-patient-photo-contain " + (this.props.hasOwnProperty("className") ? this.props.className : "")}>
+			<div className={"forcept-patient-photo-contain " + (props.hasOwnProperty("className") ? props.className : "")}>
 				{renderResource}
 			</div>
 		);

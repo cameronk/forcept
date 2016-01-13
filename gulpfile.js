@@ -21,6 +21,8 @@
 var gulp = require('gulp');
 var sass = require('gulp-sass');
 var react = require('gulp-react');
+var uglify = require('gulp-uglify');
+var rename = require('gulp-rename');
 
 // gulp.task('sass', function () {
 //
@@ -34,6 +36,9 @@ var react = require('gulp-react');
 gulp.task('default', function () {
   // gulp.watch('./forcept/resources/assets/sass/**/*.scss', ['sass']);
   // gulp.watch('./forcept/resources/assets/react/**/*.jsx', ['react']);
+
+
+    // Development scripts
     gulp.src('./resources/assets/react/**/*.jsx')
         .pipe(react())
         .pipe(gulp.dest('./public/assets/js'));
@@ -42,4 +47,25 @@ gulp.task('default', function () {
         .pipe(sass().on('error', sass.logError))
         .pipe(gulp.dest('./public/assets/css'));
 
+
+    // Minified versions
+    gulp.src('./resources/assets/react/**/*.jsx')
+        .pipe(rename(function(path) {
+            path.extname = ".min.js";
+        }))
+        .pipe(react())
+        .pipe(uglify({
+            mangle: true,
+            compress: {
+                drop_console: true,
+            }
+        }))
+        .pipe(gulp.dest('./public/assets/js'));
+
+    gulp.src('./resources/assets/sass/**/*.scss')
+        .pipe(rename(function(path) {
+            path.extname = ".min.css";
+        }))
+        .pipe(sass().on('error', sass.logError))
+        .pipe(gulp.dest('./public/assets/css'));
 });
