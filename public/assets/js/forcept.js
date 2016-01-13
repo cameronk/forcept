@@ -40,6 +40,81 @@ function getFileSize(n,a,b,c,d){
 }
 
 
+var Utilities = {
+
+	calculateAge: function(date) {
+		// Setup date objects
+		var birthday = +new Date(date),
+			now = Date.now(),
+			age = null;
+
+		// Make sure the birthday is in the past
+		if(birthday < now) {
+
+			// Start by trying to calculate in years
+			var years = ~~((now - birthday) / (31557600000)); // 24 * 3600 * 365.25 * 1000
+
+			// If the birthday is < 1 year, use months
+			if(years === 0) {
+				var months = ((now - birthday) / (2629800000)); // 24 * 3600 * 365.25 * 1000 all over 12
+				age = ~~months !== 0 ? months.toFixed(1) + " months" : "<1 month"; // If <1 month, show "<1" instead of zero
+			} else {
+				age = years + " years";
+			}
+
+		}
+
+		return age;
+	},
+
+
+		/*
+		 * Handle automatic generation of field data
+		 */
+		applyGeneratedFields: function( patient ) {
+
+		// Patient full name
+		var fullName = null;
+		if(
+			typeof patient.first_name === "string"
+			&& typeof patient.last_name === "string"
+			&& patient.first_name.length > 0
+			&& patient.last_name.length > 0
+		) {
+			fullName = patient.first_name + " " + patient.last_name;
+		} else {
+			if(typeof patient.first_name === "string" && patient.first_name.length > 0 ) {
+				fullName = patient.first_name;
+			}
+			if(typeof patient.last_name === "string" && patient.last_name.length > 0) {
+				fullName = patient.last_name;
+			}
+		}
+
+		patient.full_name = fullName;
+
+
+		// Age
+		var age = null,
+			birthday = patient.birthday;
+		if(
+			typeof birthday === "string"
+			&& birthday.length > 0
+		) {
+			age = Utilities.calculateAge(birthday);
+		}
+
+		patient.age = age;
+
+		// Return patient object
+		return patient;
+	},
+
+	getFullName: function(thisPatient) {
+		return thisPatient["full_name"] !== null && thisPatient["full_name"].length > 0 ? thisPatient["full_name"] : "Unnamed patient";
+	},
+};
+
 /* ========================================= */
 
 var Fields = {
@@ -272,7 +347,7 @@ Fields.Select = React.createClass({displayName: "Select",
 		optionsDOM = optionsKeys.map(function(optionKey, index) {
 			var disabled = false;
 			if(this.props.settings.options[optionKey].hasOwnProperty('available')) {
-				disabled = (this.props.settings.options[optionKey].available == "true");
+				disabled = (this.props.settings.options[optionKey].available === "false");
 			}
 			return (
 				React.createElement("option", {value: options[optionKey].value, key: this.props.id + "-option-" + index, disabled: disabled}, options[optionKey].value)
@@ -783,7 +858,7 @@ Fields.Pharmacy = React.createClass({displayName: "Pharmacy",
 							var optionKeys = Object.keys(thisCategory.settings.options);
 							return (
 								React.createElement("optgroup", {label: this.state.data[drugKey].name}, 
-									optionKeys.map(function(optionKey, index) {
+									optionKeys.map(function(optionKey, optionIndex) {
 										// var size = optionKeys.length > 30 ? 30 : optionKeys.length;
 										var thisOption = thisCategory.settings.options[optionKey];
 										var disabled = thisOption.available == "false";
@@ -791,7 +866,7 @@ Fields.Pharmacy = React.createClass({displayName: "Pharmacy",
 
 										if(!disabled) {
 											return (
-												React.createElement("option", {value: thisOption.value}, 
+												React.createElement("option", {value: thisOption.value, key: optionIndex}, 
 													displayName
 												)
 											);
@@ -848,6 +923,8 @@ Fields.Resource = React.createClass({displayName: "Resource",
 			isFetching: true,
 		});
 
+		// setTimeout(function() {
+
 		$.ajax({
 			method: "GET",
 			url: "/data/resources/fetch?id=" + this.props.id,
@@ -863,28 +940,40 @@ Fields.Resource = React.createClass({displayName: "Resource",
 
 			}.bind(this),
 		});
+
+		// }.bind(this), 4000);
 	},
 
 	render: function() {
-		console.log("[Fields.Resource][" + this.props.id + "]: rendering resource");
+		console.log("[Fields.Resource][" + this.props.id + "]->render() with state:");
 		console.log(this.state);
 		var resource = this.state.resource,
-			renderResource;
+			renderResource
+			loading = function() {
+				renderResource = "Loading";
+			};
 
 		if(resource !== null && typeof resource === "object") {
 
 			if(this.state.isFetching) {
-				renderResource = "Loading...";
+				loading();
 			} else {
-				if(this.state.resource.hasOwnProperty('type')) {
-					var type = this.state.resource.type;
+				if(resource.hasOwnProperty('type')) {
+					var type = resource.type;
 					if(type.match("image/*")) {
 						console.log("[Fields.Resource][" + this.props.id + "]: type matches image");
 
-						if(this.state.resource.hasOwnProperty('base64')) {
-							renderResource = (
-								React.createElement("img", {src: this.state.resource.base64})
-							);
+						if(resource.hasOwnProperty('base64')) {
+							try {
+								renderResource = (
+									React.createElement("img", {src: resource.base64})
+								);
+							} catch(e) {
+								renderResource = "error!";
+							}
+						} else {
+							// Haven't fetched yet
+							loading();
 						}
 
 					} else {

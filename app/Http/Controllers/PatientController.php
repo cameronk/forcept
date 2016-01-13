@@ -21,6 +21,7 @@ class PatientController extends Controller
     public function index()
     {
         //
+        return view('patient/index');
     }
 
     /**
@@ -60,11 +61,12 @@ class PatientController extends Controller
     {
         switch($request->by) {
             case "name":
-                return response()->json([ 
+                return response()->json([
                     "status" => "success",
                     "patients" => Patient::where('first_name', 'LIKE', '%' . $request->for . '%')
                                 ->orWhere('last_name', 'LIKE', '%' . $request->for . '%')
-                                ->get()->toArray() 
+                                ->orderBy('id', 'desc')
+                                ->get()->toArray()
                 ]);
 
                 break;
@@ -72,7 +74,10 @@ class PatientController extends Controller
             case "forceptID":
                 return response()->json([
                     "status" => "success",
-                    "patients" =>  Patient::where('id', '=', $request->for)->where('concrete', '=', 1)->get()->toArray()
+                    "patients" =>  Patient::where('id', '=', $request->for)
+                                ->where('concrete', '=', 1)
+                                ->orderBy('id', 'desc')
+                                ->get()->toArray()
                 ]);
                 break;
 
@@ -89,6 +94,17 @@ class PatientController extends Controller
         }
     }
 
+    /**
+     * Get all patient records [within a range].
+     *
+     * @return JSON
+     */
+    public function fetch(Request $request) {
+        return response()->json([
+            "status" => "success",
+            "patients" => Patient::limit(50)->where('concrete', true)->orderBy('id', 'desc')->get()->toArray()
+        ]);
+    }
 
 
     /**

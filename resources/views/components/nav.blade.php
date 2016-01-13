@@ -15,3 +15,7 @@
         </li>
     @endif
 @endforeach
+
+<li class="nav-item">
+    <a href="{{ route('patients::index') }}" class="nav-link">Patients</a>
+</li>

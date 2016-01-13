@@ -172,6 +172,17 @@ Route::group(['middleware' => 'auth'], function () {
 	], function() {
 
 		/**
+		 * Shows the patients page
+		 * @returns View
+		 *
+		 * => patients::index
+		 */
+		Route::get('/', [
+			'as' => 'index',
+			'uses' => 'PatientController@index'
+		]);
+
+		/**
 		 * Make a new patient record
 		 * @returns JSON
 		 *
@@ -194,6 +205,16 @@ Route::group(['middleware' => 'auth'], function () {
 			'uses' => 'PatientController@search'
 		]);
 
+		/**
+		 * Fetch large batches of patient records
+		 * @returns JSON
+		 *
+		 * => patients::search
+		 */
+		Route::get('fetch', [
+			'as' => 'fetch',
+			'uses' => 'PatientController@fetch'
+		]);
 	});
 
 

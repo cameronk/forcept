@@ -3,16 +3,16 @@
  */
 
 .forcept-patient-nametag {
-    
+
     .card-block {
         padding: ($spacer-y / 2) ($spacer-x);
     }
-    
+
     .card-title {
         margin-top: ($spacer-y / 1.5);
-        
+
         span.title-content {
-            padding-right: 5px;   
+            padding-right: 5px;
         }
     }
 
@@ -49,10 +49,21 @@ div.forcept-patient-photo-contain {
 	max-height: 300px;
 	overflow-y: auto;
 	overflow-x: hidden;
-
+    &.thumbnail {
+        padding: .25rem;
+        line-height: 1.5;
+        background-color: #fff;
+        border: 1px solid #ddd;
+        border-radius: .25rem;
+        margin: 0 auto;
+    }
 	img {
 		width: 100%;
 	}
+}
+
+.forcept-stagevisits-patient-name {
+    margin-top: 10px;
 }
 
 img.loading {

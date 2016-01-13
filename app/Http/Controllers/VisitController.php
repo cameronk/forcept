@@ -341,6 +341,8 @@ class VisitController extends Controller
             return response()->json([
                 'status' => 'success',
                 'message' => 'Visit moved successfully.',
+                'toStage' => $request->destination,
+                'visitID' => $visit->id,
                 'errors' => $errors
             ]);
         } else {
@@ -361,14 +363,14 @@ class VisitController extends Controller
         $response;
         $visits = Visit::where('stage', '=', $stage->id)->get()->keyBy('id')->toArray();
 
-        $rootStageFields = Stage::where('root', true)->first()->basicFields;
+        $rootStageFields = Stage::where('root', true)->first()->inputFields;
 
         foreach($visits as $visitID => $visitData) {
             $models = array();
             foreach($visitData['patients'] as $patientID) {
                 $patient = Patient::where('id', $patientID);
                 if($patient->count() > 0) {
-                    $models[$patientID] = $patient->first(array_keys($rootStageFields))->toArray();
+                    $models[$patientID] = $patient->first()->toArray();
                 }
             }
             $visits[$visitID]['patient_models'] = $models;
