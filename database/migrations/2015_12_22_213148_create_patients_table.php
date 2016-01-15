@@ -39,7 +39,7 @@ class CreatePatientsTable extends Migration
         });
 
         // Set-up default auto increment value
-        DB::statement("ALTER TABLE `stage_1` AUTO_INCREMENT = 100000");
+        DB::statement(sprintf("ALTER TABLE `stage_1` AUTO_INCREMENT = %s", env('APP_PATIENT_STARTING_INDEX', 100000)));
     }
 
     /**

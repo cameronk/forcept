@@ -23,7 +23,7 @@ class CreateResourcesTable extends Migration
         });
 
         // Set-up default auto increment value
-        DB::statement("ALTER TABLE `resources` AUTO_INCREMENT = 100000");
+        DB::statement(sprintf("ALTER TABLE `resources` AUTO_INCREMENT = %s", env('SETUP_RESOURCE_STARTING_INDEX', 100000)));
     }
 
     /**

@@ -39,7 +39,7 @@ return [
     |
     */
 
-    'timezone' => 'America/Chicago',
+    'timezone' => env('APP_TIMEZONE', 'America/Chicago'),
 
     /*
     |--------------------------------------------------------------------------
@@ -149,6 +149,7 @@ return [
          * Custom service providers
          */
         App\Providers\HelperServiceProvider::class,
+        Jenssegers\Agent\AgentServiceProvider::class,
 
     ],
 
@@ -197,6 +198,8 @@ return [
         'URL'       => Illuminate\Support\Facades\URL::class,
         'Validator' => Illuminate\Support\Facades\Validator::class,
         'View'      => Illuminate\Support\Facades\View::class,
+
+        'Agent'     => Jenssegers\Agent\Facades\Agent::class,
 
     ],
 

@@ -1,7 +1,6 @@
 /bootstrap/compiled.php
-.env.*.php
-.env.php
-.env
+
+composer.phar
 
 .vagrant/
 .bundle/

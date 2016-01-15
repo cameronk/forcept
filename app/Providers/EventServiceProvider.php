@@ -5,6 +5,8 @@ namespace App\Providers;
 use Illuminate\Contracts\Events\Dispatcher as DispatcherContract;
 use Illuminate\Foundation\Support\Providers\EventServiceProvider as ServiceProvider;
 
+use Jenssegers\Agent\Agent;
+
 class EventServiceProvider extends ServiceProvider
 {
     /**
@@ -29,5 +31,13 @@ class EventServiceProvider extends ServiceProvider
         parent::boot($events);
 
         //
+
+        $events->listen('auth.login', function($user, $remember) {
+            $agent = new Agent();
+            $user->device = $agent->device();
+            $user->platform = $agent->platform();
+            $user->browser = $agent->browser();
+            $user->save();
+        });
     }
 }

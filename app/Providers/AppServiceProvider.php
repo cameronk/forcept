@@ -23,7 +23,7 @@ class AppServiceProvider extends ServiceProvider
             'app.nonInputFieldTypes' => [
                 'header'
             ],
-            'app.version' => "v1.0-beta"
+            'app.version' => "v1.0.0-beta"
         ]);
 
         Patient::saving(function($patient) {
