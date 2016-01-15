@@ -23,7 +23,7 @@ class CreateVisitsTable extends Migration
         });
 
         // Set-up default auto increment value
-        DB::statement("ALTER TABLE `visits` AUTO_INCREMENT = 100");
+        DB::statement(sprintf("ALTER TABLE `visits` AUTO_INCREMENT = %s", env('SETUP_VISIT_STARTING_INDEX', 100)));
     }
 
     /**
