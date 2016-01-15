@@ -235,37 +235,33 @@ Route::group(['middleware' => 'auth'], function () {
 
 
 		/**
-		 * User controller resource
+		 * Field Data controller resource
 		 */
 		Route::group([
-			'prefix' => 'users',
-			'as' => 'users::',
+			'prefix' => 'field-data',
+			'as' => 'field-data::',
 		], function() {
 
 			// Users index
 			Route::get('/', [
 				'as' => 'index',
-				'uses' => 'UsersController@index'
+				'uses' => 'FieldDataController@index'
 			]);
 
 			// Create user
-			Route::get('create', [
+			Route::get('import', [
 				'as' => 'create',
-				'uses' => 'UsersController@create'
+				'uses' => 'FieldDataController@create'
 			]);
 
-			// Store user
-			Route::post('create', [
+			// Parse uploaded file
+			Route::post('import', [
 				'as' => 'store',
-				'uses' => 'UsersController@store'
-			]);
-
-			// Delete user
-			Route::delete('delete/{id}', [
-				'uses' => 'UsersController@destroy'
+				'uses' => 'FieldDataController@store'
 			]);
 
 		});
+
 
 		/**
 		 * Flow controller resource
@@ -306,6 +302,39 @@ Route::group(['middleware' => 'auth'], function () {
 			// Delete stage
 			Route::delete('delete/{id}', [
 				'uses' => 'FlowController@destroy'
+			]);
+
+		});
+
+		/**
+		 * User controller resource
+		 */
+		Route::group([
+			'prefix' => 'users',
+			'as' => 'users::',
+		], function() {
+
+			// Users index
+			Route::get('/', [
+				'as' => 'index',
+				'uses' => 'UsersController@index'
+			]);
+
+			// Create user
+			Route::get('create', [
+				'as' => 'create',
+				'uses' => 'UsersController@create'
+			]);
+
+			// Store user
+			Route::post('create', [
+				'as' => 'store',
+				'uses' => 'UsersController@store'
+			]);
+
+			// Delete user
+			Route::delete('delete/{id}', [
+				'uses' => 'UsersController@destroy'
 			]);
 
 		});

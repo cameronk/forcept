@@ -12,14 +12,6 @@
     <!--| Stylesheets |-->
     <link href="{{ asset('/assets/css/template.css') }}" rel="stylesheet" />
 
-    <!--| Base scripts |-->
-    <script type="text/javascript" src="{{ asset('/assets/jquery/jquery-2.1.4.min.js') }}"></script>
-    <script type="text/javascript" src="{{ asset('/assets/highcharts/highcharts-custom.js') }}"></script>
-    <script type="text/javascript" src="{{ asset('/assets/bootstrap/dist/js/bootstrap.js') }}"></script>
-    <script type="text/javascript" src="{{ asset('/assets/tether-1.1.1/dist/js/tether.js') }}"></script>
-    <script type="text/javascript" src="{{ asset('/assets/react/react.js') }}"></script>
-    <script type="text/javascript" src="{{ asset('/assets/react/react-dom.js') }}"></script>
-
     <meta name="csrf-token" value="{{ csrf_token() }}" />
 
 </head>
@@ -95,6 +87,25 @@
 </div>
 
 
+<!--| Debug container |-->
+<div class="container-fluid hidden" id="forcept-debug-content">
+    <div class="col-sm-12 p-t">
+        <h1>Debug output</h1>
+        <pre></pre>
+    </div>
+</div>
+
+
+<!--| Base scripts |-->
+<script type="text/javascript" src="{{ asset('/assets/jquery/jquery-2.1.4.min.js') }}"></script>
+<script type="text/javascript" src="{{ asset('/assets/highcharts/highcharts-custom.js') }}"></script>
+<script type="text/javascript" src="{{ asset('/assets/bootstrap/dist/js/bootstrap.js') }}"></script>
+<script type="text/javascript" src="{{ asset('/assets/tether-1.1.1/dist/js/tether.js') }}"></script>
+<script type="text/javascript" src="{{ asset('/assets/react/react.js') }}"></script>
+<script type="text/javascript" src="{{ asset('/assets/react/react-dom.js') }}"></script>
+
+
+
 <!--| Scripts |-->
 <script type="text/javascript" src="{{ asset('/assets/js/forcept.js') }}"></script>
 <script>
@@ -110,15 +121,6 @@ $(function() {
 });
 </script>
 @yield('scripts')
-
-
-<!--| Debug container |-->
-<div class="container-fluid hidden" id="forcept-debug-content">
-    <div class="col-sm-12 p-t">
-        <h1>Debug output</h1>
-        <pre></pre>
-    </div>
-</div>
 
 </body>
 

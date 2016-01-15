@@ -42,6 +42,9 @@ function getFileSize(n,a,b,c,d){
 
 var Utilities = {
 
+	/*
+	 * Calculate aged based on a given date
+	 */
 	calculateAge: function(date) {
 		// Setup date objects
 		var birthday = +new Date(date),
@@ -68,10 +71,10 @@ var Utilities = {
 	},
 
 
-		/*
-		 * Handle automatic generation of field data
-		 */
-		applyGeneratedFields: function( patient ) {
+	/*
+	 * Handle automatic generation of field data
+	 */
+	applyGeneratedFields: function( patient ) {
 
 		// Patient full name
 		var fullName = null;
@@ -110,8 +113,11 @@ var Utilities = {
 		return patient;
 	},
 
+	/*
+	 * Get full name of patient (or "Unnamed Patient") if none defined
+	 */
 	getFullName: function(thisPatient) {
-		return thisPatient["full_name"] !== null && thisPatient["full_name"].length > 0 ? thisPatient["full_name"] : "Unnamed patient";
+		return thisPatient.full_name !== null && thisPatient.full_name.length > 0 ? thisPatient.full_name : "Unnamed patient";
 	},
 };
 
