@@ -414,7 +414,7 @@ Fields.File = React.createClass({
 
 	componentWillMount: function() {
 		var props = this.props;
-		if(props.hasOwnProperty("defaultValue") && props.defaultValue !== null) {
+		if(props.hasOwnProperty("defaultValue") && props.defaultValue !== null && Array.isArray(props.defaultValue)) {
 			this.setState({
 				resources: props.defaultValue
 			});
@@ -652,9 +652,14 @@ Fields.File = React.createClass({
 		if(resourcesCount > 0) {
 			// We have resources - don't show file input.
 			var fileList = resources.map(function(resource, index) {
+				var thisType;
+				if(storage.hasOwnProperty(resource) && storage[resource].hasOwnProperty("type")) {
+					thisType = storage[resource].type;
+				}
 				return (
 					<div className="list-group-item" key={["file-", resource, "-", index].join()}>
-						<small>#{resource} - {storage[resource].type}</small>
+						<span className="label label-default m-r">{resource}</span>
+						<small>{thisType}</small>
 						<button onMouseUp={this.handleRemoveResource.bind(this, resource)} className="close pull-right">
 							&times;
 						</button>

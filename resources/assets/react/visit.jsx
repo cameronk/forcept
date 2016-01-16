@@ -513,6 +513,22 @@ Visit.PatientsOverview = React.createClass({
 			                    				 * Things stored as base64
 			                    				 */
 			                    				case "file":
+
+													// Convert from JSON array to nice string
+													var arr;
+													try {
+														arr = JSON.parse(thisPatientField);
+													} catch(e) {
+														arr = [];
+													}
+
+													value = arr.map(function(resourceID, index) {
+														return (
+															<Fields.Resource
+																id={resourceID} />
+														);
+													});
+
 			                    					/*var split = thisPatient[field].toString().split(";");
 			                    					var dataSection = split[0]; // data:image/png
 
@@ -529,7 +545,7 @@ Visit.PatientsOverview = React.createClass({
 			                    					break;
 
 			                    				/**
-			                    				 * Everything else
+			                    				 * Everything else (single-value data points)
 			                    				 */
 			                    				default:
 			                    					value = thisPatientField.toString();
@@ -542,11 +558,7 @@ Visit.PatientsOverview = React.createClass({
 			                    			{
 			                    				// We found data!
 			                    				foundData = true;
-			                    				value = (
-			                    					<span className="pull-right">
-			                    						{thisPatientField.join(", ")}
-			                    					</span>
-			                    				);
+			                    				value = thisPatientField.join(", ");
 			                    			} else {
 			                    				// WTF is it?
 			                    				console.log("WARNING: unknown field data type for field " + field);
@@ -746,7 +758,7 @@ Visit.PatientsContainer = React.createClass({
 
 					var thisPatient = patients[patientID];
 
-					console.log("[Visits.PatientsContainer]->render(): ...#" + patientID);
+					console.log("[Visits.PatientsContainer]->render(): #" + patientID);
 					console.log("[Visits.PatientsContainer]->render(): ...fields=" + props.fields);
 					console.log("[Visits.PatientsContainer]->render(): ...patient=" + patients[patientID]);
 
@@ -1188,6 +1200,7 @@ Visit.Patient = React.createClass({
 			summary;
 
 		console.log("[Visit.Patient] Preparing to render " + countFields + " iterable fields, " + countSummaryFields + " fields to summarize");
+		console.log("[Visit.Patient] Field keys: [" + fieldKeys.join(", ") + "]");
 
 		// Build summary DOM
 		if(summaryFields !== null && typeof summaryFields === "object" && countSummaryFields > 0) {
@@ -1236,8 +1249,29 @@ Visit.Patient = React.createClass({
 		        <hr/>
 		        {fieldKeys.map(function(fieldID, index) {
 
-					var thisField = fields[fieldID];
-					var thisPatient = props.patient;
+
+					var thisField = fields[fieldID],
+						thisPatient = props.patient,
+						defaultValue = thisPatient.hasOwnProperty(fieldID) ? thisPatient[fieldID] : null;
+
+					console.log("[Visit.Patient][" + props.id + "][" + fieldID + "] rendering with type " + thisField.type + ", defaultValue: " + defaultValue + " (typeof defaultValue='" + (typeof defaultValue) + "')");
+
+					// Mutate data as necessary per field type
+					switch(thisField.type) {
+						// Fields stored as JSON arrays
+						case "multiselect":
+						case "file":
+						case "pharmacy":
+							if(defaultValue !== null && typeof defaultValue === "string") {
+								try {
+									defaultValue = JSON.parse(defaultValue)
+								} catch(e) {
+									console.error("[Visit.Patient][" + props.id + "][" + fieldID + "] attempt to convert data -> array failed");
+									defaultValue = [];
+								}
+							}
+							break;
+					}
 
 		        	// Figure out which type of field we should render
 		        	switch(thisField.type) {
@@ -1249,7 +1283,7 @@ Visit.Patient = React.createClass({
 		        			return (
 		        				<Fields.Text
 		        					{...thisField}
-		        					defaultValue={thisPatient.hasOwnProperty(fieldID) ? thisPatient[fieldID] : null}
+		        					defaultValue={defaultValue}
 		        					onChange={this.handleFieldChange}
 		        					key={fieldID}
 		        					id={fieldID} />
@@ -1259,7 +1293,7 @@ Visit.Patient = React.createClass({
 		        			return (
 		        				<Fields.Textarea
 		        					{...thisField}
-		        					defaultValue={thisPatient.hasOwnProperty(fieldID) ? thisPatient[fieldID] : null}
+		        					defaultValue={defaultValue}
 		        					onChange={this.handleFieldChange}
 		        					key={fieldID}
 		        					id={fieldID} />
@@ -1269,7 +1303,7 @@ Visit.Patient = React.createClass({
 		        			return (
 		        				<Fields.Number
 		        					{...thisField}
-		        					defaultValue={thisPatient.hasOwnProperty(fieldID) ? thisPatient[fieldID] : null}
+		        					defaultValue={defaultValue}
 		        					onChange={this.handleFieldChange}
 		        					key={fieldID}
 		        					id={fieldID} />
@@ -1279,7 +1313,7 @@ Visit.Patient = React.createClass({
 		        			return (
 		        				<Fields.Date
 		        					{...thisField}
-		        					defaultValue={thisPatient.hasOwnProperty(fieldID) ? thisPatient[fieldID] : null}
+		        					defaultValue={defaultValue}
 		        					onChange={this.handleFieldChange}
 		        					key={fieldID}
 		        					id={fieldID} />
@@ -1290,7 +1324,7 @@ Visit.Patient = React.createClass({
 		        				<Fields.Select
 		        					{...thisField}
 		        					multiple={false}
-		        					defaultValue={thisPatient.hasOwnProperty(fieldID) ? thisPatient[fieldID] : null}
+		        					defaultValue={defaultValue}
 		        					onChange={this.handleFieldChange}
 		        					key={fieldID}
 		        					id={fieldID} />
@@ -1301,7 +1335,7 @@ Visit.Patient = React.createClass({
 		        				<Fields.Select
 		        					{...thisField}
 		        					multiple={true}
-		        					defaultValue={thisPatient.hasOwnProperty(fieldID) ? thisPatient[fieldID] : null}
+		        					defaultValue={defaultValue}
 		        					onChange={this.handleFieldChange}
 		        					key={fieldID}
 		        					id={fieldID} />
@@ -1311,7 +1345,7 @@ Visit.Patient = React.createClass({
 		        			return (
 								<Fields.File
 		        					{...thisField}
-		        					defaultValue={thisPatient.hasOwnProperty(fieldID) ? thisPatient[fieldID] : null}
+		        					defaultValue={defaultValue}
 		        					onChange={this.handleFieldChange}
 									onStore={this.handleStoreResource}
 		        					key={fieldID}
@@ -1322,7 +1356,7 @@ Visit.Patient = React.createClass({
 		        			return (
 								<Fields.YesNo
 		        					{...thisField}
-		        					defaultValue={thisPatient.hasOwnProperty(fieldID) ? thisPatient[fieldID] : null}
+		        					defaultValue={defaultValue}
 		        					onChange={this.handleFieldChange}
 		        					key={fieldID}
 		        					id={fieldID} />
