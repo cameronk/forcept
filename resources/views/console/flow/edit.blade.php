@@ -21,8 +21,8 @@
                 </div>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-primary" data-dismiss="modal">&laquo; Go back to editing</button>
-                <a href="{{ route('console::flow::index') }}" class="btn btn-danger">Back to patient flow home &raquo;</a>
+                <a href="{{ route('console::flow::index') }}" class="btn btn-danger">&laquo; Back to patient flow home</a>
+                <button type="button" class="btn btn-primary" data-dismiss="modal">Go back to editing &raquo;</button>
             </div>
         </div><!-- /.modal-content -->
     </div><!-- /.modal-dialog -->
@@ -63,13 +63,13 @@
                     <strong>Important warning:</strong>
                     <br/>During this stage editing session, you removed <span id="removal-count"></span> field(s), including:
                     <ul id="removed-field-list"></ul><br/>
-                    
+
                     Forcept will attempt to backup any data already associated with these fields. However, due to the nature of Forcept's dyanmic data flow structure, <strong><em><u>some</u> or <u>all of</u> the data <u>may</u> become inaccessible, or be <u>deleted</u> from the database entirely.</em></strong><br/><br/>
-                    
+
                     If you've changed your mind about submitting these changes, you can <a href="{{ route('console::flow::index') }}" class="alert-link">return to the flow management page</a> without submitting.<br/><br/>
-                    
+
                     If you wish to proceed, choose "proceed with changes" below.
-                    
+
                 </div>
             </div>
             <div class="modal-footer">
@@ -90,7 +90,7 @@
     <label for="stageType" class="col-sm-2 form-control-label">Stage type</label>
     <div class="col-sm-10">
         <select name="type" class="form-control" id="stageType" disabled>
-            <option value="basic">Basic</option>                    
+            <option value="basic">Basic</option>
             <option value="pharmacy">Pharmacy</option>
         </select>
     </div>
@@ -127,12 +127,12 @@
     console.log("Configuration:");
     console.log(configuration);
     console.log("\n");
-    
+
     var FlowEditorFields = ReactDOM.render(
         React.createElement(FlowEditor, {
             stageName: $("#stage-name").val(),
             stageType: "{{ $stage->type }}",
-            
+
             fields: configuration,
             handleSubmit: function() {
                 var submitAJAX = function() {
@@ -165,7 +165,7 @@
 
                             if(data.hasOwnProperty('responseJSON')) {
                                 if(data.responseJSON.hasOwnProperty('status') && data.responseJSON.hasOwnProperty('message')) {
-                                    // Manual error                                
+                                    // Manual error
                                     list.append("<li>" + data.responseJSON.message + "</li>");
                                 } else {
                                     console.log("Laravel error");
@@ -194,10 +194,10 @@
 
                 // Send AJAX request
                 if(FlowEditorFields.state.fieldsRemoved.length > 0) {
-                    // Give warning  
+                    // Give warning
 
                     var warningModal = $("#stage-submit-warning-modal");
-                    var list = warningModal.find('#removed-field-list');                    
+                    var list = warningModal.find('#removed-field-list');
                     var count = warningModal.find('#removal-count');
                     var override = warningModal.find("#submit-changes-override");
 
@@ -210,7 +210,7 @@
                     });
 
                     FlowEditorFields.state.fieldsRemoved.map(function(field, index) {
-                        list.append("<li>" + field + "</li>"); 
+                        list.append("<li>" + field + "</li>");
                     });
                     count.html(FlowEditorFields.state.fieldsRemoved.length);
 
@@ -231,6 +231,6 @@
     //            delete state['fields'];
         __debug(data, state["fieldsRemoved"]);
     }, 1000);
-    
+
 </script>
 @endsection
