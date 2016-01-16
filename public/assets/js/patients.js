@@ -150,6 +150,11 @@ var PatientsTable = React.createClass({displayName: "PatientsTable",
                         ), 
                         React.createElement("td", null, 
                             thisPatient.updated_at
+                        ), 
+                        React.createElement("td", null, 
+                            React.createElement("a", {href: ["/patients/view/", thisPatient.id].join("")}, 
+                                "»"
+                            )
                         )
                     )
                 );
@@ -218,6 +223,9 @@ var PatientsTable = React.createClass({displayName: "PatientsTable",
                                     ), 
                                     React.createElement("th", null, 
                                         "Last updated"
+                                    ), 
+                                    React.createElement("th", null
+
                                     )
                                 )
                             ), 

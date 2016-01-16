@@ -151,6 +151,11 @@ var PatientsTable = React.createClass({
                         <td>
                             {thisPatient.updated_at}
                         </td>
+                        <td>
+                            <a href={["/patients/view/", thisPatient.id].join("")}>
+                                &raquo;
+                            </a>
+                        </td>
                     </tr>
                 );
             }.bind(this));
@@ -218,6 +223,9 @@ var PatientsTable = React.createClass({
                                     </th>
                                     <th>
                                         Last updated
+                                    </th>
+                                    <th>
+
                                     </th>
                                 </tr>
                             </thead>

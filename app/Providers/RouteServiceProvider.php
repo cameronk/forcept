@@ -30,6 +30,7 @@ class RouteServiceProvider extends ServiceProvider
 
         $router->model('stage', 'App\Stage');
         $router->model('visit', 'App\Visit');
+        $router->model('patient', 'App\Patient');
     }
 
     /**

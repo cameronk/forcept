@@ -9,7 +9,11 @@ use App\Http\Controllers\Controller;
 
 use App\Http\Requests\SearchPatientsRequest;
 use App\Patient;
+use App\Visit;
+use App\Stage;
 use Auth;
+
+use DB;
 
 class PatientController extends Controller
 {
@@ -21,7 +25,46 @@ class PatientController extends Controller
     public function index()
     {
         //
-        return view('patient/index');
+        return view('patients/index');
+    }
+
+
+    public function patient(Patient $patient)
+    {
+        $stagesByVisit = array();
+        $stages = Stage::all();
+
+        // Loop through all of this patient's visits
+        foreach($patient->visits as $visitID) {
+            // Loop through each stage with this visit and see if a record exists
+            $stagesByVisit[$visitID] = array();
+            foreach($stages->keyBy('id') as $stageID => $stageData) {
+                // Bypass if the stage is root (we already have the root data in Patient!)
+
+                $stagesByVisit[$visitID][$stageData->id] = array(
+                    "fields" => $stageData->fields,
+                    "data" => array()
+                );
+
+                if(!$stageData->root) {
+                    $record = DB::table($stageData->tableName)
+                                ->where('patient_id', $patient->id)
+                                ->where('visit_id', $visitID);
+
+                    // See if the record exists.
+                    if($record->count() > 0) {
+                        $stagesByVisit[$visitID][$stageData->id]["data"] = (array) $record->first();
+                    }
+                }
+            }
+        }
+
+        //
+        return view('patients/view', [
+            'patient' => $patient,
+            'patientFields' => $stages->get(0)->fields,
+            'stages' => $stagesByVisit
+        ]);
     }
 
     /**
