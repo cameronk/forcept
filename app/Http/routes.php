@@ -262,7 +262,7 @@ Route::group(['middleware' => 'auth'], function () {
 
 			// Create user
 			Route::get('import', [
-				'as' => 'create',
+				'as' => 'import',
 				'uses' => 'FieldDataController@create'
 			]);
 
@@ -270,6 +270,11 @@ Route::group(['middleware' => 'auth'], function () {
 			Route::post('import', [
 				'as' => 'store',
 				'uses' => 'FieldDataController@store'
+			]);
+
+			Route::post('map', [
+				'as' => 'map',
+				'uses' => 'FieldDataController@map'
 			]);
 
 		});

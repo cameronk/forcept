@@ -2,6 +2,7 @@
 
 composer.phar
 
+storage/imports/*
 .vagrant/
 .bundle/
 

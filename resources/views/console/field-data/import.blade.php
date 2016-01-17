@@ -6,30 +6,30 @@
 
     <h1 class="p-t">Import new field data</h1>
     <hr/>
-    <form action="{{ route('console::flow::store') }}" method="POST">
+    <form action="{{ route('console::field-data::store') }}" method="POST" enctype="multipart/form-data">
         {!! csrf_field() !!}
 
         <div class="form-group row">
-            <label for="stageType" class="col-sm-2 form-control-label">Stage type</label>
-            <div class="col-sm-10">
-                <select name="type" class="form-control" id="stageType">
-                    <option value="basic">Basic</option>
-                    <option value="pharmacy">Pharmacy</option>
+            <label class="col-sm-3 form-control-label">Upload CSV file</label>
+            <div class="col-sm-9">
+                <input type="file" name="upload" id="file" accept=".csv" required>
+            </div>
+        </div>
+        <div class="form-group row">
+            <label for="stageType" class="col-sm-3 form-control-label">Upload mode</label>
+            <div class="col-sm-9">
+                <select name="mode" class="form-control" id="stageType" required>
+                    <option value="fresh">Delete already-existing field numbers and start fresh</option>
+                    <option value="append">Keep old values, skip if field number already exists</option>
+                    <option value="overwrite">Keep old values, overwrite old data if field number already exists</option>
                 </select>
             </div>
         </div>
         <div class="form-group row">
-            <label for="name" class="col-sm-2 form-control-label">Stage name</label>
-            <div class="col-sm-10">
-                <input type="text" name="name" class="form-control" id="name" placeholder="Enter stage name">
-            </div>
-        </div>
-        <div class="form-group row">
-            <div class="col-sm-offset-2 col-sm-10">
-                <button type="submit" class="btn btn-primary">Create stage</button>
+            <div class="col-sm-offset-3 col-sm-9">
+                <button type="submit" class="btn btn-primary">Upload</button>
             </div>
         </div>
     </form>
-
 
 @endsection
