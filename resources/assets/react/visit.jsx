@@ -708,7 +708,7 @@ Visit.PatientsContainer = React.createClass({
 			success: function(resp) {
 				console.log("success");
 				if(resp.status == "success") {
-					this.props.onPatientAdd(resp.patient;
+					this.props.onPatientAdd(resp.patient);
 				}
 			}.bind(this),
 			error: function(resp) {

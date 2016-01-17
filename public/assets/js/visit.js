@@ -708,16 +708,7 @@ Visit.PatientsContainer = React.createClass({displayName: "PatientsContainer",
 			success: function(resp) {
 				console.log("success");
 				if(resp.status == "success") {
-					var addPatient = resp.patient;
-					// if(patient !== null) {
-					// 	// Loop through existing patient properties
-					// 	var patientFieldKeys = Object.keys(patient);
-					// 	for(var i = 0; i < patientFieldKeys.length; i++) {
-					// 		var thisKey = patientFieldKeys[i];
-					// 		addPatient[thisKey] = patient[thisKey];
-					// 	}
-					// }
-					this.props.onPatientAdd(addPatient);
+					this.props.onPatientAdd(resp.patient);
 				}
 			}.bind(this),
 			error: function(resp) {
