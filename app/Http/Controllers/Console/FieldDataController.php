@@ -12,6 +12,7 @@ use App\Http\Controllers\Controller;
 use Carbon\Carbon;
 use Excel;
 use App\Stage;
+use App\FieldData;
 
 class FieldDataController extends Controller
 {
@@ -23,7 +24,10 @@ class FieldDataController extends Controller
     public function index()
     {
         //
-        return view('console/field-data/index');
+        return view('console/field-data/index', [
+            'fields'    => Stage::root()->first()->fields,
+            'fielddata' => FieldData::paginate(50)
+        ]);
     }
 
     /**
@@ -81,15 +85,13 @@ class FieldDataController extends Controller
     public function map(MapFieldDataRequest $request) {
 
         // Load the sheet from imports
-        $sheet = Excel::load(storage_path('imports') . "/" . $request->filename, function($reader) {
-
-        });
+        $sheet = Excel::load(storage_path('imports') . "/" . $request->filename, function($reader) {})->all();
 
         // Grab the headings for this sheet
         $fieldNumberHeading = null;
-        $headings = $sheet->first()->keys()->toArray();
+        $errors = [];
+        $headings = $sheet->get(0)->keys()->toArray();
         $map = array();
-
 
         // Loop through headings and check if we have one at this index
         foreach($headings as $index => $heading) {
@@ -108,10 +110,26 @@ class FieldDataController extends Controller
 
                         // At some point, a field_number is required
                         if($destination === "field_number") {
-                            $fieldNumberHeading = $heading;
+
+                            // Have we already set a field number heading?
+                            if($fieldNumberHeading !== null) {
+                                // We've already set a field number heading...
+                                $errors[] = sprintf("Tried to set '%s' as the field number heading, but it's already been set to '%s'.", $heading, $fieldNumberHeading);
+                            } else {
+                                $fieldNumberHeading = $heading;
+                            }
+
                         } else {
-                            // Push heading to map
-                            $map[$heading] = $destination;
+
+                            // Check if this destination has already been used
+                            $values = array_values($map);
+                            if(in_array($destination, $values)) {
+                                $errors[] = sprintf("Tried to map '%s' to '%s', but it's already mapped to '%s'.", $heading, $destination, $map[$heading]);
+                            } else {
+                                // Push heading to map
+                                $map[$heading] = $destination;
+                            }
+
                         }
 
                     }
@@ -119,21 +137,58 @@ class FieldDataController extends Controller
             }
         }
 
+        // Field number heading should definitely be mapped by now...
+        if($fieldNumberHeading === null) {
+            $errors[] = "No column was mapped to the Forcept field number option.";
+        }
 
+        // Check if we had any errors during the process.
+        if(count($errors) > 0) {
+            return redirect()->route("console::field-data::index")->with('alert', [ 'type' => 'failure', 'message' => $errors ]);
+        } else {
+            \Log::debug("Preparing to run insert loop with the following settings:");
+            \Log::debug("Field number heading: " . $fieldNumberHeading);
+            \Log::debug("Map array: ");
+            \Log::debug($map);
 
-        $now = Carbon::now()->toDateTimeString();
-        $insert = $sheet->all()->each(function($row) use ($map, $fieldNumberHeading) {
-            $data = array();
-            foreach($map as $heading => $destination) {
-                $data[$destination] = $row->{$heading};
+            $now = Carbon::now()->toDateTimeString();
+            $insert = array();
+
+            // Loop through every row in the sheet
+            foreach($sheet as $row) {
+                // Loop through the map and push values from
+                // this row to a new insert array value
+                $data = array();
+                foreach($map as $heading => $destination) {
+                    $data[$destination] = $row[$heading];
+                }
+
+                $insert[] = array(
+                    "field_number"  => $row[$fieldNumberHeading],
+                    "data"          => json_encode($data),
+                    "created_at"    => $now,
+                    "updated_at"    => $now
+                );
             }
-            return array(
-                "field_number" => $row->{$fieldNumberHeading},
-                "data" => $data
-            );
-        });
 
-        \Log::debug($insert);
+            $insertFailures = 0;
+            $chunk = 10;
+
+            foreach(collect($insert)->chunk($chunk)->toArray() as $rows) {
+                $status = FieldData::insert($rows);
+                if(!$status) {
+                    $insertFailures += $chunk;
+                }
+            }
+
+            // $doInsert = FieldData::insert($insert);
+            if($insertFailures === 0) {
+                return redirect()->route("console::field-data::index")->with('alert', ['type' => 'success', 'message' => "Inserted " . count($insert) . " new FieldData values."]);
+            } else {
+                return redirect()->route("console::field-data::index")->with('alert', ['type' => 'failure', 'message' => "Failed to insert " . $insertFailures . "/" . count($insert) . " new FieldData values."]);
+            }
+
+        }
     }
 
     /**

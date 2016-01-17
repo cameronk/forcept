@@ -11,6 +11,7 @@ use App\Http\Requests\SearchPatientsRequest;
 use App\Patient;
 use App\Visit;
 use App\Stage;
+use App\FieldData;
 use Auth;
 
 use DB;
@@ -72,14 +73,48 @@ class PatientController extends Controller
      *
      * @return JSON
      */
-    public function create()
+    public function create(Request $request)
     {
         //
         $patient = new Patient;
             $patient->created_by = Auth::user()->id;
             $patient->concrete = false;
 
+
+        $fieldNumber = null;
+
+        // Check if we have imported field data in this request.
+        if($request->has('importedFieldData') && $request->importedFieldData !== null) {
+
+            // Grab data that was imported
+            $data = $request->importedFieldData;
+
+            if(isset($data['field_number']) && $data['field_number'] !== null) {
+                // Cache the field number before we remove it
+                $fieldNumber = $data['field_number'];
+
+                // Remove "field_number" and "used" columns.
+                unset($data['field_number']);
+                unset($data['used']);
+
+                // Loop through valid fields and add to patient record
+                foreach($data as $fieldKey => $value) {
+                    $patient->{$fieldKey} = $value;
+                }
+            }
+        }
+
+
+        // Save the patient
         if($patient->save()) {
+
+            // If a field number was cached, update FieldData record.
+            if($fieldNumber !== null) {
+                // Set this field data record as 'used'
+                $fieldData = FieldData::where('field_number', '=', $fieldNumber)->first();
+                    $fieldData->used = $patient->id;
+                    $fieldData->save();
+            }
 
             return response()->json([
                 "status" => "success",
@@ -116,16 +151,36 @@ class PatientController extends Controller
 
             case "forceptID":
                 return response()->json([
-                    "status" => "success",
+                    "status"    => "success",
                     "patients" =>  Patient::where('id', '=', $request->for)
-                                ->where('concrete', '=', 1)
-                                ->orderBy('id', 'desc')
-                                ->get()->toArray()
+                                    ->where('concrete', '=', 1)
+                                    ->orderBy('id', 'desc')
+                                    ->get()->toArray()
                 ]);
                 break;
 
             case "fieldNumber":
-                // return response()->json( Patient::where('') )
+                $data = FieldData::where('field_number', '=', $request->for)
+                                ->orderBy('id', 'desc')
+                                ->get()
+                                ->toArray();
+
+                $resp = array();
+                foreach($data as $key => $fieldData) {
+                    $collapse = array(
+                        'field_number'  => $fieldData['field_number'],
+                        'used'          => $fieldData['used']
+                    );
+                    foreach($fieldData['data'] as $fieldKey => $value) {
+                        $collapse[$fieldKey] = $value;
+                    }
+                    $resp[] = $collapse;
+                }
+
+                return response()->json([
+                    "status"    => "success",
+                    "patients"  => $resp
+                ]);
                 break;
             default:
                 return response()->json([

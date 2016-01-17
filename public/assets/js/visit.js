@@ -688,7 +688,12 @@ Visit.PatientsContainer = React.createClass({displayName: "PatientsContainer",
 	/*
 	 * Add a bare patient record
 	 */
-	handlePatientAddfromScratch: function() {
+	handlePatientAddfromScratch: function(patientData) {
+
+		patient = patientData || null;
+
+		console.log("Adding patient from scratch with data: ");
+		console.log(patient);
 
 		// Set state as loading
 		this.isLoading(true);
@@ -697,12 +702,22 @@ Visit.PatientsContainer = React.createClass({displayName: "PatientsContainer",
 			type: "POST",
 			url: "/patients/create",
 			data: {
-				"_token": this.props._token
+				"_token": this.props._token,
+				"importedFieldData": patient
 			},
 			success: function(resp) {
 				console.log("success");
 				if(resp.status == "success") {
-					this.props.onPatientAdd(resp.patient);
+					var addPatient = resp.patient;
+					// if(patient !== null) {
+					// 	// Loop through existing patient properties
+					// 	var patientFieldKeys = Object.keys(patient);
+					// 	for(var i = 0; i < patientFieldKeys.length; i++) {
+					// 		var thisKey = patientFieldKeys[i];
+					// 		addPatient[thisKey] = patient[thisKey];
+					// 	}
+					// }
+					this.props.onPatientAdd(addPatient);
 				}
 			}.bind(this),
 			error: function(resp) {
@@ -715,6 +730,13 @@ Visit.PatientsContainer = React.createClass({displayName: "PatientsContainer",
 			}.bind(this)
 		});
 
+	},
+	handlePatientAdd: function(patient) {
+		if(patient.hasOwnProperty('field_number') && patient.field_number !== null) {
+			this.handlePatientAddfromScratch(patient);
+		} else {
+			this.props.onPatientAdd(patient);
+		}
 	},
 
 	handleShowImportBlock: function() {
@@ -809,7 +831,7 @@ Visit.PatientsContainer = React.createClass({displayName: "PatientsContainer",
 				React.createElement(Visit.ImportBlock, {
 					_token: props._token, 
 
-					onPatientAdd: props.onPatientAdd, 
+					onPatientAdd: this.handlePatientAdd, 
 					onClose: this.handleCloseImportBlock})
 			);
 		}
@@ -996,21 +1018,21 @@ Visit.ImportBlock = React.createClass({displayName: "ImportBlock",
 					React.createElement("fieldset", {className: "form-group m-b-0"}, 
 						React.createElement("label", {className: "form-control-label hidden-sm-up"}, "...by field number:"), 
 						React.createElement("div", {className: "input-group input-group-lg m-b"}, 
-	      					React.createElement("input", {type: "number", className: "form-control", placeholder: "Search for a patient by field number...", value: state.fieldNumber, onChange: this.handleInputChange("fieldNumber")}), 
+	    					React.createElement("input", {type: "number", className: "form-control", placeholder: "Search for a patient by field number...", value: state.fieldNumber, onChange: this.handleInputChange("fieldNumber")}), 
 							React.createElement("span", {className: "input-group-btn"}, 
 								React.createElement("button", {className: "btn btn-secondary", type: "button", disabled: state.fieldNumber == null, onClick: this.doSearchFieldNumber}, "Search")
 							)
 						), 
 						React.createElement("label", {className: "form-control-label hidden-sm-up"}, "...by Forcept ID:"), 
 						React.createElement("div", {className: "input-group input-group-lg m-b"}, 
-	      					React.createElement("input", {type: "number", className: "form-control", placeholder: "Search for a patient by Forcept ID...", min: "100000", value: state.forceptID, onChange: this.handleInputChange("forceptID")}), 
+	    					React.createElement("input", {type: "number", className: "form-control", placeholder: "Search for a patient by Forcept ID...", min: "100000", value: state.forceptID, onChange: this.handleInputChange("forceptID")}), 
 							React.createElement("span", {className: "input-group-btn"}, 
 								React.createElement("button", {className: "btn btn-secondary", type: "button", disabled: state.forceptID == null, onClick: this.doSearchForceptID}, "Search")
 							)
 						), 
 						React.createElement("label", {className: "form-control-label hidden-sm-up"}, "...by first or last name:"), 
 						React.createElement("div", {className: "input-group input-group-lg"}, 
-	      					React.createElement("input", {type: "text", className: "form-control", placeholder: "Search for a patient by first or last name...", value: state.name, onChange: this.handleInputChange("name")}), 
+	    					React.createElement("input", {type: "text", className: "form-control", placeholder: "Search for a patient by first or last name...", value: state.name, onChange: this.handleInputChange("name")}), 
 							React.createElement("span", {className: "input-group-btn"}, 
 								React.createElement("button", {className: "btn btn-secondary", type: "button", disabled: state.name == null || state.name.length == 0, onClick: this.doSearchName}, "Search")
 							)
@@ -1027,7 +1049,6 @@ Visit.ImportBlock = React.createClass({displayName: "ImportBlock",
 				);
 				break;
 			case "results":
-
 				if(state.patientsFound.length == 0) {
 					display = (
 						React.createElement("div", {className: "alert alert-info"}, 
@@ -1038,27 +1059,39 @@ Visit.ImportBlock = React.createClass({displayName: "ImportBlock",
 					display = (
 						React.createElement("div", {className: "row"}, 
 							state.patientsFound.map(function(patient, index) {
-								var currentVisit;
-								if(patient['current_visit'] !== null) {
+								var currentVisit,
+									disabled = false;
+								if(patient.hasOwnProperty('current_visit') && patient.current_visit !== null) {
+									disabled = true;
 									currentVisit = (
-										React.createElement("li", {className: "list-group-item bg-danger"}, "Patient currently in a visit!")
+										React.createElement("li", {className: "list-group-item bg-danger"}, 
+											React.createElement("small", null, "Patient currently in a visit!")
+										)
 									);
+								} else if(patient.hasOwnProperty('used') && patient.used !== null) {
+									if(patient.used) {
+										currentVisit = (
+											React.createElement("li", {className: "list-group-item bg-info"}, 
+												React.createElement("small", null, "Note: this record has been imported at least once already.")
+											)
+										)
+									}
 								}
 								return (
 									React.createElement("div", {className: "col-xs-12 col-sm-6", key: "patients-found-" + index}, 
 										React.createElement("div", {className: "card"}, 
 											React.createElement("div", {className: "card-header"}, 
 												React.createElement("h5", {className: "card-title"}, 
-													React.createElement("span", {className: "label label-default pull-right"}, patient['id']), 
+													React.createElement("span", {className: "label label-default pull-right"}, patient.hasOwnProperty('field_number') ? patient.field_number : patient.id), 
 													React.createElement("span", {className: "label label-primary pull-right"}, "#", index + 1), 
-													React.createElement("span", {className: "title-content"}, (patient["full_name"] !== null && patient["full_name"].length > 0) ? patient["full_name"] : "Unnamed patient")
+													React.createElement("span", {className: "title-content"}, Utilities.getFullName(patient))
 												)
 											), 
 											React.createElement("ul", {className: "list-group list-group-flush"}, 
 												currentVisit
 											), 
 											React.createElement("div", {className: "card-block"}, 
-												React.createElement("button", {type: "button", className: "btn btn-block btn-secondary", disabled: patient['current_visit'] !== null, onClick: this.handlePatientAdd(patient)}, 
+												React.createElement("button", {type: "button", className: "btn btn-block btn-secondary", disabled: disabled, onClick: this.handlePatientAdd(patient)}, 
 													'\u002b', " Add"
 												)
 											)

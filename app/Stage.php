@@ -29,7 +29,7 @@ class Stage extends Model
     public function getFieldsAttribute($value) {
     	return json_decode($value, true);
     }
-    
+
     public function getBasicFieldsAttribute() {
         $newFields = array();
         if($this->root == true) {
@@ -68,5 +68,10 @@ class Stage extends Model
 
     public function setFieldsAttribute($value) {
     	$this->attributes['fields'] = json_encode($value);
+    }
+
+
+    public function scopeRoot($query) {
+        return $query->where('root', true);
     }
 }

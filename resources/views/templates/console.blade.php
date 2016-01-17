@@ -44,7 +44,16 @@
                 <?php $alert = Session::get('alert'); ?>
                 <!--| Console template - alert section |-->
                 <div class="alert alert-{{ $alert['type'] == 'failure' ? 'danger' : $alert['type'] }} m-t">
-                    <strong>{{ $alert['type'] == 'success' ? 'Awesome!' : 'Heads up!' }}</strong> {{ $alert['message'] }}
+                    <strong>{{ $alert['type'] == 'success' ? 'Awesome!' : 'Heads up!' }}</strong>
+                    @if(is_array($alert['message']))
+                        <ul>
+                            @foreach($alert['message'] as $message)
+                                <li>{{ $message}}</li>
+                            @endforeach
+                        </ul>
+                    @else
+                        {{ $alert['message'] }}
+                    @endif
                 </div>
             @endif
 

@@ -117,7 +117,36 @@ var Utilities = {
 	 * Get full name of patient (or "Unnamed Patient") if none defined
 	 */
 	getFullName: function(thisPatient) {
-		return thisPatient.full_name !== null && thisPatient.full_name.length > 0 ? thisPatient.full_name : "Unnamed patient";
+		if(thisPatient.hasOwnProperty('full_name') && thisPatient.full_name !== null && thisPatient.full_name.length > 0) {
+			return thisPatient.full_name;
+		} else {
+			// Try to buiild one
+			var checkName = [];
+			if(thisPatient.hasOwnProperty("first_name") && thisPatient.first_name !== null && thisPatient.first_name.length > 0) {
+				checkName.push(thisPatient.first_name);
+			}
+			if(thisPatient.hasOwnProperty("last_name") && thisPatient.last_name !== null && thisPatient.last_name.length > 0) {
+				checkName.push(thisPatient.last_name);
+			}
+
+			return checkName.length > 0 ? checkName.join(" ") : "Unnamed Patient";
+		}
+	},
+
+	/*
+	 * Eloquent returns some boolean fields as strings.
+	 * Use this function to check if a statement is true.
+	 * if the value is (string) "true" : (string) "false"
+	 */
+	isTrue: function(statement) {
+		switch(typeof statement) {
+			case "boolean":
+				return statement === true;
+			case "string":
+				return statement === "true";
+			default:
+				return false;
+		}
 	},
 };
 

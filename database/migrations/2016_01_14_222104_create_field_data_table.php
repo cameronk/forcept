@@ -17,8 +17,9 @@ class CreateFieldDataTable extends Migration
             $table->increments('id');
             $table->integer('field_number');
             $table->json('data');
+            $table->integer('used')->nullable();
             $table->timestamps();
-        })
+        });
     }
 
     /**

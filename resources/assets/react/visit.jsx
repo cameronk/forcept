@@ -688,7 +688,12 @@ Visit.PatientsContainer = React.createClass({
 	/*
 	 * Add a bare patient record
 	 */
-	handlePatientAddfromScratch: function() {
+	handlePatientAddfromScratch: function(patientData) {
+
+		patient = patientData || null;
+
+		console.log("Adding patient from scratch with data: ");
+		console.log(patient);
 
 		// Set state as loading
 		this.isLoading(true);
@@ -697,12 +702,13 @@ Visit.PatientsContainer = React.createClass({
 			type: "POST",
 			url: "/patients/create",
 			data: {
-				"_token": this.props._token
+				"_token": this.props._token,
+				"importedFieldData": patient
 			},
 			success: function(resp) {
 				console.log("success");
 				if(resp.status == "success") {
-					this.props.onPatientAdd(resp.patient);
+					this.props.onPatientAdd(resp.patient;
 				}
 			}.bind(this),
 			error: function(resp) {
@@ -715,6 +721,13 @@ Visit.PatientsContainer = React.createClass({
 			}.bind(this)
 		});
 
+	},
+	handlePatientAdd: function(patient) {
+		if(patient.hasOwnProperty('field_number') && patient.field_number !== null) {
+			this.handlePatientAddfromScratch(patient);
+		} else {
+			this.props.onPatientAdd(patient);
+		}
 	},
 
 	handleShowImportBlock: function() {
@@ -809,7 +822,7 @@ Visit.PatientsContainer = React.createClass({
 				<Visit.ImportBlock
 					_token={props._token}
 
-					onPatientAdd={props.onPatientAdd}
+					onPatientAdd={this.handlePatientAdd}
 					onClose={this.handleCloseImportBlock} />
 			);
 		}
@@ -996,21 +1009,21 @@ Visit.ImportBlock = React.createClass({
 					<fieldset className="form-group m-b-0">
 						<label className="form-control-label hidden-sm-up">...by field number:</label>
 						<div className="input-group input-group-lg m-b">
-	      					<input type="number" className="form-control" placeholder="Search for a patient by field number..." value={state.fieldNumber} onChange={this.handleInputChange("fieldNumber")} />
+	    					<input type="number" className="form-control" placeholder="Search for a patient by field number..." value={state.fieldNumber} onChange={this.handleInputChange("fieldNumber")} />
 							<span className="input-group-btn">
 								<button className="btn btn-secondary" type="button" disabled={state.fieldNumber == null} onClick={this.doSearchFieldNumber}>Search</button>
 							</span>
 						</div>
 						<label className="form-control-label hidden-sm-up">...by Forcept ID:</label>
 						<div className="input-group input-group-lg m-b">
-	      					<input type="number" className="form-control" placeholder="Search for a patient by Forcept ID..." min="100000" value={state.forceptID} onChange={this.handleInputChange("forceptID")} />
+	    					<input type="number" className="form-control" placeholder="Search for a patient by Forcept ID..." min="100000" value={state.forceptID} onChange={this.handleInputChange("forceptID")} />
 							<span className="input-group-btn">
 								<button className="btn btn-secondary" type="button" disabled={state.forceptID == null} onClick={this.doSearchForceptID}>Search</button>
 							</span>
 						</div>
 						<label className="form-control-label hidden-sm-up">...by first or last name:</label>
 						<div className="input-group input-group-lg">
-	      					<input type="text" className="form-control" placeholder="Search for a patient by first or last name..." value={state.name} onChange={this.handleInputChange("name")} />
+	    					<input type="text" className="form-control" placeholder="Search for a patient by first or last name..." value={state.name} onChange={this.handleInputChange("name")} />
 							<span className="input-group-btn">
 								<button className="btn btn-secondary" type="button" disabled={state.name == null || state.name.length == 0} onClick={this.doSearchName}>Search</button>
 							</span>
@@ -1027,7 +1040,6 @@ Visit.ImportBlock = React.createClass({
 				);
 				break;
 			case "results":
-
 				if(state.patientsFound.length == 0) {
 					display = (
 						<div className="alert alert-info">
@@ -1038,27 +1050,39 @@ Visit.ImportBlock = React.createClass({
 					display = (
 						<div className="row">
 							{state.patientsFound.map(function(patient, index) {
-								var currentVisit;
-								if(patient['current_visit'] !== null) {
+								var currentVisit,
+									disabled = false;
+								if(patient.hasOwnProperty('current_visit') && patient.current_visit !== null) {
+									disabled = true;
 									currentVisit = (
-										<li className="list-group-item bg-danger">Patient currently in a visit!</li>
+										<li className="list-group-item bg-danger">
+											<small>Patient currently in a visit!</small>
+										</li>
 									);
+								} else if(patient.hasOwnProperty('used') && patient.used !== null) {
+									if(patient.used) {
+										currentVisit = (
+											<li className="list-group-item bg-info">
+												<small>Note: this record has been imported at least once already.</small>
+											</li>
+										)
+									}
 								}
 								return (
 									<div className="col-xs-12 col-sm-6" key={"patients-found-" + index}>
 										<div className="card">
 											<div className="card-header">
 												<h5 className="card-title">
-													<span className="label label-default pull-right">{patient['id']}</span>
+													<span className="label label-default pull-right">{patient.hasOwnProperty('field_number') ? patient.field_number : patient.id}</span>
 													<span className="label label-primary pull-right">#{index + 1}</span>
-													<span className="title-content">{(patient["full_name"] !== null && patient["full_name"].length > 0) ? patient["full_name"] : "Unnamed patient"}</span>
+													<span className="title-content">{Utilities.getFullName(patient)}</span>
 												</h5>
 											</div>
 											<ul className="list-group list-group-flush">
 												{currentVisit}
 											</ul>
 											<div className="card-block">
-												<button type="button" className="btn btn-block btn-secondary" disabled={patient['current_visit'] !== null} onClick={this.handlePatientAdd(patient)}>
+												<button type="button" className="btn btn-block btn-secondary" disabled={disabled} onClick={this.handlePatientAdd(patient)}>
 													{'\u002b'} Add
 												</button>
 											</div>
