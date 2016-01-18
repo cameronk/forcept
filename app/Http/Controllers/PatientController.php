@@ -84,7 +84,7 @@ class PatientController extends Controller
         $fieldNumber = null;
 
         // Check if we have imported field data in this request.
-        if($request->has('importedFieldData') && $request->importedFieldData !== null) {
+        if($request->has('importedFieldData') && $request->importedFieldData !== null && is_array($request->importedFieldData)) {
 
             // Grab data that was imported
             $data = $request->importedFieldData;

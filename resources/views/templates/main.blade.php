@@ -2,18 +2,15 @@
 <html lang="en">
 
 <head>
+    <title>@yield('page-title', 'Forcept')</title>
+
     <!--| IMPORTANT meta tags |-->
     <meta charset="utf-8" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-
-    <title>@yield('page-title', 'Forcept')</title>
-
-    <!--| Stylesheets |-->
-    <link href="{{ asset('/assets/css/template.css') }}" rel="stylesheet" />
-
     <meta name="csrf-token" value="{{ csrf_token() }}" />
 
+    @include('components/assets', ['type' => 'main'])
 </head>
 <body>
 
@@ -95,19 +92,7 @@
     </div>
 </div>
 
-
-<!--| Base scripts |-->
-<script type="text/javascript" src="{{ asset('/assets/jquery/jquery-2.1.4.min.js') }}"></script>
-<script type="text/javascript" src="{{ asset('/assets/highcharts/highcharts-custom.js') }}"></script>
-<script type="text/javascript" src="{{ asset('/assets/bootstrap/dist/js/bootstrap.js') }}"></script>
-<script type="text/javascript" src="{{ asset('/assets/tether-1.1.1/dist/js/tether.js') }}"></script>
-<script type="text/javascript" src="{{ asset('/assets/react/react.js') }}"></script>
-<script type="text/javascript" src="{{ asset('/assets/react/react-dom.js') }}"></script>
-
-
-
 <!--| Scripts |-->
-<script type="text/javascript" src="{{ asset('/assets/js/forcept.js') }}"></script>
 <script>
 $(function() {
     // Initialize all tooltips

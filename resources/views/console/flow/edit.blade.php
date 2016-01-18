@@ -120,7 +120,6 @@
 @endsection
 
 @section("scripts")
-<script type="text/javascript" src="{{ asset('assets/js/flowEditor.js') }}"></script>
 <script type="text/javascript">
     var configuration = <?php echo $stage->rawFields; ?>;
 

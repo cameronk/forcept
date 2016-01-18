@@ -1,58 +1,85 @@
-// var elixir = require('laravel-elixir');
-
-/*
- |--------------------------------------------------------------------------
- | Elixir Asset Management
- |--------------------------------------------------------------------------
- |
- | Elixir provides a clean, fluent API for defining some basic Gulp tasks
- | for your Laravel application. By default, we are compiling the Sass
- | file for our application, as well as publishing vendor resources.
- |
- */
-
-// elixir(function(mix) {
-//     mix.sass([
-//     	'template.scss'
-//     ], 'public/assets/css');
-// });
-
-
 var gulp = require('gulp');
 var sass = require('gulp-sass');
 var react = require('gulp-react');
 var uglify = require('gulp-uglify');
 var rename = require('gulp-rename');
-
-// gulp.task('sass', function () {
-//
-//     // { outputStyle: 'compressed' }
-// });
-//
-// gulp.task('react', function () {
-// 	return
-// });
+var concat = require('gulp-concat');
+var addsrc = require('gulp-add-src');
 
 gulp.task('default', function () {
-  // gulp.watch('./forcept/resources/assets/sass/**/*.scss', ['sass']);
-  // gulp.watch('./forcept/resources/assets/react/**/*.jsx', ['react']);
 
+    /**
+     * Build SASS resources
+     */
+    var SassSheets = gulp.src([
+        './resources/assets/sass/template.scss',
+        './resources/assets/sass/template-basic.scss'
+    ]);
 
-    // Development scripts
-    gulp.src('./resources/assets/react/**/*.jsx')
-        .pipe(react())
-        .pipe(gulp.dest('./public/assets/js'));
-
-    gulp.src('./resources/assets/sass/**/*.scss')
+    // Uncompressed development version
+    SassSheets
+        .pipe(rename(function(path) {
+            path.extname = ".css";
+        }))
         .pipe(sass().on('error', sass.logError))
         .pipe(gulp.dest('./public/assets/css'));
 
-
-    // Minified versions
-    gulp.src('./resources/assets/react/**/*.jsx')
+    // Compressed production version
+    SassSheets
         .pipe(rename(function(path) {
-            path.extname = ".min.js";
+            path.extname = ".min.css";
         }))
+        .pipe(sass({
+            outputStyle: 'compressed'
+        }))
+        .pipe(gulp.dest('./public/assets/css'));
+
+
+
+    /**
+     * Build REACT assets
+     */
+    var ReactScripts = gulp.src([
+        // data-displays
+        './resources/assets/react/data-displays/DataDisplays.jsx',
+        './resources/assets/react/data-displays/*.jsx',
+
+        // fields
+        './resources/assets/react/fields/Fields.jsx',
+        './resources/assets/react/fields/*.jsx',
+
+        // flow-editor
+        './resources/assets/react/flow-editor/FlowEditor.jsx',
+        './resources/assets/react/flow-editor/*.jsx',
+
+        // patients
+        './resources/assets/react/patients/Table.jsx',
+        './resources/assets/react/patients/*.jsx',
+
+        // stage-visits
+        './resources/assets/react/stage-visits/StageVisits.jsx',
+        './resources/assets/react/stage-visits/*.jsx',
+
+        // utilities
+        './resources/assets/react/utilities/Utilities.jsx',
+        './resources/assets/react/utilities/*.jsx',
+
+        // visit
+        './resources/assets/react/visit/Visit.jsx',
+        './resources/assets/react/visit/*.jsx',
+    ]);
+
+
+    // Build compiled development version
+    ReactScripts
+        .pipe(concat('compiled.js'))
+        .pipe(react())
+        .pipe(gulp.dest('./public/assets/js'));
+
+
+    // Build compiled production version
+    ReactScripts
+        .pipe(concat('compiled.min.js'))
         .pipe(react())
         .pipe(uglify({
             mangle: true,
@@ -62,10 +89,28 @@ gulp.task('default', function () {
         }))
         .pipe(gulp.dest('./public/assets/js'));
 
-    gulp.src('./resources/assets/sass/**/*.scss')
-        .pipe(rename(function(path) {
-            path.extname = ".min.css";
+
+});
+
+gulp.task("vendor", function() {
+    var VendorScripts = gulp.src([
+        './public/assets/bootstrap/dist/js/bootstrap.js',
+        './public/assets/tether-1.1.1/dist/js/tether.js',
+        './public/assets/react/react.js',
+        './public/assets/react/react-dom.js',
+    ]);
+
+    // Non-minified vendor scripts for testing
+    VendorScripts
+        .pipe(concat('vendor.js'))
+        .pipe(gulp.dest('./public/assets/js'));
+
+    // Minified vendor scripts
+    VendorScripts
+        .pipe(concat('vendor.min.js'))
+        .pipe(uglify({
+            mangle: false
         }))
-        .pipe(sass().on('error', sass.logError))
-        .pipe(gulp.dest('./public/assets/css'));
+        .pipe(gulp.dest('./public/assets/js'));
+
 });

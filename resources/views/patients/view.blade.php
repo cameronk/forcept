@@ -7,8 +7,4 @@
 @endsection
 
 <!--| patients table container |-->
-<div class="container-fluid" id="page-content">
-
-
-
-</div>
+<div class="container-fluid" id="page-content"></div>
