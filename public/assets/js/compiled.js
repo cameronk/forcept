@@ -3028,29 +3028,29 @@ var Visit = React.createClass({displayName: "Visit",
 
 		var props = this.props;
 
-		console.log("[Visit] Mounting...");
-		console.log(props);
+		console.group("Visit: mount");
+			console.log("Visit properties: %O", props);
 
 		if(props.hasOwnProperty("patients") && props.patients !== null) {
-			console.log("[Visit] Pre-existing patients detected, loading into state.");
+			console.log("Pre-existing patients detected, loading into state.");
 
 			var patients = {};
 			for(var patientID in props.patients) {
-				console.log("[Visit] ...setting up patient " + patientID);
+				console.log("Setting up patient %i", patientID);
 				patients[patientID] = Utilities.applyGeneratedFields(props.patients[patientID]);
 			}
 
-			console.log("[Visit] Done setting up patients:");
-			console.log(patients);
-			console.log(" ");
+			console.log("Done setting up patients: %O", patients);
 
 			this.setState({
 				patients: patients
 			}, function() {
-				console.log("[Visit] Done mounting " + Object.keys(this.state.patients).length + " patients.");
+				console.log("Done mounting %i patients.", Object.keys(patients).length);
 				__debug(this.state.patients);
 			}.bind(this));
 		}
+
+		console.groupEnd();
 	},
 
 	/*
@@ -3231,9 +3231,9 @@ var Visit = React.createClass({displayName: "Visit",
 	 * Render Visit container
 	 */
 	render: function() {
-		console.log("[Visit]->render(): Rendering visit container...resources are:");
-		console.log(this.state.resources);
-		console.log(" ");
+	// 	console.log("[Visit]->render(): Rendering visit container...resources are:");
+	// 	console.log(this.state.resources);
+	// 	console.log(" ");
 
 		var props = this.props,
 			state = this.state;
@@ -3404,7 +3404,6 @@ Visit.PatientsContainer = React.createClass({displayName: "PatientsContainer",
 
 	render: function() {
 
-		console.log("[Visit.PatientsContainer]->render(): Rendering patients container.");
 		var props = this.props,
 			state = this.state,
 			isLoading = (state.isLoading || props.isSubmitting),
@@ -3415,7 +3414,10 @@ Visit.PatientsContainer = React.createClass({displayName: "PatientsContainer",
 			importBlock,
 			controls;
 
-		console.log("[Visit.PatientsContainer]->render(): patientIDs=" + patientIDs + ", patientsCount=" + patientsCount);
+		console.group("Visit.PatientsContainer: render");
+			console.log("Showing import block: %s", state.showImportBlock);
+			console.log("Patient IDs: %O", patientIDs);
+			console.log("Patients count: %i", patientsCount);
 
 		// Loading state can be triggered by:
 		// 		isLoading 		-> provided by controls, procs when adding new patient / importing
@@ -3432,11 +3434,11 @@ Visit.PatientsContainer = React.createClass({displayName: "PatientsContainer",
 
 					var thisPatient = patients[patientID];
 
-					console.log("[Visits.PatientsContainer]->render(): #" + patientID);
-					console.log("[Visits.PatientsContainer]->render(): ...fields=" + props.fields);
-					console.log("[Visits.PatientsContainer]->render(): ...patient=" + patients[patientID]);
+					console.groupCollapsed("Fieldset #%i: Patient %s", index, patientID);
+						console.log("Fields: %O", props.fields);
+						console.log("This patient: %O", thisPatient);
 
-					return (
+					var patientDOM = (
 						React.createElement("div", {key: patientID}, 
 							React.createElement(Visit.Patient, {
 								/*
@@ -3464,6 +3466,12 @@ Visit.PatientsContainer = React.createClass({displayName: "PatientsContainer",
 							React.createElement("hr", null)
 						)
 					);
+
+					console.groupEnd(); // End: "#%i: Patient [patientID]"
+
+					// Push back to patientsDOM
+					return patientDOM;
+
 				}.bind(this));
 			} else {
 				patientsDOM = (
@@ -3573,6 +3581,8 @@ Visit.PatientsContainer = React.createClass({displayName: "PatientsContainer",
 			}
 		}
 
+		console.log("Ending PatientsContainer group...");
+		console.groupEnd(); // End: 'Visit.PatientsContainer: render'
 
 		return (
 			React.createElement("div", {className: "col-xs-12 col-sm-12 col-md-8 col-xl-9"}, 
@@ -3823,7 +3833,6 @@ Visit.ImportBlock = React.createClass({displayName: "ImportBlock",
 				break;
 		}
 
-
 		return (
 			React.createElement("blockquote", {className: "blockquote"}, 
 				React.createElement("h3", null, 
@@ -3987,8 +3996,9 @@ Visit.PatientsOverview = React.createClass({displayName: "PatientsOverview",
 			patientOverviews,
 			iterableFields;
 
-		console.log("[Visit.PatientsOverview]->render(): " + countPatients + " (mini=" + props.mini + ")");
-		console.log(props);
+		console.group("Visit.PatientsOverview: render (mini=%s)", props.mini);
+			console.log("Patients to overview: %i", countPatients);
+			console.log("Properties: %O", props);
 
 		// Copy the local patient fields property to a new variable
 		// and remove first/last name, so they don't appear in the list
@@ -4005,48 +4015,64 @@ Visit.PatientsOverview = React.createClass({displayName: "PatientsOverview",
 
 		// If there are patients in the props object
 		if(countPatients > 0) {
+
+			//-- Begin mapping patient keys --\\
 			patientOverviews = patientKeys.map(function(patientID, index) {
 				var cardHeader,
 					photo,
 					thisPatient = props.patients[patientID];
 
+				console.groupCollapsed("Card #%i: Patient %s", index, patientID);
+
+				//-- Begin search for patient photo --\\
 				if(thisPatient.hasOwnProperty('photo') && thisPatient.photo !== null) {
 
-					console.log("[Visit.PatientOverview][" + patientID + "]: has photo");
+					console.group("Photo:");
+						console.log("This patient has a photo property.");
 
 					var resourceKeys,
 						resources = props.hasOwnProperty("resources") ? props.resources : {};
 
 					try {
 						if(typeof thisPatient.photo === "string") {
-							console.log("[Visit.PatientOverview][" + patientID + "]: photo is STRING");
-							// Parse JSON from database as string
-							resourceKeys = JSON.parse(thisPatient.photo);
+							console.log("The photo property is a STRING");
+
+							// Attempt to..
+							try {
+								// Parse JSON from database as string
+								resourceKeys = JSON.parse(thisPatient.photo);
+							} catch(e) {
+								console.error("Failed to parse photo string into JSON array.");
+								resourceKeys = [];
+							}
+
 						} else {
-							console.log("[Visit.PatientOverview][" + patientID + "]: photo is NOT STRING");
+							console.log("The photo property is NOT a STRING");
+							console.info("Photo property type: %s", typeof thisPatient.photo);
+
 							// Otherwise, just push the object
 							resourceKeys = thisPatient.photo;
 						}
 					} catch(e) {
-						console.log("[Visit.PatientOverview][" + patientID + "]: error parsing photo string");
+						console.error("Some sort of error parsing photo string (not a JSON error...)");
 						resourceKeys = [];
 					}
 
 					if(resourceKeys.length > 0) {
 
+						// Since Photo field only allows one upload, we'll grab the first key in the array
+						// (it's probably the only key...)
 						var photoKey = resourceKeys[0];
 
-						console.log("[Visit.PatientOverview][" + patientID + "]: Valid resources array obtained, looking for photo...");
+						console.log("Photo resource ID is %i, checking resource storage...", photoKey);
 
 						// Check if we have this resource in storage already.
 						if(resources.hasOwnProperty(photoKey)) {
 
-							console.log("[Visit.PatientOverview][" + patientID + "]: Photo found in our pre-loaded resources.");
-
 							// For the immutable Photo input, the one and only file is the patient photo.
 							var photoData = resources[photoKey];
 
-							console.log("[Visit.PatientOverview]->render(patientID=" + patientID + "): has photo");
+							console.log("Photo found in preloaded resources: %O", photoData);
 
 							photo = (
 								React.createElement(Fields.Resource, {
@@ -4055,20 +4081,23 @@ Visit.PatientsOverview = React.createClass({displayName: "PatientsOverview",
 							);
 
 						} else {
-							console.log("[Visit.PatientOverview][" + patientID + "]: photo not in resources, preparing to grab via AJAX");
+							console.log("Photo not found in resources, creating resource object with instructions to grab resource via AJAX");
 
 							photo = (
 								React.createElement(Fields.Resource, {
-									id: resourceKeys[0], 
+									id: photoKey, 
 									resource: { type: "image/jpeg"}})
 							);
 						}
 					}
 
+					console.groupEnd(); // End "Photo:"
+
 				}
+				//-- End photo search --\\
 
 				// Show header if we're not in Mini mode
-				if(props.mini == false) {
+				if(props.mini === false) {
 					cardHeader = (
 						React.createElement("span", null, 
 			               	React.createElement("div", {className: "card-header"}, 
@@ -4087,9 +4116,8 @@ Visit.PatientsOverview = React.createClass({displayName: "PatientsOverview",
 			        );
 				}
 
-				console.log("[Visit.PatientsOverview] Rendering patient overview card - ID #" + patientID);
-
-				return (
+				//-- Begin render patient card --\\
+				var patientCardDOM = (
 					React.createElement("div", {className: "card forcept-patient-summary", key: patientID}, 
 						cardHeader, 
 		              	React.createElement("div", {className: "list-group list-group-flush"}, 
@@ -4101,6 +4129,10 @@ Visit.PatientsOverview = React.createClass({displayName: "PatientsOverview",
 									value = "No data",
 									icon;
 
+								console.group("Field #%i: %s", index, thisIterableField.name);
+
+
+								//-- Begin patient field checking --\\
 		                    	if(
 		                    		thisPatient.hasOwnProperty(field) 	// If this field exists in the patient data
 		                    		&& thisPatient[field] !== null	 	// If the data for this field is null, show "No data"
@@ -4108,6 +4140,8 @@ Visit.PatientsOverview = React.createClass({displayName: "PatientsOverview",
 		                    	) {
 
 									var thisPatientField = thisPatient[field];
+
+									console.info("Patient data: %O", thisPatientField);
 
 		                    		if(!(props.mini == true && isGeneratedField)) // Don't show generated fields in Mini mode
 		                    		{
@@ -4120,8 +4154,7 @@ Visit.PatientsOverview = React.createClass({displayName: "PatientsOverview",
 											// Grab field types
 											var fieldType = thisIterableField.type;
 
-			                    			console.log(" | Field " + thisIterableField.name + " is string or number");
-			                    			console.log(" | -> type: " + fieldType);
+											console.log("Type: %s", fieldType);
 
 			                    			// We might need to mutate the data
 			                    			switch(fieldType) {
@@ -4158,7 +4191,7 @@ Visit.PatientsOverview = React.createClass({displayName: "PatientsOverview",
 			                    						value = arr.join(", ");
 			                    					}
 
-			                    					console.log(" | Multiselect value: " + value);
+			                    					console.log("Multiselect value: %s", value);
 
 			                    					break;
 
@@ -4172,6 +4205,7 @@ Visit.PatientsOverview = React.createClass({displayName: "PatientsOverview",
 													try {
 														arr = JSON.parse(thisPatientField);
 													} catch(e) {
+														console.error("Failed to convert file resource array from string to array.");
 														arr = [];
 													}
 
@@ -4205,20 +4239,22 @@ Visit.PatientsOverview = React.createClass({displayName: "PatientsOverview",
 			                    					break;
 			                    			}
 			                    		} else {
-			                    			console.log(" | Field " + thisIterableField["name"] + " is NOT string or number");
-			                    			console.log(" | -> type: " + thisIterableField.type);
+											console.warning("Field isn't a string or number..");
 			                    			if( Array.isArray(thisPatientField) ) // If the data is an array
 			                    			{
+												console.info("We're good, it's an array!");
 			                    				// We found data!
 			                    				foundData = true;
 			                    				value = thisPatientField.join(", ");
 			                    			} else {
 			                    				// WTF is it?
-			                    				console.log("WARNING: unknown field data type for field " + field);
+			                    				console.error("WARNING: unknown field data type");
 			                    			}
 			                    		}
 			                    	}
 		                    	}
+								//-- End patient field checking --\\
+
 
 		                    	// Choose which icon to display
 		                    	if(!isGeneratedField) {
@@ -4238,6 +4274,8 @@ Visit.PatientsOverview = React.createClass({displayName: "PatientsOverview",
 		                    	} else {
 		                    		icon = "\u27a0";
 		                    	}
+
+								console.groupEnd(); // End: "Field %i..."
 
 		                    	// Render the list item
 		                    	if(thisIterableField.type == "header") {
@@ -4264,14 +4302,26 @@ Visit.PatientsOverview = React.createClass({displayName: "PatientsOverview",
 		                )
 					)
 				);
+				//-- End build patient card DOM --\\
+
+				console.groupEnd(); // End "Patient %i"
+
+				// Return the patient card DOM
+				return patientCardDOM;
+
 			}.bind(this));
-		} else {
+			//-- End patient fields map --\\
+
+		} else { //-- end: if there are patients in the patient object --\\
 			patientOverviews = (
 				React.createElement("div", {className: "alert alert-info hidden-sm-down"}, 
 					"No patients within this visit."
 				)
 			);
 		}
+
+		console.log("Done with PatientOverview group...");
+		console.groupEnd(); // End: "PatientsOverview"
 
 		// If we're in mini mode, use different column structure
 		if(props.mini == true) {
@@ -4321,20 +4371,19 @@ Visit.Patient = React.createClass({displayName: "Patient",
 
 		var props = this.props,
 			state = this.state,
-
 			fields = props.fields,
 			fieldKeys = Object.keys(fields),
 			countFields = fieldKeys.length,
-
 			summaryFields = props.summaryFields,
 			summaryFieldsKeys = Object.keys(summaryFields),
 			countSummaryFields = summaryFieldsKeys.length,
-
 			name = props.patient.full_name !== null ? props.patient.full_name : "Unnamed patient",
 			summary;
 
-		console.log("[Visit.Patient] Preparing to render " + countFields + " iterable fields, " + countSummaryFields + " fields to summarize");
-		console.log("[Visit.Patient] Field keys: [" + fieldKeys.join(", ") + "]");
+		console.groupCollapsed("Visit.Patient: render");
+			console.log("Iterable field count: %i", countFields);
+			console.log("Iterable field keys: %O", fieldKeys);
+			console.log("Summary field count : %i", countSummaryFields);
 
 		// Build summary DOM
 		if(summaryFields !== null && typeof summaryFields === "object" && countSummaryFields > 0) {
@@ -4353,8 +4402,8 @@ Visit.Patient = React.createClass({displayName: "Patient",
 				}
 			}.bind(this));
 
-			console.log("[Visit.Patient] " + Object.keys(leftColumnFields).length + " fields in the left column");
-			console.log("[Visit.Patient] " + Object.keys(rightColumnFields).length + " fields in the right column");
+			console.log("Left column: %O", leftColumnFields);
+			console.log("Right column: %O", rightColumnFields);
 
 			summary = (
 				React.createElement("div", {className: "row"}, 
@@ -4370,8 +4419,7 @@ Visit.Patient = React.createClass({displayName: "Patient",
 			);
 		}
 
-
-		return (
+		var patientBlock = (
 			React.createElement("blockquote", {className: "blockquote"}, 
 				React.createElement("h3", null, 
 					React.createElement("span", {className: "label label-info"}, "#", props.hasOwnProperty('index') ? props.index + 1 : "?"), 
@@ -4383,12 +4431,14 @@ Visit.Patient = React.createClass({displayName: "Patient",
 		        React.createElement("hr", null), 
 		        fieldKeys.map(function(fieldID, index) {
 
-
-					var thisField = fields[fieldID],
+					var fieldDOM,
+						thisField = fields[fieldID],
 						thisPatient = props.patient,
 						defaultValue = thisPatient.hasOwnProperty(fieldID) ? thisPatient[fieldID] : null;
 
-					console.log("[Visit.Patient][" + props.id + "][" + fieldID + "] rendering with type " + thisField.type + ", defaultValue: " + defaultValue + " (typeof defaultValue='" + (typeof defaultValue) + "')");
+					console.group("Field #%i: '%s' %O", index, thisField.name, thisField);
+						console.log("Type: %s", thisField.type);
+						console.log("Default value: %s", defaultValue);
 
 					// Mutate data as necessary per field type
 					switch(thisField.type) {
@@ -4400,7 +4450,7 @@ Visit.Patient = React.createClass({displayName: "Patient",
 								try {
 									defaultValue = JSON.parse(defaultValue)
 								} catch(e) {
-									console.error("[Visit.Patient][" + props.id + "][" + fieldID + "] attempt to convert data -> array failed");
+									console.error("Attempt to convert this field's data into an array failed.");
 									defaultValue = [];
 								}
 							}
@@ -4414,7 +4464,7 @@ Visit.Patient = React.createClass({displayName: "Patient",
 		        		 * Input field types
 		        		 */
 		        		case "text":
-		        			return (
+		        			fieldDOM = (
 		        				React.createElement(Fields.Text, React.__spread({}, 
 		        					thisField, 
 		        					{defaultValue: defaultValue, 
@@ -4424,7 +4474,7 @@ Visit.Patient = React.createClass({displayName: "Patient",
 		        			);
 		        			break;
 		        		case "textarea":
-		        			return (
+		        			fieldDOM = (
 		        				React.createElement(Fields.Textarea, React.__spread({}, 
 		        					thisField, 
 		        					{defaultValue: defaultValue, 
@@ -4434,7 +4484,7 @@ Visit.Patient = React.createClass({displayName: "Patient",
 		        			);
 		        			break;
 		        		case "number":
-		        			return (
+		        			fieldDOM = (
 		        				React.createElement(Fields.Number, React.__spread({}, 
 		        					thisField, 
 		        					{defaultValue: defaultValue, 
@@ -4444,7 +4494,7 @@ Visit.Patient = React.createClass({displayName: "Patient",
 		        			);
 		        			break;
 		        		case "date":
-		        			return (
+		        			fieldDOM = (
 		        				React.createElement(Fields.Date, React.__spread({}, 
 		        					thisField, 
 		        					{defaultValue: defaultValue, 
@@ -4454,7 +4504,7 @@ Visit.Patient = React.createClass({displayName: "Patient",
 		        			);
 		        			break;
 		        		case "select":
-							return (
+							fieldDOM = (
 		        				React.createElement(Fields.Select, React.__spread({}, 
 		        					thisField, 
 		        					{multiple: false, 
@@ -4465,7 +4515,7 @@ Visit.Patient = React.createClass({displayName: "Patient",
 		        			);
 		        			break;
 		        		case "multiselect":
-		        			return (
+		        			fieldDOM = (
 		        				React.createElement(Fields.Select, React.__spread({}, 
 		        					thisField, 
 		        					{multiple: true, 
@@ -4476,7 +4526,7 @@ Visit.Patient = React.createClass({displayName: "Patient",
 		        			);
 		        			break;
 		        		case "file":
-		        			return (
+		        			fieldDOM = (
 								React.createElement(Fields.File, React.__spread({}, 
 		        					thisField, 
 		        					{defaultValue: defaultValue, 
@@ -4487,7 +4537,7 @@ Visit.Patient = React.createClass({displayName: "Patient",
 		        			);
 		        			break;
 		        		case "yesno":
-		        			return (
+		        			fieldDOM = (
 								React.createElement(Fields.YesNo, React.__spread({}, 
 		        					thisField, 
 		        					{defaultValue: defaultValue, 
@@ -4501,7 +4551,7 @@ Visit.Patient = React.createClass({displayName: "Patient",
 		        		 * Other fields
 		        		 */
 		        		case "header":
-		        			return (
+		        			fieldDOM = (
 		        				React.createElement(Fields.Header, React.__spread({}, 
 		        					thisField, 
 		        					{key: fieldID, 
@@ -4509,7 +4559,7 @@ Visit.Patient = React.createClass({displayName: "Patient",
 		        			);
 		        			break;
 		        		case "pharmacy":
-		        			return (
+		        			fieldDOM = (
 		        				React.createElement(Fields.Pharmacy, React.__spread({}, 
 		        					thisField, 
 		        					{onChange: this.handleFieldChange, 
@@ -4522,16 +4572,27 @@ Visit.Patient = React.createClass({displayName: "Patient",
 		        		 * Field type not recognized
 		        		 */
 		        		default:
-		        			return (
+		        			fieldDOM = (
 		        				React.createElement("div", {className: "alert alert-danger"}, 
 		        					React.createElement("strong", null, "Warning:"), " Unrecognized input type ", thisField['type']
 		        				)
 		        			);
 		        			break;
 		        	}
+
+					console.groupEnd(); // End "Iterable field..."
+
+					// Return fieldDOM back to map function
+					return fieldDOM;
+
 		        }.bind(this))
 			)
 		);
+
+		console.groupEnd(); // End "Visit.Patient: render"
+
+		// Render the patient block!
+		return patientBlock;
 	}
 
 });

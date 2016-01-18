@@ -48,29 +48,29 @@ var Visit = React.createClass({
 
 		var props = this.props;
 
-		console.log("[Visit] Mounting...");
-		console.log(props);
+		console.group("Visit: mount");
+			console.log("Visit properties: %O", props);
 
 		if(props.hasOwnProperty("patients") && props.patients !== null) {
-			console.log("[Visit] Pre-existing patients detected, loading into state.");
+			console.log("Pre-existing patients detected, loading into state.");
 
 			var patients = {};
 			for(var patientID in props.patients) {
-				console.log("[Visit] ...setting up patient " + patientID);
+				console.log("Setting up patient %i", patientID);
 				patients[patientID] = Utilities.applyGeneratedFields(props.patients[patientID]);
 			}
 
-			console.log("[Visit] Done setting up patients:");
-			console.log(patients);
-			console.log(" ");
+			console.log("Done setting up patients: %O", patients);
 
 			this.setState({
 				patients: patients
 			}, function() {
-				console.log("[Visit] Done mounting " + Object.keys(this.state.patients).length + " patients.");
+				console.log("Done mounting %i patients.", Object.keys(patients).length);
 				__debug(this.state.patients);
 			}.bind(this));
 		}
+
+		console.groupEnd();
 	},
 
 	/*
@@ -251,9 +251,9 @@ var Visit = React.createClass({
 	 * Render Visit container
 	 */
 	render: function() {
-		console.log("[Visit]->render(): Rendering visit container...resources are:");
-		console.log(this.state.resources);
-		console.log(" ");
+	// 	console.log("[Visit]->render(): Rendering visit container...resources are:");
+	// 	console.log(this.state.resources);
+	// 	console.log(" ");
 
 		var props = this.props,
 			state = this.state;

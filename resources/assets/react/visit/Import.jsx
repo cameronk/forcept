@@ -170,7 +170,6 @@ Visit.ImportBlock = React.createClass({
 				break;
 		}
 
-
 		return (
 			<blockquote className="blockquote">
 				<h3>

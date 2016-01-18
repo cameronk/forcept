@@ -30,20 +30,19 @@ Visit.Patient = React.createClass({
 
 		var props = this.props,
 			state = this.state,
-
 			fields = props.fields,
 			fieldKeys = Object.keys(fields),
 			countFields = fieldKeys.length,
-
 			summaryFields = props.summaryFields,
 			summaryFieldsKeys = Object.keys(summaryFields),
 			countSummaryFields = summaryFieldsKeys.length,
-
 			name = props.patient.full_name !== null ? props.patient.full_name : "Unnamed patient",
 			summary;
 
-		console.log("[Visit.Patient] Preparing to render " + countFields + " iterable fields, " + countSummaryFields + " fields to summarize");
-		console.log("[Visit.Patient] Field keys: [" + fieldKeys.join(", ") + "]");
+		console.groupCollapsed("Visit.Patient: render");
+			console.log("Iterable field count: %i", countFields);
+			console.log("Iterable field keys: %O", fieldKeys);
+			console.log("Summary field count : %i", countSummaryFields);
 
 		// Build summary DOM
 		if(summaryFields !== null && typeof summaryFields === "object" && countSummaryFields > 0) {
@@ -62,8 +61,8 @@ Visit.Patient = React.createClass({
 				}
 			}.bind(this));
 
-			console.log("[Visit.Patient] " + Object.keys(leftColumnFields).length + " fields in the left column");
-			console.log("[Visit.Patient] " + Object.keys(rightColumnFields).length + " fields in the right column");
+			console.log("Left column: %O", leftColumnFields);
+			console.log("Right column: %O", rightColumnFields);
 
 			summary = (
 				<div className="row">
@@ -79,8 +78,7 @@ Visit.Patient = React.createClass({
 			);
 		}
 
-
-		return (
+		var patientBlock = (
 			<blockquote className="blockquote">
 				<h3>
 					<span className="label label-info">#{props.hasOwnProperty('index') ? props.index + 1 : "?"}</span>
@@ -92,12 +90,14 @@ Visit.Patient = React.createClass({
 		        <hr/>
 		        {fieldKeys.map(function(fieldID, index) {
 
-
-					var thisField = fields[fieldID],
+					var fieldDOM,
+						thisField = fields[fieldID],
 						thisPatient = props.patient,
 						defaultValue = thisPatient.hasOwnProperty(fieldID) ? thisPatient[fieldID] : null;
 
-					console.log("[Visit.Patient][" + props.id + "][" + fieldID + "] rendering with type " + thisField.type + ", defaultValue: " + defaultValue + " (typeof defaultValue='" + (typeof defaultValue) + "')");
+					console.group("Field #%i: '%s' %O", index, thisField.name, thisField);
+						console.log("Type: %s", thisField.type);
+						console.log("Default value: %s", defaultValue);
 
 					// Mutate data as necessary per field type
 					switch(thisField.type) {
@@ -109,7 +109,7 @@ Visit.Patient = React.createClass({
 								try {
 									defaultValue = JSON.parse(defaultValue)
 								} catch(e) {
-									console.error("[Visit.Patient][" + props.id + "][" + fieldID + "] attempt to convert data -> array failed");
+									console.error("Attempt to convert this field's data into an array failed.");
 									defaultValue = [];
 								}
 							}
@@ -123,7 +123,7 @@ Visit.Patient = React.createClass({
 		        		 * Input field types
 		        		 */
 		        		case "text":
-		        			return (
+		        			fieldDOM = (
 		        				<Fields.Text
 		        					{...thisField}
 		        					defaultValue={defaultValue}
@@ -133,7 +133,7 @@ Visit.Patient = React.createClass({
 		        			);
 		        			break;
 		        		case "textarea":
-		        			return (
+		        			fieldDOM = (
 		        				<Fields.Textarea
 		        					{...thisField}
 		        					defaultValue={defaultValue}
@@ -143,7 +143,7 @@ Visit.Patient = React.createClass({
 		        			);
 		        			break;
 		        		case "number":
-		        			return (
+		        			fieldDOM = (
 		        				<Fields.Number
 		        					{...thisField}
 		        					defaultValue={defaultValue}
@@ -153,7 +153,7 @@ Visit.Patient = React.createClass({
 		        			);
 		        			break;
 		        		case "date":
-		        			return (
+		        			fieldDOM = (
 		        				<Fields.Date
 		        					{...thisField}
 		        					defaultValue={defaultValue}
@@ -163,7 +163,7 @@ Visit.Patient = React.createClass({
 		        			);
 		        			break;
 		        		case "select":
-							return (
+							fieldDOM = (
 		        				<Fields.Select
 		        					{...thisField}
 		        					multiple={false}
@@ -174,7 +174,7 @@ Visit.Patient = React.createClass({
 		        			);
 		        			break;
 		        		case "multiselect":
-		        			return (
+		        			fieldDOM = (
 		        				<Fields.Select
 		        					{...thisField}
 		        					multiple={true}
@@ -185,7 +185,7 @@ Visit.Patient = React.createClass({
 		        			);
 		        			break;
 		        		case "file":
-		        			return (
+		        			fieldDOM = (
 								<Fields.File
 		        					{...thisField}
 		        					defaultValue={defaultValue}
@@ -196,7 +196,7 @@ Visit.Patient = React.createClass({
 		        			);
 		        			break;
 		        		case "yesno":
-		        			return (
+		        			fieldDOM = (
 								<Fields.YesNo
 		        					{...thisField}
 		        					defaultValue={defaultValue}
@@ -210,7 +210,7 @@ Visit.Patient = React.createClass({
 		        		 * Other fields
 		        		 */
 		        		case "header":
-		        			return (
+		        			fieldDOM = (
 		        				<Fields.Header
 		        					{...thisField}
 		        					key={fieldID}
@@ -218,7 +218,7 @@ Visit.Patient = React.createClass({
 		        			);
 		        			break;
 		        		case "pharmacy":
-		        			return (
+		        			fieldDOM = (
 		        				<Fields.Pharmacy
 		        					{...thisField}
 		        					onChange={this.handleFieldChange}
@@ -231,16 +231,27 @@ Visit.Patient = React.createClass({
 		        		 * Field type not recognized
 		        		 */
 		        		default:
-		        			return (
+		        			fieldDOM = (
 		        				<div className="alert alert-danger">
 		        					<strong>Warning:</strong> Unrecognized input type {thisField['type']}
 		        				</div>
 		        			);
 		        			break;
 		        	}
+
+					console.groupEnd(); // End "Iterable field..."
+
+					// Return fieldDOM back to map function
+					return fieldDOM;
+
 		        }.bind(this))}
 			</blockquote>
 		);
+
+		console.groupEnd(); // End "Visit.Patient: render"
+
+		// Render the patient block!
+		return patientBlock;
 	}
 
 });

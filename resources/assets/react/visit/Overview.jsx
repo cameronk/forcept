@@ -20,8 +20,9 @@ Visit.PatientsOverview = React.createClass({
 			patientOverviews,
 			iterableFields;
 
-		console.log("[Visit.PatientsOverview]->render(): " + countPatients + " (mini=" + props.mini + ")");
-		console.log(props);
+		console.group("Visit.PatientsOverview: render (mini=%s)", props.mini);
+			console.log("Patients to overview: %i", countPatients);
+			console.log("Properties: %O", props);
 
 		// Copy the local patient fields property to a new variable
 		// and remove first/last name, so they don't appear in the list
@@ -38,48 +39,64 @@ Visit.PatientsOverview = React.createClass({
 
 		// If there are patients in the props object
 		if(countPatients > 0) {
+
+			//-- Begin mapping patient keys --\\
 			patientOverviews = patientKeys.map(function(patientID, index) {
 				var cardHeader,
 					photo,
 					thisPatient = props.patients[patientID];
 
+				console.groupCollapsed("Card #%i: Patient %s", index, patientID);
+
+				//-- Begin search for patient photo --\\
 				if(thisPatient.hasOwnProperty('photo') && thisPatient.photo !== null) {
 
-					console.log("[Visit.PatientOverview][" + patientID + "]: has photo");
+					console.group("Photo:");
+						console.log("This patient has a photo property.");
 
 					var resourceKeys,
 						resources = props.hasOwnProperty("resources") ? props.resources : {};
 
 					try {
 						if(typeof thisPatient.photo === "string") {
-							console.log("[Visit.PatientOverview][" + patientID + "]: photo is STRING");
-							// Parse JSON from database as string
-							resourceKeys = JSON.parse(thisPatient.photo);
+							console.log("The photo property is a STRING");
+
+							// Attempt to..
+							try {
+								// Parse JSON from database as string
+								resourceKeys = JSON.parse(thisPatient.photo);
+							} catch(e) {
+								console.error("Failed to parse photo string into JSON array.");
+								resourceKeys = [];
+							}
+
 						} else {
-							console.log("[Visit.PatientOverview][" + patientID + "]: photo is NOT STRING");
+							console.log("The photo property is NOT a STRING");
+							console.info("Photo property type: %s", typeof thisPatient.photo);
+
 							// Otherwise, just push the object
 							resourceKeys = thisPatient.photo;
 						}
 					} catch(e) {
-						console.log("[Visit.PatientOverview][" + patientID + "]: error parsing photo string");
+						console.error("Some sort of error parsing photo string (not a JSON error...)");
 						resourceKeys = [];
 					}
 
 					if(resourceKeys.length > 0) {
 
+						// Since Photo field only allows one upload, we'll grab the first key in the array
+						// (it's probably the only key...)
 						var photoKey = resourceKeys[0];
 
-						console.log("[Visit.PatientOverview][" + patientID + "]: Valid resources array obtained, looking for photo...");
+						console.log("Photo resource ID is %i, checking resource storage...", photoKey);
 
 						// Check if we have this resource in storage already.
 						if(resources.hasOwnProperty(photoKey)) {
 
-							console.log("[Visit.PatientOverview][" + patientID + "]: Photo found in our pre-loaded resources.");
-
 							// For the immutable Photo input, the one and only file is the patient photo.
 							var photoData = resources[photoKey];
 
-							console.log("[Visit.PatientOverview]->render(patientID=" + patientID + "): has photo");
+							console.log("Photo found in preloaded resources: %O", photoData);
 
 							photo = (
 								<Fields.Resource
@@ -88,20 +105,23 @@ Visit.PatientsOverview = React.createClass({
 							);
 
 						} else {
-							console.log("[Visit.PatientOverview][" + patientID + "]: photo not in resources, preparing to grab via AJAX");
+							console.log("Photo not found in resources, creating resource object with instructions to grab resource via AJAX");
 
 							photo = (
 								<Fields.Resource
-									id={resourceKeys[0]}
+									id={photoKey}
 									resource={{ type: "image/jpeg" }} />
 							);
 						}
 					}
 
+					console.groupEnd(); // End "Photo:"
+
 				}
+				//-- End photo search --\\
 
 				// Show header if we're not in Mini mode
-				if(props.mini == false) {
+				if(props.mini === false) {
 					cardHeader = (
 						<span>
 			               	<div className="card-header">
@@ -120,9 +140,8 @@ Visit.PatientsOverview = React.createClass({
 			        );
 				}
 
-				console.log("[Visit.PatientsOverview] Rendering patient overview card - ID #" + patientID);
-
-				return (
+				//-- Begin render patient card --\\
+				var patientCardDOM = (
 					<div className="card forcept-patient-summary" key={patientID}>
 						{cardHeader}
 		              	<div className="list-group list-group-flush">
@@ -134,6 +153,10 @@ Visit.PatientsOverview = React.createClass({
 									value = "No data",
 									icon;
 
+								console.group("Field #%i: %s", index, thisIterableField.name);
+
+
+								//-- Begin patient field checking --\\
 		                    	if(
 		                    		thisPatient.hasOwnProperty(field) 	// If this field exists in the patient data
 		                    		&& thisPatient[field] !== null	 	// If the data for this field is null, show "No data"
@@ -141,6 +164,8 @@ Visit.PatientsOverview = React.createClass({
 		                    	) {
 
 									var thisPatientField = thisPatient[field];
+
+									console.info("Patient data: %O", thisPatientField);
 
 		                    		if(!(props.mini == true && isGeneratedField)) // Don't show generated fields in Mini mode
 		                    		{
@@ -153,8 +178,7 @@ Visit.PatientsOverview = React.createClass({
 											// Grab field types
 											var fieldType = thisIterableField.type;
 
-			                    			console.log(" | Field " + thisIterableField.name + " is string or number");
-			                    			console.log(" | -> type: " + fieldType);
+											console.log("Type: %s", fieldType);
 
 			                    			// We might need to mutate the data
 			                    			switch(fieldType) {
@@ -191,7 +215,7 @@ Visit.PatientsOverview = React.createClass({
 			                    						value = arr.join(", ");
 			                    					}
 
-			                    					console.log(" | Multiselect value: " + value);
+			                    					console.log("Multiselect value: %s", value);
 
 			                    					break;
 
@@ -205,6 +229,7 @@ Visit.PatientsOverview = React.createClass({
 													try {
 														arr = JSON.parse(thisPatientField);
 													} catch(e) {
+														console.error("Failed to convert file resource array from string to array.");
 														arr = [];
 													}
 
@@ -238,20 +263,22 @@ Visit.PatientsOverview = React.createClass({
 			                    					break;
 			                    			}
 			                    		} else {
-			                    			console.log(" | Field " + thisIterableField["name"] + " is NOT string or number");
-			                    			console.log(" | -> type: " + thisIterableField.type);
+											console.warning("Field isn't a string or number..");
 			                    			if( Array.isArray(thisPatientField) ) // If the data is an array
 			                    			{
+												console.info("We're good, it's an array!");
 			                    				// We found data!
 			                    				foundData = true;
 			                    				value = thisPatientField.join(", ");
 			                    			} else {
 			                    				// WTF is it?
-			                    				console.log("WARNING: unknown field data type for field " + field);
+			                    				console.error("WARNING: unknown field data type");
 			                    			}
 			                    		}
 			                    	}
 		                    	}
+								//-- End patient field checking --\\
+
 
 		                    	// Choose which icon to display
 		                    	if(!isGeneratedField) {
@@ -271,6 +298,8 @@ Visit.PatientsOverview = React.createClass({
 		                    	} else {
 		                    		icon = "\u27a0";
 		                    	}
+
+								console.groupEnd(); // End: "Field %i..."
 
 		                    	// Render the list item
 		                    	if(thisIterableField.type == "header") {
@@ -297,14 +326,26 @@ Visit.PatientsOverview = React.createClass({
 		                </div>
 					</div>
 				);
+				//-- End build patient card DOM --\\
+
+				console.groupEnd(); // End "Patient %i"
+
+				// Return the patient card DOM
+				return patientCardDOM;
+
 			}.bind(this));
-		} else {
+			//-- End patient fields map --\\
+
+		} else { //-- end: if there are patients in the patient object --\\
 			patientOverviews = (
 				<div className="alert alert-info hidden-sm-down">
 					No patients within this visit.
 				</div>
 			);
 		}
+
+		console.log("Done with PatientOverview group...");
+		console.groupEnd(); // End: "PatientsOverview"
 
 		// If we're in mini mode, use different column structure
 		if(props.mini == true) {

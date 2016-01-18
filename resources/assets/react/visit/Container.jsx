@@ -111,7 +111,6 @@ Visit.PatientsContainer = React.createClass({
 
 	render: function() {
 
-		console.log("[Visit.PatientsContainer]->render(): Rendering patients container.");
 		var props = this.props,
 			state = this.state,
 			isLoading = (state.isLoading || props.isSubmitting),
@@ -122,7 +121,10 @@ Visit.PatientsContainer = React.createClass({
 			importBlock,
 			controls;
 
-		console.log("[Visit.PatientsContainer]->render(): patientIDs=" + patientIDs + ", patientsCount=" + patientsCount);
+		console.group("Visit.PatientsContainer: render");
+			console.log("Showing import block: %s", state.showImportBlock);
+			console.log("Patient IDs: %O", patientIDs);
+			console.log("Patients count: %i", patientsCount);
 
 		// Loading state can be triggered by:
 		// 		isLoading 		-> provided by controls, procs when adding new patient / importing
@@ -139,11 +141,11 @@ Visit.PatientsContainer = React.createClass({
 
 					var thisPatient = patients[patientID];
 
-					console.log("[Visits.PatientsContainer]->render(): #" + patientID);
-					console.log("[Visits.PatientsContainer]->render(): ...fields=" + props.fields);
-					console.log("[Visits.PatientsContainer]->render(): ...patient=" + patients[patientID]);
+					console.groupCollapsed("Fieldset #%i: Patient %s", index, patientID);
+						console.log("Fields: %O", props.fields);
+						console.log("This patient: %O", thisPatient);
 
-					return (
+					var patientDOM = (
 						<div key={patientID}>
 							<Visit.Patient
 								/*
@@ -171,6 +173,12 @@ Visit.PatientsContainer = React.createClass({
 							<hr/>
 						</div>
 					);
+
+					console.groupEnd(); // End: "#%i: Patient [patientID]"
+
+					// Push back to patientsDOM
+					return patientDOM;
+
 				}.bind(this));
 			} else {
 				patientsDOM = (
@@ -280,6 +288,8 @@ Visit.PatientsContainer = React.createClass({
 			}
 		}
 
+		console.log("Ending PatientsContainer group...");
+		console.groupEnd(); // End: 'Visit.PatientsContainer: render'
 
 		return (
 			<div className="col-xs-12 col-sm-12 col-md-8 col-xl-9">
