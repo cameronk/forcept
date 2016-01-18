@@ -24,6 +24,7 @@ class FieldDataController extends Controller
     public function index()
     {
         //
+        \Log::debug('test');
         return view('console/field-data/index', [
             'fields'    => Stage::root()->first()->fields,
             'fielddata' => FieldData::paginate(50)
@@ -86,6 +87,9 @@ class FieldDataController extends Controller
 
         // Load the sheet from imports
         $sheet = Excel::load(storage_path('imports') . "/" . $request->filename, function($reader) {})->all();
+
+        // Grab fields from the root stage
+        $fields = Stage::root()->first(['fields'])->fields;
 
         // Grab the headings for this sheet
         $fieldNumberHeading = null;
@@ -160,7 +164,18 @@ class FieldDataController extends Controller
                 // this row to a new insert array value
                 $data = array();
                 foreach($map as $heading => $destination) {
-                    $data[$destination] = $row[$heading];
+                    \Log::debug("Destination type: " . $fields[$destination]['type']);
+                    switch($fields[$destination]['type']) {
+                        case "date":
+                            $value = $row[$heading];
+                            if(is_numeric($value)) {
+                                $data[$destination] = Carbon::now()->subYears($value)->toDateString();
+                            }
+                            break;
+                        default:
+                            $data[$destination] = $row[$heading];
+                            break;
+                    }
                 }
 
                 $insert[] = array(
