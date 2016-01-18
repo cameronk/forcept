@@ -976,20 +976,83 @@ Fields.Resource = React.createClass({displayName: "Resource",
 	},
 });
 
+/**
+ * fields/Select.jsx
+ * @author Cameron Kelley
+ *
+ * Properties:
+ * - multiple (boolean): 	is this a multiselect input?
+ * - onChange (function): 	handle a change to this field's data
+ */
+
 Fields.Select = React.createClass({displayName: "Select",
 
+	/*
+	 * Get initial state.
+	 */
 	getInitialState: function() {
 		return {
-			isCustomDataOptionSelected: false
+			isCustomDataOptionSelected: false,
+			customDataDefaultValue: ""
 		};
 	},
 
+	/*
+	 * Before the field mounts...
+	 */
+	componentWillMount: function() {
+		var props = this.props,
+			options,
+			optionsKeys,
+			optionsValues = [];
+
+		console.groupCollapsed("  Fields.Select: mount '%s'", props.name);
+			console.log("Props: %O", props);
+
+		if(props.multiple !== true) {
+
+			if(props.settings.hasOwnProperty('options')) {
+				options = props.settings.options;
+				optionsKeys = Object.keys(options);
+			} else {
+				options = {};
+				optionsKeys = [];
+			}
+
+			console.log("Options keys: %O", optionsKeys);
+
+			// Push all option values to an array.
+			optionsKeys.map(function(key) {
+				optionsValues.push(options[key].value);
+			});
+
+			console.log("Options values: %O", optionsValues);
+			console.log("Default value: %s", props.defaultValue);
+			console.log("IndexOf value: %i", optionsValues.indexOf(props.defaultValue));
+
+			// Check if our value is NOT a valid option value
+			if(typeof props.defaultValue === "string" && optionsValues.indexOf(props.defaultValue) === -1) {
+				console.log("Default value exists but isn't a valid value, enabling custom data box");
+				this.setState({
+					isCustomDataOptionSelected: true,
+					customDataDefaultValue: props.defaultValue
+				});
+			}
+
+		}
+
+		console.groupEnd(); // end: "Fields.Select: mount"
+	},
+
+	/*
+	 * Handle select input change Event
+	 */
 	onSelectInputChange: function(event) {
 
 		var props = this.props;
 
 		// Is this a multiselect input?
-		if(props.multiple == true) {
+		if(props.multiple === true) {
 
 			var options = event.target.options,
 				values = [];
@@ -1006,8 +1069,8 @@ Fields.Select = React.createClass({displayName: "Select",
 			// Check value before bubbling.
 			switch(event.target.value) {
 				case "__default__":
-					// Spoof event target value
-					this.setState({ isCustomDataOptionSelected: false });
+					// Set top-level state value to nothing (so it says "No data")
+					this.setState(this.getInitialState());
 					props.onChange(props.id, "");
 					break;
 				case "__custom__":
@@ -1018,17 +1081,23 @@ Fields.Select = React.createClass({displayName: "Select",
 				default:
 					// Bubble event up to handler passed from Visit
 					// (pass field ID and event)
-					this.setState({ isCustomDataOptionSelected: false });
+					this.setState(this.getInitialState());
 					props.onChange(props.id, event.target.value);
 					break;
 			}
 		}
 	},
 
+	/*
+	 * Handle a change to data in the custom data text input
+	 */
 	onCustomDataInputChange: function(event) {
 		this.props.onChange(this.props.id, event.target.value);
 	},
 
+	/*
+	 * Render the select field.
+	 */
 	render: function() {
 
 		var props = this.props,
@@ -1041,6 +1110,10 @@ Fields.Select = React.createClass({displayName: "Select",
 			customDataOption,
 			customDataInput;
 
+		console.groupCollapsed("  Fields.Select: render '%s'", props.name);
+			console.log("State: %O", state);
+
+		// Check if this field had options within the settings object
 		if(props.settings.hasOwnProperty('options')) {
 			options = props.settings.options;
 			optionsKeys = Object.keys(options);
@@ -1050,10 +1123,10 @@ Fields.Select = React.createClass({displayName: "Select",
 		}
 
 		// Default option (prepended to select)
-		if(props.multiple == false) {
+		if(props.multiple === false) {
 
 			defaultOption = (
-				React.createElement("option", {value: "__default__", disabled: "disabled"}, "Choose an option…")
+				React.createElement("option", {value: "__default__", disabled: true}, "Choose an option…")
 			);
 
 			// Custom data option (appended to select IF allowCustomData is set)
@@ -1066,7 +1139,11 @@ Fields.Select = React.createClass({displayName: "Select",
 			// Custom data input (show if custom data option select state is true)
 			if(isTrue(state.isCustomDataOptionSelected)) {
 				customDataInput = (
-					React.createElement("input", {type: "text", className: "form-control", placeholder: "Enter custom data here", onChange: this.onCustomDataInputChange})
+					React.createElement("input", {type: "text", 
+						className: "form-control", 
+						placeholder: "Enter custom data here", 
+						onChange: this.onCustomDataInputChange, 
+						defaultValue: state.customDataDefaultValue})
 				);
 			}
 		}
@@ -1086,14 +1163,27 @@ Fields.Select = React.createClass({displayName: "Select",
 		}.bind(this));
 
 		// Set size if this is a multiselect input
-		var size = props.multiple ? (optionsKeys.length > 30 ? 30 : optionsKeys.length ) : 1;
+		var size = props.multiple ? (optionsKeys.length > 30 ? 30 : optionsKeys.length ) : 1,
+			defaultValue = state.customDataDefaultValue.length > 0
+							? "__default__"
+							: (
+								props.defaultValue !== null
+								? props.defaultValue
+								: (
+									props.multiple
+									? []
+									: "__default__"
+								)
+							);
+
+		console.log("Calculated default value: %s", defaultValue);
 
 		// Build the select input
 		displaySelect = (
 			React.createElement("select", {
 				className: "form-control", 
 				onChange: this.onSelectInputChange, 
-				defaultValue: props.defaultValue !== null ? props.defaultValue : (props.multiple ? [] : "__default__"), 
+				defaultValue: defaultValue, 
 				multiple: props.multiple, 
 				size: size}, 
 					defaultOption, 
@@ -1101,6 +1191,8 @@ Fields.Select = React.createClass({displayName: "Select",
 					customDataOption
 			)
 		);
+
+		console.groupEnd(); // End "Fields.Select: render"
 
 		return (
 			React.createElement("div", {className: "form-group row"}, 
@@ -3661,6 +3753,12 @@ Visit.StageVisitControls = React.createClass({displayName: "StageVisitControls",
 
 });
 
+/**
+ * visit/Import.jsx
+ * @author Cameron Kelley
+ *
+ * Properties:
+ */
 Visit.ImportBlock = React.createClass({displayName: "ImportBlock",
 
 	getInitialState: function() {
@@ -3683,7 +3781,6 @@ Visit.ImportBlock = React.createClass({displayName: "ImportBlock",
 	},
 
 	handleSearch: function(type) {
-		console.log("Handling click" + type);
 		this.setState({
 			display: 'searching'
 		});
@@ -3768,8 +3865,7 @@ Visit.ImportBlock = React.createClass({displayName: "ImportBlock",
 			case "searching":
 				display = (
 					React.createElement("h2", null, 
-						React.createElement("img", {src: "/assets/img/loading.gif", className: "m-r"}), 
-						"One moment, searching patients.."
+						React.createElement("img", {src: "/assets/img/loading.gif", className: "m-r"})
 					)
 				);
 				break;
@@ -3796,8 +3892,9 @@ Visit.ImportBlock = React.createClass({displayName: "ImportBlock",
 								} else if(patient.hasOwnProperty('used') && patient.used !== null) {
 									if(patient.used) {
 										currentVisit = (
-											React.createElement("li", {className: "list-group-item bg-info"}, 
-												React.createElement("small", null, "Note: this record has been imported at least once already.")
+											React.createElement("li", {className: "list-group-item"}, 
+												React.createElement("h6", null, "Note: this record is associated with the following user ID:"), 
+												React.createElement("span", {className: "label label-default"}, patient.used)
 											)
 										)
 									}
@@ -3816,14 +3913,23 @@ Visit.ImportBlock = React.createClass({displayName: "ImportBlock",
 												currentVisit
 											), 
 											React.createElement("div", {className: "card-block"}, 
-												React.createElement("button", {type: "button", className: "btn btn-block btn-secondary", disabled: disabled, onClick: this.handlePatientAdd(patient)}, 
+												React.createElement("button", {type: "button", className: "btn btn-block btn-primary", disabled: disabled, onClick: this.handlePatientAdd(patient)}, 
 													'\u002b', " Add"
 												)
 											)
 										)
 									)
 								);
-							}.bind(this))
+							}.bind(this)), 
+							React.createElement("div", {className: "col-xs-12 col-sm-6"}, 
+								React.createElement("div", {className: "card"}, 
+									React.createElement("div", {className: "card-block"}, 
+										React.createElement("button", {type: "button", className: "btn btn-block btn-secondary", onClick: this.resetDisplay}, 
+											'\u21b5', " Go back"
+										)
+									)
+								)
+							)
 						)
 					);
 				}
@@ -4436,7 +4542,7 @@ Visit.Patient = React.createClass({displayName: "Patient",
 						thisPatient = props.patient,
 						defaultValue = thisPatient.hasOwnProperty(fieldID) ? thisPatient[fieldID] : null;
 
-					console.group("Field #%i: '%s' %O", index, thisField.name, thisField);
+					console.groupCollapsed("Field #%i: '%s' %O", index, thisField.name, thisField);
 						console.log("Type: %s", thisField.type);
 						console.log("Default value: %s", defaultValue);
 

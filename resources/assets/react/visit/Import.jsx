@@ -1,3 +1,9 @@
+/**
+ * visit/Import.jsx
+ * @author Cameron Kelley
+ *
+ * Properties:
+ */
 Visit.ImportBlock = React.createClass({
 
 	getInitialState: function() {
@@ -20,7 +26,6 @@ Visit.ImportBlock = React.createClass({
 	},
 
 	handleSearch: function(type) {
-		console.log("Handling click" + type);
 		this.setState({
 			display: 'searching'
 		});
@@ -106,7 +111,6 @@ Visit.ImportBlock = React.createClass({
 				display = (
 					<h2>
 						<img src="/assets/img/loading.gif" className="m-r" />
-						One moment, searching patients..
 					</h2>
 				);
 				break;
@@ -133,8 +137,9 @@ Visit.ImportBlock = React.createClass({
 								} else if(patient.hasOwnProperty('used') && patient.used !== null) {
 									if(patient.used) {
 										currentVisit = (
-											<li className="list-group-item bg-info">
-												<small>Note: this record has been imported at least once already.</small>
+											<li className="list-group-item">
+												<h6>Note: this record is associated with the following user ID:</h6>
+												<span className="label label-default">{patient.used}</span>
 											</li>
 										)
 									}
@@ -153,7 +158,7 @@ Visit.ImportBlock = React.createClass({
 												{currentVisit}
 											</ul>
 											<div className="card-block">
-												<button type="button" className="btn btn-block btn-secondary" disabled={disabled} onClick={this.handlePatientAdd(patient)}>
+												<button type="button" className="btn btn-block btn-primary" disabled={disabled} onClick={this.handlePatientAdd(patient)}>
 													{'\u002b'} Add
 												</button>
 											</div>
@@ -161,6 +166,15 @@ Visit.ImportBlock = React.createClass({
 									</div>
 								);
 							}.bind(this))}
+							<div className="col-xs-12 col-sm-6">
+								<div className="card">
+									<div className="card-block">
+										<button type="button" className="btn btn-block btn-secondary" onClick={this.resetDisplay}>
+											{'\u21b5'} Go back
+										</button>
+									</div>
+								</div>
+							</div>
 						</div>
 					);
 				}

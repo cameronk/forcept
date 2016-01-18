@@ -95,7 +95,7 @@ Visit.Patient = React.createClass({
 						thisPatient = props.patient,
 						defaultValue = thisPatient.hasOwnProperty(fieldID) ? thisPatient[fieldID] : null;
 
-					console.group("Field #%i: '%s' %O", index, thisField.name, thisField);
+					console.groupCollapsed("Field #%i: '%s' %O", index, thisField.name, thisField);
 						console.log("Type: %s", thisField.type);
 						console.log("Default value: %s", defaultValue);
 
