@@ -1,1 +1,817 @@
-{"1452394469553":{"name":"Analgesics, Anti-inflammatories","type":"multiselect","mutable":true,"settings":{"options":{"1452394496274":{"value":"Acetaminophen 500 mg tablets","count":"0","available":false},"1452394500963":{"value":"Acetaminophen 80 mg/0.8 mL drops","count":"0","available":false},"1452407239907":{"value":"Acetaminophen 160 mg/5 mL elixir","count":0,"available":false},"1452407244610":{"value":"Acetaminophen 120 mg suppositories","count":0,"available":false},"1452407253076":{"value":"Aspirin 81 mg enteric coated tablets   ","count":0,"available":false},"1452407257311":{"value":"Ibuprofen 200 mg tablets","count":0,"available":false},"1452407262875":{"value":"Ibuprofen 100 mg/5 mL oral suspension","count":0,"available":false},"1452407263510":{"value":"Naproxen 550 mg tablets","count":0,"available":false},"1452407264018":{"value":"Prednisone 10 mg tablets","count":0,"available":false},"1452407275732":{"value":"Prednisone 20 mg tablets","count":0,"available":false},"1452407276387":{"value":"Glucosamine Chondroitin","count":0,"available":false},"1452407276915":{"value":"Dexamethasone 4 mg","count":0,"available":false},"1452407278668":{"value":"Acetaminophen 80 mg chewable tablets","count":0,"available":false},"1452407279155":{"value":"Ibuprofen 200 mg","count":0,"available":false},"1452407305697":{"value":"Mobic 7.5 mg","count":0,"available":false},"1452407306197":{"value":"Ibuprofen 600 mg","count":0,"available":false},"1452407306805":{"value":"Meloxicam 15 mg tablets","count":0,"available":false}}},"description":""},"1452394517381":{"name":"Antibiotics, Antifungals, Antivirals","type":"multiselect","mutable":true,"settings":{"options":{"1452394523525":{"value":"Amoxicillin 250 mg chewable tablets","count":0,"available":"false"},"1452394524047":{"value":"Amoxicillin 500 mg capsules","count":"0","available":"true"},"1452407441391":{"value":"Amoxicillin 125 mg/5 mL oral suspension","count":0,"available":false},"1452407442027":{"value":"Azithromycin 250 mg tablets","count":0,"available":false},"1452407450738":{"value":"Azithromycin 200 mg/5 mL oral suspension","count":0,"available":false},"1452407454273":{"value":"Cephalexin 500 mg tablets","count":0,"available":false},"1452407462216":{"value":"Cephalexin 250 mg/5 mL oral suspension","count":0,"available":false},"1452407462764":{"value":"Doxycycline 100 mg tablets","count":0,"available":false},"1452407463685":{"value":"Fluconazole 150m mg tablets","count":0,"available":false},"1452407464108":{"value":"Griseofulvin 500 mg tablets","count":0,"available":false},"1452407464889":{"value":"Ketoconazole 200 mg tablets","count":0,"available":false},"1452407465481":{"value":"Levofloxacin 500 mg tablets","count":0,"available":false},"1452407486558":{"value":"Penicillin VK 250 mg tablets","count":0,"available":false},"1452407487125":{"value":"Sulfamethoxazole/trimethoprim 800 mg/160 mg tablets","count":0,"available":false},"1452407487553":{"value":"Sulfamethoxazole/trimethoprim 200 mg-40 mg/5 mL oral suspension","count":0,"available":false},"1452407488095":{"value":"Tinidazole 500 mg tablets","count":0,"available":false},"1452407489335":{"value":"Metronidazole 250 mg capsules","count":0,"available":false},"1452407500702":{"value":"Phenoxymethylpenicillin  250 mg tablets","count":0,"available":false},"1452407501290":{"value":"Amoxicillin 250 mg/5 mL suspension","count":0,"available":false},"1452407511685":{"value":"Amoxicillin/Clavulanate 500 mg/125 mg tablets","count":0,"available":false},"1452407512184":{"value":"Cephalexin 250 mg/5 mL suspension","count":0,"available":false},"1452407512748":{"value":"Cephalexin 500 mg tablets","count":0,"available":false},"1452407513276":{"value":"Ketoconazole shampoo","count":0,"available":false},"1452407533517":{"value":"Tinidazole 500 mg tablets","count":0,"available":false},"1452407534063":{"value":"Z-pak 250 mg (6-day)","count":0,"available":false}}},"description":""},"1452407545527":{"name":"Antihelminthics","type":"multiselect","mutable":true,"settings":{"options":{"1452407559163":{"value":"Albendazole 400 mg tablets","count":0,"available":false},"1452407559632":{"value":"Ivermectin 6 mg tablets ","count":0,"available":false},"1452407569086":{"value":"Piperazine ","count":0,"available":false},"1452407569960":{"value":"Sulfur cream","count":0,"available":false}}},"description":null},"1452407546468":{"name":"Antihistamines, Decongestants, Cough","type":"multiselect","mutable":true,"settings":{"options":{"1452407604399":{"value":"Diphenhydramine 25 mg capsules","count":0,"available":false},"1452407605062":{"value":"Diphenhydramine 12.5 mg/5 mL liquid","count":0,"available":false},"1452407605543":{"value":"Guaifenesin/dextromethorphan 100 mg-10 mg/5 mL liquid","count":0,"available":false},"1452407606045":{"value":"Guaifenesin 100 mg/5 mL liquid","count":0,"available":false},"1452407606646":{"value":"Azelastine 0.15% nasal","count":0,"available":false},"1452407623481":{"value":"Budesonide 160 mg/ formoteral fumarate 4.5 mcg inhaler","count":0,"available":false},"1452407624054":{"value":"Albuterol inhaler","count":0,"available":false},"1452407624711":{"value":"Fluticasone 50mcg nasal","count":0,"available":false},"1452407625286":{"value":"Beclomethasone inhaler","count":0,"available":false},"1452407626496":{"value":"Cetirizine 10 mg","count":0,"available":false},"1452407627125":{"value":"Children's Nighttime Cough syrup","count":0,"available":false},"1452407656361":{"value":"Fexofenadine 30 mg/5 mL syrup","count":0,"available":false},"1452407656893":{"value":"Zarbees Cough Syrup","count":0,"available":false},"1452407657345":{"value":"Children's Daytime Cough syrup","count":0,"available":false},"1452407657924":{"value":"Afrin Nasal Spray","count":0,"available":false},"1452407658950":{"value":"Spacer for inhaler","count":0,"available":false},"1452407659425":{"value":"Children's Nighttime Cold and Cough syrup","count":0,"available":false},"1452407682804":{"value":"Fexofenadine/Allegra 60 mg syrup","count":0,"available":false}}},"description":null},"1452407688840":{"name":"Antihypertensives, Diuretics","type":"multiselect","mutable":true,"settings":{"options":{"1452407699709":{"value":"Atenolol 50 mg tablets","count":0,"available":false},"1452407702528":{"value":"Hydrochlorothiazide 25 mg tablets","count":0,"available":false},"1452407703129":{"value":"Lisinopril 10 mg tablets","count":0,"available":false},"1452407703589":{"value":"Losartan 50 mg tablets","count":0,"available":false},"1452407704246":{"value":"Furosemide 20 mg tablets","count":0,"available":false},"1452407705854":{"value":"Lisinopril/HCTZ 20 mg /12.5 mg tablets","count":0,"available":false},"1452407706455":{"value":"Clonidine 0.2 mg tablets","count":0,"available":false},"1452407707007":{"value":"Nitrate 0.4 mg sublingual tablets","count":0,"available":false},"1452407737221":{"value":"Losartan 50 mg tablets","count":0,"available":false},"1452407737841":{"value":"Losartan 100 mg tablets","count":0,"available":false},"1452407738740":{"value":"Lisinopril/HCTZ 20/25 mg","count":0,"available":false},"1452407739590":{"value":"Amlodipine 5 mg tablets","count":0,"available":false}}},"description":null},"1452407769210":{"name":"Antimalarials","type":"multiselect","mutable":true,"settings":{"options":{"1452407775082":{"value":"Hydroxychloroquine 200 mg tablets","count":0,"available":false}}},"description":null},"1452407780995":{"name":"Diabetes","type":"multiselect","mutable":true,"settings":{"options":{"1452407792712":{"value":"Metformin 1000 mg tablets","count":0,"available":false}}},"description":null},"1452407795332":{"name":"Gastrointestinal","type":"multiselect","mutable":true,"settings":{"options":{"1452407806208":{"value":"Bisacodyl  5 mg tablets","count":0,"available":false},"1452407806808":{"value":"Calcium carbondate 500 mg chewable tablets","count":0,"available":false},"1452407807289":{"value":"Loperamide 2 mg capsules","count":0,"available":false},"1452407807799":{"value":"Metoclopramide 5 mg tablets","count":0,"available":false},"1452407826534":{"value":"Promethazine 25 mg tablets","count":0,"available":false},"1452407827750":{"value":"Ranitidine 150 mg tablets","count":0,"available":false},"1452407828350":{"value":"Meclizine 25 mg tablets","count":0,"available":false},"1452407828856":{"value":"Docusate 100 mg tablets","count":0,"available":false},"1452407829422":{"value":"Metoclopramide 5 mg tablets","count":0,"available":false},"1452407847963":{"value":"Meclizine 25 mg tablets","count":0,"available":false},"1452407848469":{"value":"Metamucil","count":0,"available":false}}},"description":null},"1452407863325":{"name":"Happy Meal","type":"multiselect","mutable":true,"settings":{"options":{"1452407876118":{"value":"Tylenol, Tums, Vitamins","count":0,"available":false}}},"description":null},"1452407886581":{"name":"Injectables","type":"multiselect","mutable":true,"settings":{"options":{"1452407963431":{"value":"Cefazolin 1 gm  IM or IV injection","count":0,"available":false},"1452407963991":{"value":"Ceftriaxone 1 gm IM or IV injection","count":0,"available":false},"1452407964474":{"value":"Lidocaine 1% 10 mg/mL injection","count":0,"available":false},"1452407969614":{"value":"Bacteriostatic water for injection","count":0,"available":false},"1452407970141":{"value":"Dexamethasone 5 mg/1 mL injection","count":0,"available":false},"1452407982561":{"value":"Promethazine 50 mg/1 mL injection","count":0,"available":false},"1452407983134":{"value":"Sodium chloride 0.9% irrigation","count":0,"available":false},"1452407983644":{"value":"Diphenhydramine 50 mg/mL IM injection","count":0,"available":false},"1452407997025":{"value":"Ketorolac","count":0,"available":false},"1452407997534":{"value":"Ondansetron","count":0,"available":false},"1452408010198":{"value":"Fentanyl","count":0,"available":false}}},"description":null},"1452408027789":{"name":"Ophthalmics","type":"multiselect","mutable":true,"settings":{"options":{"1452408040472":{"value":"Gentamicin 0.3% ophthalmic solution","count":0,"available":false},"1452408041135":{"value":"Lubricant eye drops","count":0,"available":false},"1452408041810":{"value":"Ofloxacin 0.3% otic solution","count":0,"available":false},"1452408050932":{"value":"Saline eye drops, tears","count":0,"available":false},"1452408051470":{"value":"Prednisolone 1% ophthalmic drops","count":0,"available":false},"1452408052629":{"value":"Gentamicin 0.3% ophthalmic drops","count":0,"available":false},"1452408053093":{"value":"Tetrahydrozoline 0.05% ophthalmic drops","count":0,"available":false}}},"description":null},"1452408071844":{"name":"Topicals","type":"multiselect","mutable":true,"settings":{"options":{"1452408080253":{"value":"Clotrimazole 1% antifungal cream","count":0,"available":false},"1452408080901":{"value":"Ear wax softener (olive oil)","count":0,"available":false},"1452408081377":{"value":"Hemorrhoidal rectal suppositories","count":0,"available":false},"1452408081904":{"value":"Hydrocortisone 1% foil packet cream","count":0,"available":false},"1452408082466":{"value":"Silver sulfadiazine 1% cream","count":0,"available":false},"1452408101656":{"value":"Triple antibitoic oinment foil packets","count":0,"available":false},"1452408106527":{"value":"Vitamin A & D foil packet ointment","count":0,"available":false},"1452408111678":{"value":"White petrolatum foil packets","count":0,"available":false},"1452408113751":{"value":"Aspercreme","count":0,"available":false},"1452408114343":{"value":"Clotrimazole 500 mg vaginal tablets","count":0,"available":false},"1452408114823":{"value":"Vaginal lubricant jelly","count":0,"available":false},"1452408129960":{"value":"Triple Antibiotic Ointment","count":0,"available":false},"1452408130743":{"value":"Methylsalicylate Cream","count":0,"available":false},"1452408131255":{"value":"Trolamine salicyclate cream","count":0,"available":false},"1452408153932":{"value":"Muscle Rub","count":0,"available":false},"1452408154476":{"value":"Preparation H","count":0,"available":false}}},"description":null},"1452408164245":{"name":"Vitamins","type":"multiselect","mutable":true,"settings":{"options":{"1452408181017":{"value":"Ferrous sulfate 325 mg tablets","count":0,"available":false},"1452408182622":{"value":"Folic acid 800 mcg tablets","count":0,"available":false},"1452408183097":{"value":"Multivitamin tablets: adult with iron and iodine","count":0,"available":false},"1452408183546":{"value":"Multivitamin tablets: children's chewable with iron","count":0,"available":false},"1452408184035":{"value":"Multivitamin drops: infant's with iron","count":0,"available":false},"1452408184969":{"value":"Multivitamin tablets: adult with iron and iodine","count":0,"available":false},"1452408185839":{"value":"Prenatal vitamin tablets","count":0,"available":false},"1452408186326":{"value":"Peanut Butter jar","count":0,"available":false},"1452408187105":{"value":"Plumpy Nut bag","count":0,"available":false},"1452408226312":{"value":"Baby Formula","count":0,"available":false},"1452408227012":{"value":"Oral rehydration salts","count":0,"available":false}}},"description":null}}
+{
+  "1452394469553": {
+    "name": "Analgesics, Anti-inflammatories",
+    "type": "multiselect",
+    "mutable": true,
+    "settings": {
+      "options": {
+        "1452394496274": {
+          "value": "Acetaminophen 500 mg tablets",
+          "count": "0",
+          "available": "true"
+        },
+        "1452394500963": {
+          "value": "Acetaminophen 80 mg chewable tablets",
+          "count": "0",
+          "available": "true"
+        },
+        "1452407239907": {
+          "value": "Acetaminophen 80 mg/0.8 mL drops",
+          "count": "0",
+          "available": "true"
+        },
+        "1452407244610": {
+          "value": "Acetaminophen 160 mg/5 mL elixir",
+          "count": "0",
+          "available": "true"
+        },
+        "1452407253076": {
+          "value": "Acetaminophen 120 mg suppositories",
+          "count": "0",
+          "available": "true"
+        },
+        "1452407257311": {
+          "value": "Aspirin 81 mg enteric coated tablets   ",
+          "count": "0",
+          "available": "true"
+        },
+        "1452407262875": {
+          "value": "Ibuprofen 100 mg/5 mL oral suspension",
+          "count": "0",
+          "available": "true"
+        },
+        "1452407263510": {
+          "value": "Ibuprofen 200 mg tablets",
+          "count": "0",
+          "available": "false"
+        },
+        "1452407264018": {
+          "value": "Meloxicam 15 mg tablets",
+          "count": "0",
+          "available": "true"
+        },
+        "1452407275732": {
+          "value": "Naproxen 500 mg tablets",
+          "count": "0",
+          "available": "true"
+        },
+        "1452407276387": {
+          "value": "Prednisone 10 mg tablets",
+          "count": "0",
+          "available": "true"
+        },
+        "1452407276915": {
+          "value": "Prednisone 20 mg tablets",
+          "count": "0",
+          "available": "true"
+        },
+        "1452407278668": {
+          "value": "Glucosamine Chondroitin",
+          "count": "0",
+          "available": "false"
+        },
+        "1452407279155": {
+          "value": "Dexamethasone 4 mg",
+          "count": "0",
+          "available": "false"
+        },
+        "1452407305697": {
+          "value": "Ibuprofen 200 mg",
+          "count": "0",
+          "available": "false"
+        },
+        "1452407306197": {
+          "value": "Mobic 7.5 mg",
+          "count": "0",
+          "available": "false"
+        },
+        "1452407306805": {
+          "value": "Ibuprofen 600 mg",
+          "count": "0",
+          "available": "false"
+        }
+      }
+    },
+    "description": ""
+  },
+  "1452394517381": {
+    "name": "Antibiotics, Antifungals, Antivirals",
+    "type": "multiselect",
+    "mutable": true,
+    "settings": {
+      "options": {
+        "1452394523525": {
+          "value": "Amoxicillin 250 mg chewable tablets",
+          "count": "0",
+          "available": "true"
+        },
+        "1452394524047": {
+          "value": "Amoxicillin 500 mg capsules",
+          "count": "0",
+          "available": "true"
+        },
+        "1452407441391": {
+          "value": "Amoxicillin 125 mg/5 mL oral suspension",
+          "count": "0",
+          "available": "true"
+        },
+        "1452407442027": {
+          "value": "Azithromycin 250 mg tablets",
+          "count": "0",
+          "available": "true"
+        },
+        "1452407450738": {
+          "value": "Azithromycin 200 mg/5 mL oral suspension",
+          "count": "0",
+          "available": "true"
+        },
+        "1452407454273": {
+          "value": "Cephalexin 500 mg tablets",
+          "count": "0",
+          "available": "true"
+        },
+        "1452407462216": {
+          "value": "Cephalexin 250 mg/5 mL oral suspension",
+          "count": "0",
+          "available": "false"
+        },
+        "1452407462764": {
+          "value": "Doxycycline 100 mg tablets",
+          "count": "0",
+          "available": "true"
+        },
+        "1452407463685": {
+          "value": "Fluconazole 150 mg tablets",
+          "count": "0",
+          "available": "true"
+        },
+        "1452407464108": {
+          "value": "Griseofulvin 250 mg tablets",
+          "count": "0",
+          "available": "true"
+        },
+        "1452407464889": {
+          "value": "Griseofulvin 500 mg tablets",
+          "count": "0",
+          "available": "true"
+        },
+        "1452407465481": {
+          "value": "Ketoconazole 200 mg tablets",
+          "count": "0",
+          "available": "false"
+        },
+        "1452407486558": {
+          "value": "Levofloxacin 500 mg tablets",
+          "count": "0",
+          "available": "true"
+        },
+        "1452407487125": {
+          "value": "Penicillin VK 250 mg tablets",
+          "count": "0",
+          "available": "false"
+        },
+        "1452407487553": {
+          "value": "Sulfamethoxazole/trimethoprim 800 mg/160 mg tablets",
+          "count": "0",
+          "available": "false"
+        },
+        "1452407488095": {
+          "value": "Sulfamethoxazole/trimethoprim 200 mg-40 mg/5 mL oral suspension",
+          "count": "0",
+          "available": "false"
+        },
+        "1452407489335": {
+          "value": "Tinidazole 500 mg tablets",
+          "count": "0",
+          "available": "false"
+        },
+        "1452407500702": {
+          "value": "Metronidazole 250 mg capsules",
+          "count": "0",
+          "available": "true"
+        },
+        "1452407501290": {
+          "value": "Phenoxymethylpenicillin 250 mg tablets",
+          "count": "0",
+          "available": "true"
+        },
+        "1452407511685": {
+          "value": "Amoxicillin 250 mg/5 mL suspension",
+          "count": "0",
+          "available": "false"
+        },
+        "1452407512184": {
+          "value": "Amoxicillin/Clavulanate 500 mg/125 mg tablets",
+          "count": "0",
+          "available": "false"
+        },
+        "1452407512748": {
+          "value": "Cephalexin 250 mg/5 mL suspension",
+          "count": "0",
+          "available": "false"
+        },
+        "1452407533517": {
+          "value": "Ketoconazole shampoo",
+          "count": "0",
+          "available": "false"
+        },
+        "1452407534063": {
+          "value": "Tinidazole 500 mg tablets",
+          "count": "0",
+          "available": "true"
+        },
+        "1453147623936": {
+          "value": "Z-pak 250 mg (6-day)",
+          "count": "0",
+          "available": "false"
+        }
+      }
+    },
+    "description": ""
+  },
+  "1452407545527": {
+    "name": "Antihelminthics",
+    "type": "multiselect",
+    "mutable": true,
+    "settings": {
+      "options": {
+        "1452407559163": {
+          "value": "Albendazole 400 mg tablets",
+          "count": "0",
+          "available": "true"
+        },
+        "1452407559632": {
+          "value": "Ivermectin 6 mg tablets ",
+          "count": "0",
+          "available": "true"
+        },
+        "1452407569086": {
+          "value": "Piperazine ",
+          "count": "0",
+          "available": "true"
+        },
+        "1452407569960": {
+          "value": "Sulfur 10% cream",
+          "count": "0",
+          "available": "true"
+        }
+      }
+    },
+    "description": ""
+  },
+  "1452407546468": {
+    "name": "Antihistamines, Decongestants, Cough",
+    "type": "multiselect",
+    "mutable": true,
+    "settings": {
+      "options": {
+        "1452407604399": {
+          "value": "Diphenhydramine 25 mg capsules",
+          "count": "0",
+          "available": "true"
+        },
+        "1452407605062": {
+          "value": "Diphenhydramine 12.5 mg/5 mL liquid",
+          "count": "0",
+          "available": "true"
+        },
+        "1452407605543": {
+          "value": "Guaifenesin/dextromethorphan 100 mg-10 mg/5 mL liquid",
+          "count": "0",
+          "available": "true"
+        },
+        "1452407606045": {
+          "value": "Guaifenesin 100 mg/5 mL liquid",
+          "count": "0",
+          "available": "true"
+        },
+        "1452407606646": {
+          "value": "Azelastine 0.15% nasal",
+          "count": "0",
+          "available": "false"
+        },
+        "1452407623481": {
+          "value": "Budesonide 160 mg/ formoteral fumarate 4.5 mcg inhaler",
+          "count": "0",
+          "available": "false"
+        },
+        "1452407624054": {
+          "value": "Albuterol 0.083% inhalation solution",
+          "count": "0",
+          "available": "true"
+        },
+        "1452407624711": {
+          "value": "Fluticasone 50mcg nasal",
+          "count": "0",
+          "available": "false"
+        },
+        "1452407625286": {
+          "value": "Beclomethasone inhaler",
+          "count": "0",
+          "available": "false"
+        },
+        "1452407626496": {
+          "value": "Cetirizine 10 mg",
+          "count": "0",
+          "available": "true"
+        },
+        "1452407627125": {
+          "value": "Children's Nighttime Cough syrup",
+          "count": "0",
+          "available": "false"
+        },
+        "1452407656361": {
+          "value": "Fexofenadine 30 mg/5 mL syrup",
+          "count": "0",
+          "available": "false"
+        },
+        "1452407656893": {
+          "value": "Zarbees Cough Syrup",
+          "count": "0",
+          "available": "false"
+        },
+        "1452407657345": {
+          "value": "Children's Daytime Cough syrup",
+          "count": "0",
+          "available": "false"
+        },
+        "1452407657924": {
+          "value": "Afrin Nasal Spray",
+          "count": "0",
+          "available": "false"
+        },
+        "1452407658950": {
+          "value": "Spacer for inhaler",
+          "count": "0",
+          "available": "false"
+        },
+        "1452407659425": {
+          "value": "Children's Nighttime Cold and Cough syrup",
+          "count": "0",
+          "available": "true"
+        },
+        "1452407682804": {
+          "value": "Fexofenadine/Allegra 60 mg syrup",
+          "count": "0",
+          "available": "false"
+        }
+      }
+    },
+    "description": ""
+  },
+  "1452407688840": {
+    "name": "Antihypertensives, Diuretics",
+    "type": "multiselect",
+    "mutable": true,
+    "settings": {
+      "options": {
+        "1452407699709": {
+          "value": "Amlodipine 5 mg tablets",
+          "count": "0",
+          "available": "true"
+        },
+        "1452407702528": {
+          "value": "Atenolol 50 mg tablets",
+          "count": "0",
+          "available": "true"
+        },
+        "1452407703129": {
+          "value": "Benazepril 20 mg/ HCTZ 25 mg tablets",
+          "count": "0",
+          "available": "true"
+        },
+        "1452407703589": {
+          "value": "Furosemide 40 mg tablets",
+          "count": "0",
+          "available": "true"
+        },
+        "1452407704246": {
+          "value": "Hydrochlorothiazide 25 mg tablets",
+          "count": "0",
+          "available": "true"
+        },
+        "1452407705854": {
+          "value": "Lisinopril 10 mg tablets",
+          "count": "0",
+          "available": "true"
+        },
+        "1452407706455": {
+          "value": "Losartan 50 mg tablets",
+          "count": "0",
+          "available": "false"
+        },
+        "1452407707007": {
+          "value": "Lisinopril/HCTZ 20 mg /12.5 mg tablets",
+          "count": "0",
+          "available": "false"
+        },
+        "1452407737221": {
+          "value": "Clonidine 0.2 mg tablets",
+          "count": "0",
+          "available": "false"
+        },
+        "1452407737841": {
+          "value": "Nitrate 0.4 mg sublingual tablets",
+          "count": "0",
+          "available": "false"
+        },
+        "1452407738740": {
+          "value": "Losartan 50 mg tablets",
+          "count": "0",
+          "available": "false"
+        },
+        "1452407739590": {
+          "value": "Losartan 100 mg tablets",
+          "count": "0",
+          "available": "false"
+        },
+        "1453149033188": {
+          "value": "Lisinopril/HCTZ 20/25 mg",
+          "count": "0",
+          "available": "false"
+        }
+      }
+    },
+    "description": ""
+  },
+  "1452407769210": {
+    "name": "Antimalarials",
+    "type": "multiselect",
+    "mutable": true,
+    "settings": {
+      "options": {
+        "1452407775082": {
+          "value": "Chloroquine 150 mg tablets",
+          "count": "0",
+          "available": "true"
+        },
+        "1453149659951": {
+          "value": "Hydroxychloroquine 200 mg tablets",
+          "count": "0",
+          "available": "true"
+        }
+      }
+    },
+    "description": ""
+  },
+  "1452407780995": {
+    "name": "Antidiabetics",
+    "type": "multiselect",
+    "mutable": true,
+    "settings": {
+      "options": {
+        "1452407792712": {
+          "value": "Metformin 1000 mg tablets",
+          "count": "0",
+          "available": "true"
+        }
+      }
+    },
+    "description": ""
+  },
+  "1452407795332": {
+    "name": "Gastrointestinal",
+    "type": "multiselect",
+    "mutable": true,
+    "settings": {
+      "options": {
+        "1452407806208": {
+          "value": "Bisacodyl 5 mg tablets",
+          "count": "0",
+          "available": "true"
+        },
+        "1452407806808": {
+          "value": "Calcium carbondate 500 mg chewable tablets",
+          "count": "0",
+          "available": "true"
+        },
+        "1452407807289": {
+          "value": "Docusate 100 mg tablets",
+          "count": "0",
+          "available": "true"
+        },
+        "1452407807799": {
+          "value": "Loperamide 2 mg capsules",
+          "count": "0",
+          "available": "true"
+        },
+        "1452407826534": {
+          "value": "Metoclopramide 5 mg tablets",
+          "count": "0",
+          "available": "false"
+        },
+        "1452407827750": {
+          "value": "Promethazine 25 mg tablets",
+          "count": "0",
+          "available": "true"
+        },
+        "1452407828350": {
+          "value": "Ranitidine 150 mg tablets",
+          "count": "0",
+          "available": "true"
+        },
+        "1452407828856": {
+          "value": "Meclizine 25 mg tablets",
+          "count": "0",
+          "available": "false"
+        },
+        "1452407829422": {
+          "value": "Metoclopramide 5 mg tablets",
+          "count": "0",
+          "available": "false"
+        },
+        "1452407847963": {
+          "value": "Meclizine 25 mg tablets",
+          "count": "0",
+          "available": "false"
+        },
+        "1452407848469": {
+          "value": "Metamucil",
+          "count": "0",
+          "available": "false"
+        }
+      }
+    },
+    "description": ""
+  },
+  "1452407863325": {
+    "name": "Happy Meal",
+    "type": "multiselect",
+    "mutable": true,
+    "settings": {
+      "options": {
+        "1452407876118": {
+          "value": "Tylenol, Tums, Vitamins",
+          "count": "0",
+          "available": "false"
+        }
+      }
+    },
+    "description": ""
+  },
+  "1452407886581": {
+    "name": "Injectables",
+    "type": "multiselect",
+    "mutable": true,
+    "settings": {
+      "options": {
+        "1452407963431": {
+          "value": "Cefazolin 1 gm  IM or IV injection",
+          "count": "0",
+          "available": "false"
+        },
+        "1452407963991": {
+          "value": "Ceftriaxone 1 gm IM or IV injection",
+          "count": "0",
+          "available": "true"
+        },
+        "1452407964474": {
+          "value": "Lidocaine 1% 10 mg/mL injection",
+          "count": "0",
+          "available": "true"
+        },
+        "1452407969614": {
+          "value": "Bacteriostatic water for injection",
+          "count": "0",
+          "available": "false"
+        },
+        "1452407970141": {
+          "value": "Dexamethasone 5 mg/1 mL injection",
+          "count": "0",
+          "available": "true"
+        },
+        "1452407982561": {
+          "value": "Promethazine 25 mg/1 mL injection",
+          "count": "0",
+          "available": "true"
+        },
+        "1452407983134": {
+          "value": "Sodium chloride 0.9% irrigation",
+          "count": "0",
+          "available": "false"
+        },
+        "1452407983644": {
+          "value": "Diphenhydramine 50 mg/mL IM injection",
+          "count": "0",
+          "available": "true"
+        },
+        "1452407997025": {
+          "value": "Ketorolac injection",
+          "count": "0",
+          "available": "true"
+        },
+        "1452407997534": {
+          "value": "Ondansetron",
+          "count": "0",
+          "available": "false"
+        },
+        "1452408010198": {
+          "value": "Fentanyl",
+          "count": "0",
+          "available": "false"
+        }
+      }
+    },
+    "description": ""
+  },
+  "1452408027789": {
+    "name": "Ophthalmics, Optics",
+    "type": "multiselect",
+    "mutable": true,
+    "settings": {
+      "options": {
+        "1452408040472": {
+          "value": "Gentamicin 0.3% ophthalmic drops",
+          "count": "0",
+          "available": "true"
+        },
+        "1452408041135": {
+          "value": "Lubricant 1.4% 14 mg/0.5 oz eye drops",
+          "count": "0",
+          "available": "true"
+        },
+        "1452408041810": {
+          "value": "Ofloxacin 0.3% otic drops",
+          "count": "0",
+          "available": "true"
+        },
+        "1452408050932": {
+          "value": "Saline eye drops, tears",
+          "count": "0",
+          "available": "false"
+        },
+        "1452408051470": {
+          "value": "Prednisolone 1% ophthalmic drops",
+          "count": "0",
+          "available": "true"
+        },
+        "1452408052629": {
+          "value": "Gentamicin 0.3% ophthalmic drops",
+          "count": "0",
+          "available": "false"
+        },
+        "1452408053093": {
+          "value": "Tetrahydrozoline 0.05% ophthalmic drops",
+          "count": "0",
+          "available": "true"
+        }
+      }
+    },
+    "description": ""
+  },
+  "1452408071844": {
+    "name": "Topicals",
+    "type": "multiselect",
+    "mutable": true,
+    "settings": {
+      "options": {
+        "1452408080253": {
+          "value": "Clotrimazole 500 mg vaginal tablets",
+          "count": "0",
+          "available": "true"
+        },
+        "1452408080901": {
+          "value": "Clotrimazole 1% antifungal cream",
+          "count": "0",
+          "available": "true"
+        },
+        "1452408081377": {
+          "value": "Ear wax softener (olive oil)",
+          "count": "0",
+          "available": "false"
+        },
+        "1452408081904": {
+          "value": "Hemorrhoidal rectal suppositories",
+          "count": "0",
+          "available": "false"
+        },
+        "1452408082466": {
+          "value": "Hydrocortisone 1% foil packet cream",
+          "count": "0",
+          "available": "true"
+        },
+        "1452408101656": {
+          "value": "Silver sulfadiazine 1% cream",
+          "count": "0",
+          "available": "true"
+        },
+        "1452408106527": {
+          "value": "Triple antibitoic oinment foil packets",
+          "count": "0",
+          "available": "true"
+        },
+        "1452408111678": {
+          "value": "Vitamin A & D foil packet ointment",
+          "count": "0",
+          "available": "true"
+        },
+        "1452408113751": {
+          "value": "White petrolatum foil packets",
+          "count": "0",
+          "available": "false"
+        },
+        "1452408114343": {
+          "value": "Aspercreme",
+          "count": "0",
+          "available": "false"
+        },
+        "1452408114823": {
+          "value": "Vaginal lubricant jelly",
+          "count": "0",
+          "available": "true"
+        },
+        "1452408129960": {
+          "value": "Triple Antibiotic Ointment",
+          "count": "0",
+          "available": "false"
+        },
+        "1452408130743": {
+          "value": "Methylsalicylate Cream",
+          "count": "0",
+          "available": "false"
+        },
+        "1452408131255": {
+          "value": "Trolamine salicyclate cream",
+          "count": "0",
+          "available": "false"
+        },
+        "1452408153932": {
+          "value": "Muscle Rub",
+          "count": "0",
+          "available": "false"
+        },
+        "1452408154476": {
+          "value": "Preparation H",
+          "count": "0",
+          "available": "true"
+        }
+      }
+    },
+    "description": ""
+  },
+  "1452408164245": {
+    "name": "Vitamins",
+    "type": "multiselect",
+    "mutable": true,
+    "settings": {
+      "options": {
+        "1452408181017": {
+          "value": "Ferrous sulfate 325 mg tablets",
+          "count": "0",
+          "available": "true"
+        },
+        "1452408182622": {
+          "value": "Folic acid 800 mcg tablets",
+          "count": "0",
+          "available": "true"
+        },
+        "1452408183097": {
+          "value": "Multivitamin tablets: adult with iron and iodine",
+          "count": "0",
+          "available": "true"
+        },
+        "1452408183546": {
+          "value": "Multivitamin tablets: children's chewable with iron",
+          "count": "0",
+          "available": "true"
+        },
+        "1452408184035": {
+          "value": "Multivitamin drops: infant's with iron",
+          "count": "0",
+          "available": "true"
+        },
+        "1452408184969": {
+          "value": "Multivitamin tablets: adult with iron and iodine",
+          "count": "0",
+          "available": "false"
+        },
+        "1452408185839": {
+          "value": "Prenatal vitamin tablets",
+          "count": "0",
+          "available": "true"
+        },
+        "1452408186326": {
+          "value": "Peanut Butter jar",
+          "count": "0",
+          "available": "false"
+        },
+        "1452408187105": {
+          "value": "Plumpy Nut bag",
+          "count": "0",
+          "available": "false"
+        },
+        "1452408226312": {
+          "value": "Baby Formula",
+          "count": "0",
+          "available": "false"
+        },
+        "1452408227012": {
+          "value": "Oral rehydration salts",
+          "count": "0",
+          "available": "true"
+        }
+      }
+    },
+    "description": ""
+  }
+}

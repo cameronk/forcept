@@ -452,10 +452,23 @@ FlowEditor.Field.Settings = React.createClass({
 								);
 							}
 
+							var pharmacyAvailableIcon;
 							if(this.props.stageType == "pharmacy") {
-
+								if(isTrue(thisOption.available)) {
+									pharmacyAvailableIcon = (
+										<span className="label label-success col-sm-1">
+											Check
+										</span>
+									);
+								} else {
+									pharmacyAvailableIcon = (
+										<span className="label label-default col-sm-1">
+											x
+										</span>
+									);
+								}
 								drugOptions = (
-									<div className="col-xs-12">
+									<div className="col-xs-11 col-sm-offset-1">
 										<div className="row">
 											<div className="col-xs-12 col-sm-6">
 												<div className="input-group input-group-sm">
@@ -491,9 +504,11 @@ FlowEditor.Field.Settings = React.createClass({
 							}
 
 
+
 							return (
 								<div className={(this.props.stageType !== "pharmacy" ? "field-select-option " : "") + "form-group row"} key={index}>
-									<div className="col-sm-12">
+									{pharmacyAvailableIcon}
+									<div className={this.props.stageType !== "pharmacy" ? "col-sm-12" : "col-sm-11"}>
 										<div className="input-group input-group-sm">
 											<input type="text"
 												placeholder="Enter a value for this option"
