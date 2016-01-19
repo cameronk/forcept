@@ -213,7 +213,7 @@ var FlowEditor = React.createClass({
 
 });
 
-FlowEditor.customizableFields 	= [ "select", "multiselect", "file" ];
+FlowEditor.customizableFields 	= [ "select", "multiselect", "file", "date" ];
 FlowEditor.disableTypeChanges 	= [ "multiselect", "file" ];
 FlowEditor.getDefaultFieldState = function(stageType) {
 	switch(stageType) {

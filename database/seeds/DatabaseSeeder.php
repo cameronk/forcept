@@ -44,7 +44,9 @@ class DatabaseSeeder extends Seeder
                     "type" => "date",
                     "name" => "Birthday",
                     "mutable" => false,
-                    "settings" => null
+                    "settings" => [
+                        "useBroadMonthSelector" => false
+                    ]
                 ],
                 "photo" => [
                     "type" => "file",

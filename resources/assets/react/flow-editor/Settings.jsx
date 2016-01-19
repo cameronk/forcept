@@ -15,15 +15,27 @@ FlowEditor.Field.Settings = React.createClass({
 	 * Return initial state based on property type
 	 */
 	getInitialState: function() {
-		console.log("Caught getInitialState for field settings dialog with type " + this.props.type);
 
+		console.group("FlowEditor.Field.Settings: getInitialState");
+		console.log("Type: %s", this.props.type);
+
+		var initialState = {};
 		// Return initial state if settings are necessary for this file type
 		switch(this.props.type) {
 
+			// Date input
+			case "date":
+				console.log("Dialog is for date field, returning initial date options.");
+				initialState = {
+					useBroadMonthSelector: false
+				};
+				break;
+
+
 			// Select input
 			case "select":
-				console.log("\t| Dialog is for select field, returning initial select options.");
-				return {
+				console.log("Dialog is for select field, returning initial select options.");
+				initialState = {
 					options: {},
 					allowCustomData: false,
 				};
@@ -31,25 +43,29 @@ FlowEditor.Field.Settings = React.createClass({
 
 			// Multiselect input
 			case "multiselect":
-				console.log("\t| Dialog is for multiselect field, returning initial select options.");
-				return {
+				console.log("Dialog is for multiselect field, returning initial select options.");
+				initialState = {
 					options: {},
 				};
 				break;
 
 			// File input
 			case "file":
-				return {
+				initialState = {
 					accept: []
 				};
 				break;
 
 			// For all others...
 			default:
-				console.log("\t| Field not recognized, skipping.");
-				return {};
+				console.log("Field does not need settings, skipping.");
 				break;
 		}
+
+
+		console.groupEnd();
+
+		return initialState;
 	},
 
 	/*
@@ -57,13 +73,30 @@ FlowEditor.Field.Settings = React.createClass({
 	 */
 	componentWillMount: function() {
 
- 		console.log("");
- 		console.log("--[mount: " + this.props['field-key'] + "]--")
-		console.log("Mounting options dialog for '" + this.props.type + "' input with props:");
-		console.log(this.props);
+		console.group("FlowEditor.Field.Settings: componentWillMount");
+		console.log("Props: %O", this.props);
+		console.log("Type: %s", this.props.type);
 
 		// If we have a field type that requires settings, load default settings into state
 		switch(this.props.type) {
+
+			// Select field type
+			case "date":
+
+				// If there's already an options array...
+				if(this.props.hasOwnProperty('settings') && this.props.settings !== null) {
+					console.log("DATE FIELD: props.settings found");
+					// If there's a set value for allowing custom data...
+					if(this.props.settings.hasOwnProperty("useBroadMonthSelector") && this.props.settings.useBroadMonthSelector == "true") {
+						console.log("DATE FIELD: use broad month selector == true");
+						this.setState({ useBroadMonthSelector: (this.props.settings.useBroadMonthSelector == "true") });
+					}
+
+				} else {
+					console.log("\t| Input DOES NOT have pre-defined settings");
+				}
+
+				break;
 
 			// Select field type
 			case "select":
@@ -121,6 +154,8 @@ FlowEditor.Field.Settings = React.createClass({
 
 				break;
 		}
+
+		console.groupEnd();
 	},
 
 	/*
@@ -270,24 +305,25 @@ FlowEditor.Field.Settings = React.createClass({
 	 * Handle change of allow custom data checkbox (SELECT/MULTISELECT type)
 	 */
 	handleAllowCustomDataChange: function() {
-		console.log("");
-		console.log("--[handleAllowCustomDataChange]--");
-		console.log("\t| for: " + this.props['field-key']);
-		console.log("\t| State before custom data change:");
-		console.log(this.state);
 
 		var newStatus = !this.state.allowCustomData;
 		this.setState({ allowCustomData: newStatus }, function() {
-			console.log("\t| New state:");
-			console.log(this.state);
-
 			// Bump changes to parent element for aggregation
 			this.props.onChange(this.state);
-
-			console.log("--[/handleAllowCustomDataChange]--");
-			console.log("");
 		});
 
+	},
+
+	/*
+	 * Handle change of allow custom data checkbox (SELECT/MULTISELECT type)
+	 */
+	handleBroadMonthSelectorChange: function() {
+		console.log("handleBroadMonthSelectorChange");
+		var newStatus = !this.state.useBroadMonthSelector;
+		this.setState({ useBroadMonthSelector: newStatus }, function() {
+			// Bump changes to parent element for aggregation
+			this.props.onChange(this.state);
+		});
 	},
 
 	/**
@@ -372,7 +408,6 @@ FlowEditor.Field.Settings = React.createClass({
 			case "text":
 			case "textarea":
 			case "number":
-			case "date":
 			case "yesno":
 			case "header":
 			case "pharmacy":
@@ -386,6 +421,24 @@ FlowEditor.Field.Settings = React.createClass({
 				);
 				break;
 
+			case "date":
+				return (
+					<div className="form-group row">
+						<div className="col-sm-12">
+							<h2>Settings</h2>
+							<div className="checkbox m-t">
+								<label>
+									<input type="checkbox"
+										checked={this.state.useBroadMonthSelector == true}
+										onChange={this.handleBroadMonthSelectorChange} />
+										Use broad month selector instead of specific date selector
+								</label>
+							</div>
+							{mutabilityMessage}
+						</div>
+					</div>
+				);
+				break;
 			case "select":
 			case "multiselect":
 

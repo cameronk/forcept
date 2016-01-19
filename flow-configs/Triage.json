@@ -1,1 +1,146 @@
-{"1452365179781":{"name":"Main complaint","type":"multiselect","mutable":"true","settings":{"options":{"1452365191177":{"value":"Acid/Stomach"},"1452365191741":{"value":"Abdominal pain"},"1452365193237":{"value":"Back pain"},"1452365193589":{"value":"Chest pain"},"1452365193938":{"value":"Coughing"},"1452365194324":{"value":"Diarrhea"},"1452365194672":{"value":"Dizziness"},"1452365195007":{"value":"Fever"},"1452365195372":{"value":"Headache"},"1452365195660":{"value":"Joint pain"},"1452365196037":{"value":"Malaise/Fatigue"},"1452365196463":{"value":"Poor appetite"},"1452365196923":{"value":"Poor sleep"},"1452365245988":{"value":"Poor vision"},"1452365246800":{"value":"Respiratory difficulty"},"1452365247200":{"value":"Recheck patient"},"1452365247529":{"value":"Short of breath"},"1452365247940":{"value":"Skin disorder"},"1452365248242":{"value":"Swelling"},"1452365248996":{"value":"UTI symptoms"},"1452365274379":{"value":"Vaginal discharge"},"1452365274773":{"value":"Weight loss"}}},"description":""},"1452365283153":{"name":"Complaint details","type":"textarea","mutable":"true","settings":"","description":"Short details about the complaint"},"1452365297232":{"name":"Blood pressure","type":"text","mutable":"true","settings":"","description":"Format: Systolic/Diastolic"},"1452365306914":{"name":"Weight (lb)","type":"number","mutable":"true","settings":"","description":""},"1452365339302":{"name":"Questions","type":"header","mutable":"true","settings":"","description":""},"1452365347769":{"name":"Pregnant?","type":"yesno","mutable":"true","settings":"","description":"Are you currently pregnant?"},"1452365359347":{"name":"Nursing?","type":"yesno","mutable":"true","settings":"","description":"Are you currently nursing?"},"1452365383930":{"name":"Albendezole?","type":"yesno","mutable":"true","settings":"","description":"Are you currently taking Albendazole?"},"1453163659777":{"name":"","type":"text","mutable":true,"settings":{}}}
+{
+  "1452365179781": {
+    "name": "Main complaint",
+    "type": "multiselect",
+    "mutable": "true",
+    "settings": {
+      "options": {
+        "1452365191177": {
+          "value": "Acid/Stomach"
+        },
+        "1452365191741": {
+          "value": "Abdominal pain"
+        },
+        "1452365193237": {
+          "value": "Back pain"
+        },
+        "1452365193589": {
+          "value": "Chest pain"
+        },
+        "1452365193938": {
+          "value": "Coughing"
+        },
+        "1452365194324": {
+          "value": "Diarrhea"
+        },
+        "1452365194672": {
+          "value": "Dizziness"
+        },
+        "1452365195007": {
+          "value": "Fever"
+        },
+        "1452365195372": {
+          "value": "Headache"
+        },
+        "1452365195660": {
+          "value": "Joint pain"
+        },
+        "1452365196037": {
+          "value": "Malaise/Fatigue"
+        },
+        "1452365196463": {
+          "value": "Poor appetite"
+        },
+        "1452365196923": {
+          "value": "Poor sleep"
+        },
+        "1452365245988": {
+          "value": "Poor vision"
+        },
+        "1452365246800": {
+          "value": "Respiratory difficulty"
+        },
+        "1452365247200": {
+          "value": "Recheck patient"
+        },
+        "1452365247529": {
+          "value": "Short of breath"
+        },
+        "1452365247940": {
+          "value": "Skin disorder"
+        },
+        "1452365248242": {
+          "value": "Swelling"
+        },
+        "1452365248996": {
+          "value": "UTI symptoms"
+        },
+        "1452365274379": {
+          "value": "Vaginal discharge"
+        },
+        "1452365274773": {
+          "value": "Weight loss"
+        }
+      }
+    },
+    "description": ""
+  },
+  "1452365283153": {
+    "name": "Complaint details",
+    "type": "textarea",
+    "mutable": "true",
+    "settings": "",
+    "description": "Short details about the complaint"
+  },
+  "1452365297232": {
+    "name": "Blood pressure",
+    "type": "text",
+    "mutable": "true",
+    "settings": "",
+    "description": "Format: Systolic/Diastolic"
+  },
+  "1452365306914": {
+    "name": "Weight (lb)",
+    "type": "number",
+    "mutable": "true",
+    "settings": "",
+    "description": ""
+  },
+  "1452365339302": {
+    "name": "Questions",
+    "type": "header",
+    "mutable": "true",
+    "settings": "",
+    "description": ""
+  },
+  "1452365347769": {
+    "name": "Pregnant?",
+    "type": "yesno",
+    "mutable": "true",
+    "settings": "",
+    "description": "Are you currently pregnant?"
+  },
+  "1452365359347": {
+    "name": "Nursing?",
+    "type": "yesno",
+    "mutable": "true",
+    "settings": "",
+    "description": "Are you currently nursing?"
+  },
+  "1453170946579": {
+    "name": "Have you taken...",
+    "type": "multiselect",
+    "mutable": "true",
+    "settings": {
+      "options": {
+        "1453170950651": {
+          "value": "Ablendezole"
+        },
+        "1453170951180": {
+          "value": "Piperazine"
+        }
+      }
+    },
+    "description": "Have you recently taken Albendezole or Piperazine?"
+   },
+  "1453171057858": {
+    "name": "When did you take them?",
+    "type": "date",
+    "mutable": true,
+    "settings": {
+      "useBroadMonthSelector": "true"
+    },
+    "description": "When did you last take Albendezole / Piperazine?"
+  }
+
+}

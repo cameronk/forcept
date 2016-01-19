@@ -34,19 +34,22 @@ FlowEditor.Field = React.createClass({
  	 * Set up field state based on props prior to mount
  	 */
  	componentWillMount: function() {
+
+        var props = this.props;
  		this.setState({
  			// Required properties
- 			name: this.props.name,
- 			type: this.props.type,
- 			mutable: isTrue(this.props.mutable),
+ 			name: props.name,
+ 			type: props.type,
+ 			mutable: isTrue(props.mutable),
 
  			// Settings
- 			description: this.props.hasOwnProperty("description") ? this.props.description : null,
+ 			description: props.hasOwnProperty("description") ? props.description : null,
  			settings:
- 				(FlowEditor.customizableFields).indexOf(this.props.type) !== -1 // If this field is a customizable field
- 				&& typeof this.props.settings === "object" // If the settings object exists
- 				&& Object.keys(this.props.settings).length > 0  // If the settings object has parameters
- 					? this.props.settings // Use the settings object
+ 				(FlowEditor.customizableFields).indexOf(props.type) !== -1 // If this field is a customizable field
+                && props.hasOwnProperty('settings')
+ 				&& typeof props.settings === "object" // If the settings object exists
+ 				&& Object.keys(props.settings).length > 0  // If the settings object has parameters
+ 					? props.settings // Use the settings object
  					: null, // Otherwise, return null
 
  		});

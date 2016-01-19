@@ -348,7 +348,45 @@ Fields.FieldLabel = React.createClass({displayName: "FieldLabel",
 	}
 });
 
-Fields.Date = React.createClass({displayName: "Date",
+/**
+ * fields/Date.jsx
+ * @author Cameron Kelley
+ *
+ * Properties:
+ * - settings:
+ *   - useBroadMonthSelector: if true, show a basic month selector instead of date input
+ */
+ Fields.Date = React.createClass({displayName: "Date",
+
+	getInitialState: function() {
+		return {
+			broadMonthDetractor: null
+		};
+	},
+
+	onBroadMonthSelectorChange: function(amount) {
+		return function(evt) {
+			var now = new Date();
+				now.setMonth(now.getMonth() + amount);
+
+			this.setState({
+				broadMonthDetractor: amount
+			});
+
+			var newDate = [
+				(now.getMonth()) < 9
+					? "0" + (now.getMonth() + 1)
+					: (now.getMonth() + 1),
+				now.getDate(),
+				now.getFullYear()
+			].join("/");
+			console.log("Date: onBroadMonthSelectorChange -> %s", newDate);
+
+			this.props.onChange(this.props.id, newDate);
+
+		}.bind(this);
+	},
+
 	onDateInputChange: function(event) {
 		// Bubble event up to handler passed from Visit
 		// (pass field ID and event)
@@ -356,20 +394,73 @@ Fields.Date = React.createClass({displayName: "Date",
 	},
 
 	render: function() {
+		var props = this.props,
+			dateDOM;
+
+		if(props.hasOwnProperty('settings')
+			&& props.settings.hasOwnProperty('useBroadMonthSelector')
+			&& isTrue(props.settings.useBroadMonthSelector)) {
+
+			var monthDetractors = [
+				{
+					name: "1 month ago",
+					amount: -1
+				},
+				{
+					name: "2 months ago",
+					amount: -2
+				},
+				{
+					name: "3 months ago",
+					amount: -3
+				},
+				{
+					name: "6 months ago",
+					amount: -6
+				},
+				{
+					name: "1 year ago",
+					amount: -12
+				},
+			];
+
+			dateDOM = (
+				React.createElement("div", {className: "btn-group btn-group-block", "data-toggle": "buttons"}, 
+					monthDetractors.map(function(detractor, index) {
+						var active = (this.state.broadMonthDetractor === detractor.amount);
+						return (
+							React.createElement("label", {className: "btn btn-primary-outline" + (active ? " active" : ""), onClick: this.onBroadMonthSelectorChange(detractor.amount)}, 
+								React.createElement("input", {type: "radio", 
+									name: detractor.name + "-options", 
+									autoComplete: "off", 
+									defaultChecked: active}), 
+								detractor.name
+							)
+						);
+					}.bind(this))
+				)
+			);
+
+		} else {
+			dateDOM = (
+				React.createElement("input", {
+					type: "date", 
+					className: "form-control", 
+					autoComplete: "off", 
+					maxLength: "255", 
+
+					id: this.props.id, 
+					placeholder: this.props.name + " goes here", 
+					defaultValue: this.props.defaultValue !== null ? this.props.defaultValue : null, 
+					onChange: this.onDateInputChange})
+			);
+		}
+
 		return (
 			React.createElement("div", {className: "form-group row"}, 
 				React.createElement(Fields.FieldLabel, React.__spread({},  this.props)), 
 				React.createElement("div", {className: Fields.inputColumnClasses}, 
-					React.createElement("input", {
-						type: "date", 
-						className: "form-control", 
-						autoComplete: "off", 
-						maxLength: "255", 
-
-						id: this.props.id, 
-						placeholder: this.props.name + " goes here", 
-						defaultValue: this.props.defaultValue !== null ? this.props.defaultValue : null, 
-						onChange: this.onDateInputChange})
+					dateDOM
 				)
 			)
 		);
@@ -1544,7 +1635,7 @@ var FlowEditor = React.createClass({displayName: "FlowEditor",
 
 });
 
-FlowEditor.customizableFields 	= [ "select", "multiselect", "file" ];
+FlowEditor.customizableFields 	= [ "select", "multiselect", "file", "date" ];
 FlowEditor.disableTypeChanges 	= [ "multiselect", "file" ];
 FlowEditor.getDefaultFieldState = function(stageType) {
 	switch(stageType) {
@@ -1622,19 +1713,22 @@ FlowEditor.Field = React.createClass({displayName: "Field",
  	 * Set up field state based on props prior to mount
  	 */
  	componentWillMount: function() {
+
+        var props = this.props;
  		this.setState({
  			// Required properties
- 			name: this.props.name,
- 			type: this.props.type,
- 			mutable: isTrue(this.props.mutable),
+ 			name: props.name,
+ 			type: props.type,
+ 			mutable: isTrue(props.mutable),
 
  			// Settings
- 			description: this.props.hasOwnProperty("description") ? this.props.description : null,
+ 			description: props.hasOwnProperty("description") ? props.description : null,
  			settings:
- 				(FlowEditor.customizableFields).indexOf(this.props.type) !== -1 // If this field is a customizable field
- 				&& typeof this.props.settings === "object" // If the settings object exists
- 				&& Object.keys(this.props.settings).length > 0  // If the settings object has parameters
- 					? this.props.settings // Use the settings object
+ 				(FlowEditor.customizableFields).indexOf(props.type) !== -1 // If this field is a customizable field
+                && props.hasOwnProperty('settings')
+ 				&& typeof props.settings === "object" // If the settings object exists
+ 				&& Object.keys(props.settings).length > 0  // If the settings object has parameters
+ 					? props.settings // Use the settings object
  					: null, // Otherwise, return null
 
  		});
@@ -1889,15 +1983,27 @@ FlowEditor.Field.Settings = React.createClass({displayName: "Settings",
 	 * Return initial state based on property type
 	 */
 	getInitialState: function() {
-		console.log("Caught getInitialState for field settings dialog with type " + this.props.type);
 
+		console.group("FlowEditor.Field.Settings: getInitialState");
+		console.log("Type: %s", this.props.type);
+
+		var initialState = {};
 		// Return initial state if settings are necessary for this file type
 		switch(this.props.type) {
 
+			// Date input
+			case "date":
+				console.log("Dialog is for date field, returning initial date options.");
+				initialState = {
+					useBroadMonthSelector: false
+				};
+				break;
+
+
 			// Select input
 			case "select":
-				console.log("\t| Dialog is for select field, returning initial select options.");
-				return {
+				console.log("Dialog is for select field, returning initial select options.");
+				initialState = {
 					options: {},
 					allowCustomData: false,
 				};
@@ -1905,25 +2011,29 @@ FlowEditor.Field.Settings = React.createClass({displayName: "Settings",
 
 			// Multiselect input
 			case "multiselect":
-				console.log("\t| Dialog is for multiselect field, returning initial select options.");
-				return {
+				console.log("Dialog is for multiselect field, returning initial select options.");
+				initialState = {
 					options: {},
 				};
 				break;
 
 			// File input
 			case "file":
-				return {
+				initialState = {
 					accept: []
 				};
 				break;
 
 			// For all others...
 			default:
-				console.log("\t| Field not recognized, skipping.");
-				return {};
+				console.log("Field does not need settings, skipping.");
 				break;
 		}
+
+
+		console.groupEnd();
+
+		return initialState;
 	},
 
 	/*
@@ -1931,13 +2041,30 @@ FlowEditor.Field.Settings = React.createClass({displayName: "Settings",
 	 */
 	componentWillMount: function() {
 
- 		console.log("");
- 		console.log("--[mount: " + this.props['field-key'] + "]--")
-		console.log("Mounting options dialog for '" + this.props.type + "' input with props:");
-		console.log(this.props);
+		console.group("FlowEditor.Field.Settings: componentWillMount");
+		console.log("Props: %O", this.props);
+		console.log("Type: %s", this.props.type);
 
 		// If we have a field type that requires settings, load default settings into state
 		switch(this.props.type) {
+
+			// Select field type
+			case "date":
+
+				// If there's already an options array...
+				if(this.props.hasOwnProperty('settings') && this.props.settings !== null) {
+					console.log("DATE FIELD: props.settings found");
+					// If there's a set value for allowing custom data...
+					if(this.props.settings.hasOwnProperty("useBroadMonthSelector") && this.props.settings.useBroadMonthSelector == "true") {
+						console.log("DATE FIELD: use broad month selector == true");
+						this.setState({ useBroadMonthSelector: (this.props.settings.useBroadMonthSelector == "true") });
+					}
+
+				} else {
+					console.log("\t| Input DOES NOT have pre-defined settings");
+				}
+
+				break;
 
 			// Select field type
 			case "select":
@@ -1995,6 +2122,8 @@ FlowEditor.Field.Settings = React.createClass({displayName: "Settings",
 
 				break;
 		}
+
+		console.groupEnd();
 	},
 
 	/*
@@ -2144,24 +2273,25 @@ FlowEditor.Field.Settings = React.createClass({displayName: "Settings",
 	 * Handle change of allow custom data checkbox (SELECT/MULTISELECT type)
 	 */
 	handleAllowCustomDataChange: function() {
-		console.log("");
-		console.log("--[handleAllowCustomDataChange]--");
-		console.log("\t| for: " + this.props['field-key']);
-		console.log("\t| State before custom data change:");
-		console.log(this.state);
 
 		var newStatus = !this.state.allowCustomData;
 		this.setState({ allowCustomData: newStatus }, function() {
-			console.log("\t| New state:");
-			console.log(this.state);
-
 			// Bump changes to parent element for aggregation
 			this.props.onChange(this.state);
-
-			console.log("--[/handleAllowCustomDataChange]--");
-			console.log("");
 		});
 
+	},
+
+	/*
+	 * Handle change of allow custom data checkbox (SELECT/MULTISELECT type)
+	 */
+	handleBroadMonthSelectorChange: function() {
+		console.log("handleBroadMonthSelectorChange");
+		var newStatus = !this.state.useBroadMonthSelector;
+		this.setState({ useBroadMonthSelector: newStatus }, function() {
+			// Bump changes to parent element for aggregation
+			this.props.onChange(this.state);
+		});
 	},
 
 	/**
@@ -2246,7 +2376,6 @@ FlowEditor.Field.Settings = React.createClass({displayName: "Settings",
 			case "text":
 			case "textarea":
 			case "number":
-			case "date":
 			case "yesno":
 			case "header":
 			case "pharmacy":
@@ -2260,6 +2389,24 @@ FlowEditor.Field.Settings = React.createClass({displayName: "Settings",
 				);
 				break;
 
+			case "date":
+				return (
+					React.createElement("div", {className: "form-group row"}, 
+						React.createElement("div", {className: "col-sm-12"}, 
+							React.createElement("h2", null, "Settings"), 
+							React.createElement("div", {className: "checkbox m-t"}, 
+								React.createElement("label", null, 
+									React.createElement("input", {type: "checkbox", 
+										checked: this.state.useBroadMonthSelector == true, 
+										onChange: this.handleBroadMonthSelectorChange}), 
+										"Use broad month selector instead of specific date selector"
+								)
+							), 
+							mutabilityMessage
+						)
+					)
+				);
+				break;
 			case "select":
 			case "multiselect":
 
