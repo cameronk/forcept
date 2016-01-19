@@ -319,8 +319,12 @@ DataDisplays.PatientAggregate = React.createClass({displayName: "PatientAggregat
 
 });
 
-
 /* ========================================= */
+
+/**
+ * fields/Fields.jsx
+ * @author Cameron Kelley
+ */
 
 var Fields = {
 	labelColumnClasses: "col-lg-4 col-sm-5 col-xs-12",
@@ -849,21 +853,139 @@ Fields.Number = React.createClass({displayName: "Number",
 	}
 });
 
-Fields.Pharmacy = React.createClass({displayName: "Pharmacy",
+/**
+ * fields/Pharmacy.jsx
+ * @author Cameron Kelley
+ *
+ * Properties:
+ * - settings:
+ *   - TODO fix this
+ */
+ Fields.Pharmacy = React.createClass({displayName: "Pharmacy",
+
 	getInitialState: function() {
 		return {
-			data: {}
+			status: "init",
+			justSaved: false,
+			setID: null,
+
+			data: {},
+			drugs: {},
+
+			selected: {},
 		};
 	},
+
+	/*
+	 *
+	 */
+	componentWillMount: function() {
+
+		console.group("  | Fields.Pharmacy: mount");
+			console.log("Props: %O", this.props);
+
+		// Check if we have a prescription table ID
+		if(this.props.hasOwnProperty('defaultValue') && this.props.defaultValue !== null) {
+			console.log("Found default value: %s", this.props.defaultValue);
+			this.setState({
+				setID: this.props.defaultValue
+			});
+			this.loadPrescriptionSet(this.props.defaultValue);
+		}
+		this.loadPrescriptionSet();
+
+		console.groupEnd();
+	},
+
+	loadPrescriptionSet: function() {
+		this.setState({ status: "loading" });
+	},
+
+	savePrescriptionSet: function() {
+		if(this.state.setID !== null) {
+			this.setState({
+				status: "saving"
+			});
+			$.ajax({
+				type: "POST",
+				url: "/data/prescription-sets/save",
+				data: {
+					_token: document.querySelector("meta[name='csrf-token']").getAttribute('value'),
+					id: this.state.setID,
+					prescriptions: this.state.selected
+				},
+				success: function(resp) {
+					console.log(resp);
+					if(resp.hasOwnProperty("id")) {
+
+						// Bump the PrescriptionSet ID up to top level
+						this.props.onChange(this.props.id, parseInt(resp.id));
+
+						this.setState({
+							status: "view",
+							justSaved: true
+						}, function() {
+							// TODO reference this with a state variable?
+							setTimeout(function() {
+								this.setState({
+									justSaved: false,
+								});
+							}.bind(this), 3000);
+						}.bind(this));
+					}
+				}.bind(this)
+			})
+		} else {
+			console.error("Tried to save prescription set with a null ID");
+		}
+	},
+
+	createPrescriptionSet: function() {
+		this.setState({ status: "loading" });
+
+		$.ajax({
+			type: "POST",
+			url: "/data/prescription-sets/create",
+			data: {
+				_token: document.querySelector("meta[name='csrf-token']").getAttribute('value'),
+				patientID: this.props.patientID,
+				visitID: this.props.visitID
+			},
+			success: function(resp) {
+				console.log(resp);
+				var state = {
+					status: "view",
+					setID: resp.id
+				};
+				if(resp.hasOwnProperty("prescriptions")) {
+					state.selected = resp.prescriptions;
+				}
+				this.setState(state);
+			}.bind(this)
+		});
+	},
+
+	/*
+	 * Grab list of drugs from /data/
+	 */
 	updateList: function() {
 		$.ajax({
 			type: "GET",
 			url: "/data/pharmacy/drugs",
 			success: function(resp) {
 				if(resp.status == "success") {
-					__debug(resp.data);
+					var drugs = {};
+					Object.keys(resp.data).map(function(categoryKey) {
+						var thisCategory = resp.data[categoryKey];
+						if(thisCategory.hasOwnProperty('settings')&& thisCategory.settings.hasOwnProperty('options')) {
+							Object.keys(thisCategory.settings.options).map(function(drugKey) {
+								drugs[drugKey] = thisCategory.settings.options[drugKey];
+							});
+						}
+					});
 					this.setState({
-						data: resp.data
+						data: resp.data,
+						drugs: drugs
 					});
 				}
 			}.bind(this),
@@ -875,6 +997,10 @@ Fields.Pharmacy = React.createClass({displayName: "Pharmacy",
 			}
 		});
 	},
+
+	/*
+	 * When the component mounts, update the pharmacy list
+	 */
 	componentWillMount: function() {
 		this.updateList();
 	},
@@ -882,78 +1008,241 @@ Fields.Pharmacy = React.createClass({displayName: "Pharmacy",
 	onSelectedDrugsChange: function(event) {
 		console.log("Selected drugs change:");
 		var options = event.target.options,
-			values = [];
+			values = this.state.selected,
+			alreadySelected = Object.keys(values);
 
+		console.log("Already selected: %O", values);
+
+		// Loop through all target options
 		for(var i = 0; i < options.length; i++) {
-			if(options[i].selected) {
-				values.push(options[i].value);
+			var thisOption = options[i],
+				thisValue = thisOption.value;
+
+			// If the option is selected in the <select> input and NOT in our "selected" object
+			if(thisOption.selected && alreadySelected.indexOf(thisValue) === -1) {
+				values[thisValue] = {
+					amount: 1,
+					done: false
+				};
+			} else {
+				// Delete an option IF:
+				// - it's found in the alreadySelected object
+				// - the option is not selected
+				// - the option is not marked as done
+				if(alreadySelected.indexOf(thisValue) !== -1
+					&& !thisOption.selected
+					&& !isTrue(values[thisValue].done)) {
+					delete values[thisValue];
+				}
 			}
 		}
-		console.log(values);
-		this.props.onChange(this.props.id, values);
+		this.setState({
+			selected: values
+		});
+	},
+
+	/*
+	 *
+	 */
+	onSignOff: function(drugKey) {
+		return function(event) {
+			var selected = this.state.selected;
+				// signedOff = this.state.signedOff;
+
+			if(selected.hasOwnProperty(drugKey)) {
+				console.log("Signing off %s", drugKey);
+				selected[drugKey].done = true;
+			}
+
+			console.log("Signed off: %O", selected);
+
+			this.setState({
+				selected: selected,
+			});
+
+		}.bind(this);
+	},
+
+	/*
+	 *
+	 */
+	onDrugAmountChange: function(drugKey) {
+		return function(event) {
+			var selected = this.state.selected;
+			if(selected.hasOwnProperty(drugKey)) {
+				selected[drugKey].amount = event.target.value;
+			}
+
+			this.setState({ selected: selected });
+		}.bind(this);
 	},
 
 	render: function() {
+
 		var props = this.props,
 			state = this.state,
-			dataKeys = Object.keys(this.state.data);
+			dataKeys = Object.keys(this.state.data),
+			selectedKeys = Object.keys(state.selected),
+			renderDOM;
 
-		var selectDrugs = (
-			React.createElement("div", {className: "alert alert-info"}, 
-				React.createElement("strong", null, "One moment..."), React.createElement("div", null, "loading the latest pharmacy data")
-			)
-		);
+		console.groupCollapsed("  Fields.Pharmacy: render '%s'", props.name);
+		console.log("Props: %O", props);
+		console.log("State: %O", state);
 
-		if(dataKeys.length > 0) {
-			selectDrugs = (
-				React.createElement("select", {
-					className: "form-control forcept-field-select-drugs", 
-					multiple: true, 
-					size: 10, 
-					onChange: this.onSelectedDrugsChange}, 
 
-					dataKeys.map(function(drugKey, index) {
-						var thisCategory = state.data[drugKey];
+		switch(state.status) {
+			case "init":
+				renderDOM = (
+					React.createElement("div", {className: "btn btn-block btn-primary", onClick: this.createPrescriptionSet}, 
+						'\u002b', " Load prescription set"
+					)
+				);
+				break;
+			case "loading":
+				renderDOM = (
+					React.createElement("img", {src: "/assets/img/loading.gif"})
+				);
+				break;
 
-						if(thisCategory.hasOwnProperty('settings')
-							&& thisCategory.settings.hasOwnProperty('options')
-							&& thisCategory.settings.options !== null) {
+			case "saving":
+			case "view":
 
-							var optionKeys = Object.keys(thisCategory.settings.options);
+				var drugPicker = (
+					React.createElement("div", {className: "alert alert-info"}, 
+						React.createElement("strong", null, "One moment..."), React.createElement("div", null, "loading the latest pharmacy data")
+					)
+				);
+
+				var selectedDrugs,
+					saveButton;
+
+				if(dataKeys.length > 0) {
+					drugPicker = (
+						React.createElement("select", {
+							className: "form-control forcept-field-select-drugs", 
+							multiple: true, 
+							size: 10, 
+							onChange: this.onSelectedDrugsChange}, 
+
+							dataKeys.map(function(categoryKey, index) {
+								var thisCategory = state.data[categoryKey];
+
+								if(thisCategory.hasOwnProperty('settings')
+									&& thisCategory.settings.hasOwnProperty('options')
+									&& thisCategory.settings.options !== null) {
+
+									var optionKeys = Object.keys(thisCategory.settings.options);
+
+									return (
+										React.createElement("optgroup", {key: thisCategory.name, label: thisCategory.name}, 
+											optionKeys.map(function(optionKey, optionIndex) {
+
+												var thisOption = thisCategory.settings.options[optionKey],
+													disabled = (thisOption.available === "false"),
+													displayName = thisOption.value + (parseInt(thisOption.count) > 0 && thisOption.available ? "\u2014 " + thisOption.count : "")
+
+												if(!disabled) {
+													return (
+														React.createElement("option", {value: optionKey, key: optionIndex}, 
+															displayName
+														)
+													);
+												}
+
+											}.bind(this))
+										)
+									);
+								}
+							}.bind(this))
+						)
+					);
+
+
+					if(selectedKeys.length > 0) {
+						console.log("Selected: %O", state.selected);
+
+						saveButton = (
+							React.createElement("div", {className: "col-xs-12"}, 
+								React.createElement("div", {className: "btn btn-block btn-lg btn-success m-t", onClick: this.savePrescriptionSet}, 
+									state.status === "saving" ? "Working..." : (state.justSaved === true ? "Saved!" : "\u21ea Save prescription set")
+								)
+							)
+						);
+
+						selectedDrugs = selectedKeys.map(function(drugKey) {
+							console.log("Selected drug key: %s", drugKey);
+							console.log("...this drug's object: %O", state.drugs[drugKey]);
+
+							var thisDrug = state.drugs[drugKey],
+								thisSelection = state.selected[drugKey],
+								signedOff = isTrue(thisSelection.done),
+								preSignOffDOM;
+
+							if(!signedOff) {
+								preSignOffDOM = (
+									React.createElement("div", {className: "col-xs-12"}, 
+										React.createElement("div", {className: "input-group input-group-sm"}, 
+											React.createElement("span", {className: "input-group-addon"}, 
+												"Amount"
+											), 
+											React.createElement("input", {
+												type: "number", 
+												min: "1", 
+												className: "form-control form-control-sm", 
+												placeholder: "Enter amount here", 
+												defaultValue: "1", 
+												onChange: this.onDrugAmountChange(drugKey)}), 
+											React.createElement("span", {className: "input-group-btn"}, 
+												React.createElement("button", {type: "button", className: "btn btn-sm btn-success", onClick: this.onSignOff(drugKey)}, 
+													"\u2713", " Done"
+												)
+											)
+										)
+									)
+								);
+							}
 
 							return (
-								React.createElement("optgroup", {key: thisCategory.name, label: thisCategory.name}, 
-									optionKeys.map(function(optionKey, optionIndex) {
-
-										var thisOption = thisCategory.settings.options[optionKey],
-											disabled = thisOption.available == "false",
-											displayName = thisOption.value + (parseInt(thisOption.count) > 0 && thisOption.available ? "\u2014 " + thisOption.count : "")
-
-										if(!disabled) {
-											return (
-												React.createElement("option", {value: thisOption.value, key: optionIndex}, 
-													displayName
-												)
-											);
-										}
-
-									}.bind(this))
+								React.createElement("div", {className: "row m-t"}, 
+									React.createElement("div", {className: "col-xs-12"}, 
+										React.createElement("h6", null, 
+											signedOff ? ["\u2611", thisSelection.amount, "\u00d7"].join(" ") : "\u2610", " ", thisDrug.value
+										)
+									), 
+									preSignOffDOM
 								)
 							);
-						}
-					}.bind(this))
-				)
-			);
+						}.bind(this));
+					}
+
+				}
+
+				renderDOM = (
+					React.createElement("span", null, 
+						drugPicker, 
+						selectedDrugs, 
+						saveButton
+					)
+				);
+
+				break;
 		}
+
+		console.groupEnd();
 
 		return (
 			React.createElement("div", {className: "form-group row"}, 
 				React.createElement(Fields.FieldLabel, React.__spread({},  props)), 
 				React.createElement("div", {className: Fields.inputColumnClasses}, 
-					selectDrugs
+					renderDOM
 				)
 			)
 		);
+
+		/*
+			{selectDrugs}
+			{selectedDrugs}*/
+
 	}
 });
 
@@ -3509,7 +3798,8 @@ var Visit = React.createClass({displayName: "Visit",
 					controlsType: props.controlsType, 
 					containerTitle: props.containerTitle, 
 					stageType: props.currentStageType, 
-
+					visitID: props.visitID, 
+					
 					summaryFields: props.summaryFields, 
 					fields: props.mutableFields, 
 					patients: state.patients, 
@@ -3695,6 +3985,16 @@ Visit.PatientsContainer = React.createClass({displayName: "PatientsContainer",
 					var patientDOM = (
 						React.createElement("div", {key: patientID}, 
 							React.createElement(Visit.Patient, {
+								/*
+								 * Stage type
+								 */
+								stageType: props.stageType, 
+								
+								/*
+								 * Visit
+								 */
+								visitID: props.visitID, 
+
 								/*
 								 * Patient record
 								 */
@@ -4649,6 +4949,7 @@ Visit.Patient = React.createClass({displayName: "Patient",
 			summary;
 
 		console.groupCollapsed("Visit.Patient: render");
+			console.log("Stage type: %s", props.stageType);
 			console.log("Iterable field count: %i", countFields);
 			console.log("Iterable field keys: %O", fieldKeys);
 			console.log("Summary field count : %i", countSummaryFields);
@@ -4687,6 +4988,212 @@ Visit.Patient = React.createClass({displayName: "Patient",
 			);
 		}
 
+		var fieldsDOM;
+
+		if(props.stageType === "pharmacy") {
+			console.group("Running pharmacy loop.");
+
+				// Loop through summary fields instead of actual fields.
+				fieldsDOM = summaryFieldsKeys.map(function(fieldID, index) {
+
+					var fieldDOM,
+						thisField = summaryFields[fieldID],
+						thisPatient = props.patient,
+						defaultValue = thisPatient.hasOwnProperty(fieldID) ? thisPatient[fieldID] : null;
+
+					console.groupCollapsed("Field #%i: '%s' %O", index, thisField.name, thisField);
+						console.log("Type: %s", thisField.type);
+						console.log("Default value: %s", defaultValue);
+
+					// Mutate data as necessary per field type
+					if(thisField.type === "pharmacy") {
+						console.log("-> found a pharmacy-type");
+						fieldDOM = (
+							React.createElement(Fields.Pharmacy, React.__spread({}, 
+								thisField, 
+								{patientID: props.id, 
+								visitID: props.visitID, 
+								defaultValue: defaultValue, 
+								onChange: this.handleFieldChange, 
+								key: fieldID, 
+								id: fieldID}))
+						);
+					}
+
+					console.groupEnd();
+
+					// Return fieldDOM back to map function
+					return fieldDOM;
+
+				}.bind(this));
+
+			console.groupEnd();
+		} else {
+			fieldsDOM = fieldKeys.map(function(fieldID, index) {
+
+				var fieldDOM,
+					thisField = fields[fieldID],
+					thisPatient = props.patient,
+					defaultValue = thisPatient.hasOwnProperty(fieldID) ? thisPatient[fieldID] : null;
+
+				console.groupCollapsed("Field #%i: '%s' %O", index, thisField.name, thisField);
+					console.log("Type: %s", thisField.type);
+					console.log("Default value: %s", defaultValue);
+
+				// Mutate data as necessary per field type
+				switch(thisField.type) {
+					// Fields stored as JSON arrays
+					case "multiselect":
+					case "file":
+					case "pharmacy":
+						if(defaultValue !== null && typeof defaultValue === "string") {
+							try {
+								defaultValue = JSON.parse(defaultValue)
+							} catch(e) {
+								console.error("Attempt to convert this field's data into an array failed.");
+								defaultValue = [];
+							}
+						}
+						break;
+				}
+
+				// Figure out which type of field we should render
+				switch(thisField.type) {
+
+					/*
+					 * Input field types
+					 */
+					case "text":
+						fieldDOM = (
+							React.createElement(Fields.Text, React.__spread({}, 
+								thisField, 
+								{defaultValue: defaultValue, 
+								onChange: this.handleFieldChange, 
+								key: fieldID, 
+								id: fieldID}))
+						);
+						break;
+					case "textarea":
+						fieldDOM = (
+							React.createElement(Fields.Textarea, React.__spread({}, 
+								thisField, 
+								{defaultValue: defaultValue, 
+								onChange: this.handleFieldChange, 
+								key: fieldID, 
+								id: fieldID}))
+						);
+						break;
+					case "number":
+						fieldDOM = (
+							React.createElement(Fields.Number, React.__spread({}, 
+								thisField, 
+								{defaultValue: defaultValue, 
+								onChange: this.handleFieldChange, 
+								key: fieldID, 
+								id: fieldID}))
+						);
+						break;
+					case "date":
+						fieldDOM = (
+							React.createElement(Fields.Date, React.__spread({}, 
+								thisField, 
+								{defaultValue: defaultValue, 
+								onChange: this.handleFieldChange, 
+								key: fieldID, 
+								id: fieldID}))
+						);
+						break;
+					case "select":
+						fieldDOM = (
+							React.createElement(Fields.Select, React.__spread({}, 
+								thisField, 
+								{multiple: false, 
+								defaultValue: defaultValue, 
+								onChange: this.handleFieldChange, 
+								key: fieldID, 
+								id: fieldID}))
+						);
+						break;
+					case "multiselect":
+						fieldDOM = (
+							React.createElement(Fields.Select, React.__spread({}, 
+								thisField, 
+								{multiple: true, 
+								defaultValue: defaultValue, 
+								onChange: this.handleFieldChange, 
+								key: fieldID, 
+								id: fieldID}))
+						);
+						break;
+					case "file":
+						fieldDOM = (
+							React.createElement(Fields.File, React.__spread({}, 
+								thisField, 
+								{defaultValue: defaultValue, 
+								onChange: this.handleFieldChange, 
+								onStore: this.handleStoreResource, 
+								key: fieldID, 
+								id: fieldID}))
+						);
+						break;
+					case "yesno":
+						fieldDOM = (
+							React.createElement(Fields.YesNo, React.__spread({}, 
+								thisField, 
+								{defaultValue: defaultValue, 
+								onChange: this.handleFieldChange, 
+								key: fieldID, 
+								id: fieldID}))
+						);
+						break;
+
+					/*
+					 * Other fields
+					 */
+					case "header":
+						fieldDOM = (
+							React.createElement(Fields.Header, React.__spread({}, 
+								thisField, 
+								{key: fieldID, 
+								id: fieldID}))
+						);
+						break;
+					case "pharmacy":
+						fieldDOM = (
+							React.createElement(Fields.Pharmacy, React.__spread({}, 
+								thisField, 
+								{patientID: props.id, 
+								visitID: props.visitID, 
+
+								onChange: this.handleFieldChange, 
+								key: fieldID, 
+								id: fieldID}))
+						);
+						break;
+
+					/*
+					 * Field type not recognized
+					 */
+					default:
+						fieldDOM = (
+							React.createElement("div", {className: "alert alert-danger"}, 
+								React.createElement("strong", null, "Warning:"), " Unrecognized input type ", thisField['type']
+							)
+						);
+						break;
+				}
+
+				// Return fieldDOM back to map function
+				return fieldDOM;
+
+			}.bind(this));
+		}
+		//-- End switch stage type to determine fieldsDOM output --\\
+
+
+		console.groupEnd(); // End "Iterable field..."
+
+
 		var patientBlock = (
 			React.createElement("blockquote", {className: "blockquote"}, 
 				React.createElement("h3", null, 
@@ -4697,163 +5204,7 @@ Visit.Patient = React.createClass({displayName: "Patient",
 		        ), 
 		        summary, 
 		        React.createElement("hr", null), 
-		        fieldKeys.map(function(fieldID, index) {
-
-					var fieldDOM,
-						thisField = fields[fieldID],
-						thisPatient = props.patient,
-						defaultValue = thisPatient.hasOwnProperty(fieldID) ? thisPatient[fieldID] : null;
-
-					console.groupCollapsed("Field #%i: '%s' %O", index, thisField.name, thisField);
-						console.log("Type: %s", thisField.type);
-						console.log("Default value: %s", defaultValue);
-
-					// Mutate data as necessary per field type
-					switch(thisField.type) {
-						// Fields stored as JSON arrays
-						case "multiselect":
-						case "file":
-						case "pharmacy":
-							if(defaultValue !== null && typeof defaultValue === "string") {
-								try {
-									defaultValue = JSON.parse(defaultValue)
-								} catch(e) {
-									console.error("Attempt to convert this field's data into an array failed.");
-									defaultValue = [];
-								}
-							}
-							break;
-					}
-
-		        	// Figure out which type of field we should render
-		        	switch(thisField.type) {
-
-		        		/*
-		        		 * Input field types
-		        		 */
-		        		case "text":
-		        			fieldDOM = (
-		        				React.createElement(Fields.Text, React.__spread({}, 
-		        					thisField, 
-		        					{defaultValue: defaultValue, 
-		        					onChange: this.handleFieldChange, 
-		        					key: fieldID, 
-		        					id: fieldID}))
-		        			);
-		        			break;
-		        		case "textarea":
-		        			fieldDOM = (
-		        				React.createElement(Fields.Textarea, React.__spread({}, 
-		        					thisField, 
-		        					{defaultValue: defaultValue, 
-		        					onChange: this.handleFieldChange, 
-		        					key: fieldID, 
-		        					id: fieldID}))
-		        			);
-		        			break;
-		        		case "number":
-		        			fieldDOM = (
-		        				React.createElement(Fields.Number, React.__spread({}, 
-		        					thisField, 
-		        					{defaultValue: defaultValue, 
-		        					onChange: this.handleFieldChange, 
-		        					key: fieldID, 
-		        					id: fieldID}))
-		        			);
-		        			break;
-		        		case "date":
-		        			fieldDOM = (
-		        				React.createElement(Fields.Date, React.__spread({}, 
-		        					thisField, 
-		        					{defaultValue: defaultValue, 
-		        					onChange: this.handleFieldChange, 
-		        					key: fieldID, 
-		        					id: fieldID}))
-		        			);
-		        			break;
-		        		case "select":
-							fieldDOM = (
-		        				React.createElement(Fields.Select, React.__spread({}, 
-		        					thisField, 
-		        					{multiple: false, 
-		        					defaultValue: defaultValue, 
-		        					onChange: this.handleFieldChange, 
-		        					key: fieldID, 
-		        					id: fieldID}))
-		        			);
-		        			break;
-		        		case "multiselect":
-		        			fieldDOM = (
-		        				React.createElement(Fields.Select, React.__spread({}, 
-		        					thisField, 
-		        					{multiple: true, 
-		        					defaultValue: defaultValue, 
-		        					onChange: this.handleFieldChange, 
-		        					key: fieldID, 
-		        					id: fieldID}))
-		        			);
-		        			break;
-		        		case "file":
-		        			fieldDOM = (
-								React.createElement(Fields.File, React.__spread({}, 
-		        					thisField, 
-		        					{defaultValue: defaultValue, 
-		        					onChange: this.handleFieldChange, 
-									onStore: this.handleStoreResource, 
-		        					key: fieldID, 
-		        					id: fieldID}))
-		        			);
-		        			break;
-		        		case "yesno":
-		        			fieldDOM = (
-								React.createElement(Fields.YesNo, React.__spread({}, 
-		        					thisField, 
-		        					{defaultValue: defaultValue, 
-		        					onChange: this.handleFieldChange, 
-		        					key: fieldID, 
-		        					id: fieldID}))
-		        			);
-		        			break;
-
-		        		/*
-		        		 * Other fields
-		        		 */
-		        		case "header":
-		        			fieldDOM = (
-		        				React.createElement(Fields.Header, React.__spread({}, 
-		        					thisField, 
-		        					{key: fieldID, 
-		        					id: fieldID}))
-		        			);
-		        			break;
-		        		case "pharmacy":
-		        			fieldDOM = (
-		        				React.createElement(Fields.Pharmacy, React.__spread({}, 
-		        					thisField, 
-		        					{onChange: this.handleFieldChange, 
-		        					key: fieldID, 
-		        					id: fieldID}))
-		        			);
-		        			break;
-
-		        		/*
-		        		 * Field type not recognized
-		        		 */
-		        		default:
-		        			fieldDOM = (
-		        				React.createElement("div", {className: "alert alert-danger"}, 
-		        					React.createElement("strong", null, "Warning:"), " Unrecognized input type ", thisField['type']
-		        				)
-		        			);
-		        			break;
-		        	}
-
-					console.groupEnd(); // End "Iterable field..."
-
-					// Return fieldDOM back to map function
-					return fieldDOM;
-
-		        }.bind(this))
+		        fieldsDOM
 			)
 		);
 

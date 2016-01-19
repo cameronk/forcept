@@ -149,6 +149,16 @@ Visit.PatientsContainer = React.createClass({
 						<div key={patientID}>
 							<Visit.Patient
 								/*
+								 * Stage type
+								 */
+								stageType={props.stageType}
+								
+								/*
+								 * Visit
+								 */
+								visitID={props.visitID}
+
+								/*
 								 * Patient record
 								 */
 								patient={thisPatient}

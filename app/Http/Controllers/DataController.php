@@ -12,6 +12,7 @@ use App\Visit;
 use App\Stage;
 use App\Patient;
 use App\Resource;
+use App\PrescriptionSet;
 use DB;
 use Storage;
 
@@ -261,6 +262,56 @@ class DataController extends Controller
                 break;
             default:
                 return response()->json(["status" => "failure", "message" => "Unknown method"]);
+                break;
+        }
+    }
+
+
+    public function prescriptionSets(Request $request, $method) {
+        switch($method) {
+            case "create":
+                if($request->has('patientID') && $request->has('visitID')) {
+                    $check = PrescriptionSet::where('visit_id', $request->visitID)->where('patient_id', $request->patientID);
+                    if($check->count() > 0) {
+                        $set = $check->first();
+                        return response()->json(["status" => "success", "id" => $set->id, "prescriptions" => json_decode($set->prescriptions)]);
+                    } else {
+                        $set = new PrescriptionSet;
+                            $set->patient_id = $request->patientID;
+                            $set->visit_id = $request->visitID;
+                            if($set->save()) {
+                                return response()->json(["status" => "success", "id" => $set->id]);
+                            } else {
+                                return response()->json(["status" => "failure", "message" => "Failed to save Set record"]);
+                            }
+                    }
+                } else {
+                    return response()->json(["status" => "failure", "message" => "Missing patientID or visitID"]);
+                }
+                break;
+            case "save":
+                if($request->has('id') && $request->has('prescriptions')) {
+                    $set = PrescriptionSet::where('id', $request->id);
+                    if($set->count() > 0) {
+                        $set = $set->first();
+
+                        /// TODO: Compare to old and anything new that is done should affect drug counts
+
+                        $set->prescriptions = json_encode($request->prescriptions);
+                        if($set->save()) {
+                            return response()->json(["status" => "success", "message" => "Set saved successfully.", "id" => $set->id]);
+                        } else {
+                            return response()->json(["status" => "failure", "message" => "Failed to save Set record"]);
+                        }
+                    } else {
+                        return response()->json(["status" => "failure", "message" => "PrescriptionSet not found."]);
+                    }
+                } else {
+                    return response()->json(["status" => "failure", "message" => "Missing Set ID or prescriptions"]);
+                }
+                break;
+            default:
+                return response()->json(["status" => "failure", "message" => "Unknown method"], 422);
                 break;
         }
     }

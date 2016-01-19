@@ -275,7 +275,8 @@ var Visit = React.createClass({
 					controlsType={props.controlsType}
 					containerTitle={props.containerTitle}
 					stageType={props.currentStageType}
-
+					visitID={props.visitID}
+					
 					summaryFields={props.summaryFields}
 					fields={props.mutableFields}
 					patients={state.patients}

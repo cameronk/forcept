@@ -77,6 +77,14 @@ Route::group(['middleware' => 'auth'], function () {
 			'as' => 'resources',
 			'uses' => 'DataController@resources'
 		]);
+
+		/**
+		 * Work with resources
+		 */
+		Route::any('prescription-sets/{method?}', [
+			'as' => 'prescription-sets',
+			'uses' => 'DataController@prescriptionSets'
+		]);
 	});
 
 	/**

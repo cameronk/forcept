@@ -72,15 +72,15 @@ gulp.task('default', function () {
 
     // Build compiled development version
     ReactScripts
-        .pipe(concat('compiled.js'))
         .pipe(react())
+        .pipe(concat('compiled.js'))
         .pipe(gulp.dest('./public/assets/js'));
 
 
     // Build compiled production version
     ReactScripts
-        .pipe(concat('compiled.min.js'))
         .pipe(react())
+        .pipe(concat('compiled.min.js'))
         .pipe(uglify({
             mangle: true,
             compress: {

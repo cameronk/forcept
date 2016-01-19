@@ -6,6 +6,7 @@ use Illuminate\Support\ServiceProvider;
 
 use App\Patient;
 use App\Resource;
+use App\PrescriptionSet;
 use Auth;
 use View;
 
@@ -35,6 +36,12 @@ class AppServiceProvider extends ServiceProvider
         Resource::creating(function($resource) {
             if(Auth::check()) {
                 $resource->uploaded_by = Auth::user()->id;
+            }
+        });
+
+        PrescriptionSet::creating(function($resource) {
+            if(Auth::check()) {
+                $resource->created_by = Auth::user()->id;
             }
         });
     }

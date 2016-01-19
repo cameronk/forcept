@@ -1,5 +1,9 @@
-
 /* ========================================= */
+
+/**
+ * fields/Fields.jsx
+ * @author Cameron Kelley
+ */
 
 var Fields = {
 	labelColumnClasses: "col-lg-4 col-sm-5 col-xs-12",

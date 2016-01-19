@@ -40,6 +40,7 @@ Visit.Patient = React.createClass({
 			summary;
 
 		console.groupCollapsed("Visit.Patient: render");
+			console.log("Stage type: %s", props.stageType);
 			console.log("Iterable field count: %i", countFields);
 			console.log("Iterable field keys: %O", fieldKeys);
 			console.log("Summary field count : %i", countSummaryFields);
@@ -78,6 +79,212 @@ Visit.Patient = React.createClass({
 			);
 		}
 
+		var fieldsDOM;
+
+		if(props.stageType === "pharmacy") {
+			console.group("Running pharmacy loop.");
+
+				// Loop through summary fields instead of actual fields.
+				fieldsDOM = summaryFieldsKeys.map(function(fieldID, index) {
+
+					var fieldDOM,
+						thisField = summaryFields[fieldID],
+						thisPatient = props.patient,
+						defaultValue = thisPatient.hasOwnProperty(fieldID) ? thisPatient[fieldID] : null;
+
+					console.groupCollapsed("Field #%i: '%s' %O", index, thisField.name, thisField);
+						console.log("Type: %s", thisField.type);
+						console.log("Default value: %s", defaultValue);
+
+					// Mutate data as necessary per field type
+					if(thisField.type === "pharmacy") {
+						console.log("-> found a pharmacy-type");
+						fieldDOM = (
+							<Fields.Pharmacy
+								{...thisField}
+								patientID={props.id}
+								visitID={props.visitID}
+								defaultValue={defaultValue}
+								onChange={this.handleFieldChange}
+								key={fieldID}
+								id={fieldID} />
+						);
+					}
+
+					console.groupEnd();
+
+					// Return fieldDOM back to map function
+					return fieldDOM;
+
+				}.bind(this));
+
+			console.groupEnd();
+		} else {
+			fieldsDOM = fieldKeys.map(function(fieldID, index) {
+
+				var fieldDOM,
+					thisField = fields[fieldID],
+					thisPatient = props.patient,
+					defaultValue = thisPatient.hasOwnProperty(fieldID) ? thisPatient[fieldID] : null;
+
+				console.groupCollapsed("Field #%i: '%s' %O", index, thisField.name, thisField);
+					console.log("Type: %s", thisField.type);
+					console.log("Default value: %s", defaultValue);
+
+				// Mutate data as necessary per field type
+				switch(thisField.type) {
+					// Fields stored as JSON arrays
+					case "multiselect":
+					case "file":
+					case "pharmacy":
+						if(defaultValue !== null && typeof defaultValue === "string") {
+							try {
+								defaultValue = JSON.parse(defaultValue)
+							} catch(e) {
+								console.error("Attempt to convert this field's data into an array failed.");
+								defaultValue = [];
+							}
+						}
+						break;
+				}
+
+				// Figure out which type of field we should render
+				switch(thisField.type) {
+
+					/*
+					 * Input field types
+					 */
+					case "text":
+						fieldDOM = (
+							<Fields.Text
+								{...thisField}
+								defaultValue={defaultValue}
+								onChange={this.handleFieldChange}
+								key={fieldID}
+								id={fieldID} />
+						);
+						break;
+					case "textarea":
+						fieldDOM = (
+							<Fields.Textarea
+								{...thisField}
+								defaultValue={defaultValue}
+								onChange={this.handleFieldChange}
+								key={fieldID}
+								id={fieldID} />
+						);
+						break;
+					case "number":
+						fieldDOM = (
+							<Fields.Number
+								{...thisField}
+								defaultValue={defaultValue}
+								onChange={this.handleFieldChange}
+								key={fieldID}
+								id={fieldID} />
+						);
+						break;
+					case "date":
+						fieldDOM = (
+							<Fields.Date
+								{...thisField}
+								defaultValue={defaultValue}
+								onChange={this.handleFieldChange}
+								key={fieldID}
+								id={fieldID} />
+						);
+						break;
+					case "select":
+						fieldDOM = (
+							<Fields.Select
+								{...thisField}
+								multiple={false}
+								defaultValue={defaultValue}
+								onChange={this.handleFieldChange}
+								key={fieldID}
+								id={fieldID} />
+						);
+						break;
+					case "multiselect":
+						fieldDOM = (
+							<Fields.Select
+								{...thisField}
+								multiple={true}
+								defaultValue={defaultValue}
+								onChange={this.handleFieldChange}
+								key={fieldID}
+								id={fieldID} />
+						);
+						break;
+					case "file":
+						fieldDOM = (
+							<Fields.File
+								{...thisField}
+								defaultValue={defaultValue}
+								onChange={this.handleFieldChange}
+								onStore={this.handleStoreResource}
+								key={fieldID}
+								id={fieldID} />
+						);
+						break;
+					case "yesno":
+						fieldDOM = (
+							<Fields.YesNo
+								{...thisField}
+								defaultValue={defaultValue}
+								onChange={this.handleFieldChange}
+								key={fieldID}
+								id={fieldID} />
+						);
+						break;
+
+					/*
+					 * Other fields
+					 */
+					case "header":
+						fieldDOM = (
+							<Fields.Header
+								{...thisField}
+								key={fieldID}
+								id={fieldID} />
+						);
+						break;
+					case "pharmacy":
+						fieldDOM = (
+							<Fields.Pharmacy
+								{...thisField}
+								patientID={props.id}
+								visitID={props.visitID}
+
+								onChange={this.handleFieldChange}
+								key={fieldID}
+								id={fieldID} />
+						);
+						break;
+
+					/*
+					 * Field type not recognized
+					 */
+					default:
+						fieldDOM = (
+							<div className="alert alert-danger">
+								<strong>Warning:</strong> Unrecognized input type {thisField['type']}
+							</div>
+						);
+						break;
+				}
+
+				// Return fieldDOM back to map function
+				return fieldDOM;
+
+			}.bind(this));
+		}
+		//-- End switch stage type to determine fieldsDOM output --\\
+
+
+		console.groupEnd(); // End "Iterable field..."
+
+
 		var patientBlock = (
 			<blockquote className="blockquote">
 				<h3>
@@ -88,163 +295,7 @@ Visit.Patient = React.createClass({
 		        </h3>
 		        {summary}
 		        <hr/>
-		        {fieldKeys.map(function(fieldID, index) {
-
-					var fieldDOM,
-						thisField = fields[fieldID],
-						thisPatient = props.patient,
-						defaultValue = thisPatient.hasOwnProperty(fieldID) ? thisPatient[fieldID] : null;
-
-					console.groupCollapsed("Field #%i: '%s' %O", index, thisField.name, thisField);
-						console.log("Type: %s", thisField.type);
-						console.log("Default value: %s", defaultValue);
-
-					// Mutate data as necessary per field type
-					switch(thisField.type) {
-						// Fields stored as JSON arrays
-						case "multiselect":
-						case "file":
-						case "pharmacy":
-							if(defaultValue !== null && typeof defaultValue === "string") {
-								try {
-									defaultValue = JSON.parse(defaultValue)
-								} catch(e) {
-									console.error("Attempt to convert this field's data into an array failed.");
-									defaultValue = [];
-								}
-							}
-							break;
-					}
-
-		        	// Figure out which type of field we should render
-		        	switch(thisField.type) {
-
-		        		/*
-		        		 * Input field types
-		        		 */
-		        		case "text":
-		        			fieldDOM = (
-		        				<Fields.Text
-		        					{...thisField}
-		        					defaultValue={defaultValue}
-		        					onChange={this.handleFieldChange}
-		        					key={fieldID}
-		        					id={fieldID} />
-		        			);
-		        			break;
-		        		case "textarea":
-		        			fieldDOM = (
-		        				<Fields.Textarea
-		        					{...thisField}
-		        					defaultValue={defaultValue}
-		        					onChange={this.handleFieldChange}
-		        					key={fieldID}
-		        					id={fieldID} />
-		        			);
-		        			break;
-		        		case "number":
-		        			fieldDOM = (
-		        				<Fields.Number
-		        					{...thisField}
-		        					defaultValue={defaultValue}
-		        					onChange={this.handleFieldChange}
-		        					key={fieldID}
-		        					id={fieldID} />
-		        			);
-		        			break;
-		        		case "date":
-		        			fieldDOM = (
-		        				<Fields.Date
-		        					{...thisField}
-		        					defaultValue={defaultValue}
-		        					onChange={this.handleFieldChange}
-		        					key={fieldID}
-		        					id={fieldID} />
-		        			);
-		        			break;
-		        		case "select":
-							fieldDOM = (
-		        				<Fields.Select
-		        					{...thisField}
-		        					multiple={false}
-		        					defaultValue={defaultValue}
-		        					onChange={this.handleFieldChange}
-		        					key={fieldID}
-		        					id={fieldID} />
-		        			);
-		        			break;
-		        		case "multiselect":
-		        			fieldDOM = (
-		        				<Fields.Select
-		        					{...thisField}
-		        					multiple={true}
-		        					defaultValue={defaultValue}
-		        					onChange={this.handleFieldChange}
-		        					key={fieldID}
-		        					id={fieldID} />
-		        			);
-		        			break;
-		        		case "file":
-		        			fieldDOM = (
-								<Fields.File
-		        					{...thisField}
-		        					defaultValue={defaultValue}
-		        					onChange={this.handleFieldChange}
-									onStore={this.handleStoreResource}
-		        					key={fieldID}
-		        					id={fieldID} />
-		        			);
-		        			break;
-		        		case "yesno":
-		        			fieldDOM = (
-								<Fields.YesNo
-		        					{...thisField}
-		        					defaultValue={defaultValue}
-		        					onChange={this.handleFieldChange}
-		        					key={fieldID}
-		        					id={fieldID} />
-		        			);
-		        			break;
-
-		        		/*
-		        		 * Other fields
-		        		 */
-		        		case "header":
-		        			fieldDOM = (
-		        				<Fields.Header
-		        					{...thisField}
-		        					key={fieldID}
-		        					id={fieldID} />
-		        			);
-		        			break;
-		        		case "pharmacy":
-		        			fieldDOM = (
-		        				<Fields.Pharmacy
-		        					{...thisField}
-		        					onChange={this.handleFieldChange}
-		        					key={fieldID}
-		        					id={fieldID} />
-		        			);
-		        			break;
-
-		        		/*
-		        		 * Field type not recognized
-		        		 */
-		        		default:
-		        			fieldDOM = (
-		        				<div className="alert alert-danger">
-		        					<strong>Warning:</strong> Unrecognized input type {thisField['type']}
-		        				</div>
-		        			);
-		        			break;
-		        	}
-
-					console.groupEnd(); // End "Iterable field..."
-
-					// Return fieldDOM back to map function
-					return fieldDOM;
-
-		        }.bind(this))}
+		        {fieldsDOM}
 			</blockquote>
 		);
 
