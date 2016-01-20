@@ -180,8 +180,6 @@ var Visit = React.createClass({
 			// Apply generated fields to patient object
 			patient = Utilities.applyGeneratedFields(patient);
 
-			// __debug(patients);
-
 			// Push patients back to state
 			this.setState({
 				patients: patients
@@ -207,54 +205,9 @@ var Visit = React.createClass({
 	},
 
 	/*
-	 *
-	 */
-	/*topLevelAddPrescription: function(patientID, drugs) {
-		console.log("[Visit]->topLevelAddPrescription()");
-
-		// Make sure drugs is a valid type
-		if(Array.isArray(drugs) && drugs.length > 0) {
-			var prescriptions = this.state.prescriptions;
-
-			var patientPrescriptions;
-
-			// If this is the first time we're seeing prescriptions for
-			// this patient, create a new prescriptions Array...
-			// otherwise, grab the old one.
-			if(prescriptions.hasOwnProperty(patientID)) {
-				patientPrescriptions = prescriptions[patientID];
-			} else {
-				patientPrescriptions = [];
-			}
-
-			// Loop through drugs found for this patient
-			for(var i = 0; i < drugs.length; i++) {
-				var thisDrug = drugs[i];
-				// Make sure the drug isn't already in the list
-				if(patientPrescriptions.indexOf(thisDrug) === -1) {
-					patientPrescriptions.push(thisDrug);
-				}
-
-			}
-
-			// Update patient record in prescriptions
-			prescriptions[patientID] = patientPrescriptions;
-
-		}
-
-		this.setState({
-			prescriptions: prescriptions
-		});
-	},*/
-
-	/*
 	 * Render Visit container
 	 */
 	render: function() {
-	// 	console.log("[Visit]->render(): Rendering visit container...resources are:");
-	// 	console.log(this.state.resources);
-	// 	console.log(" ");
-
 		var props = this.props,
 			state = this.state;
 
@@ -276,7 +229,7 @@ var Visit = React.createClass({
 					containerTitle={props.containerTitle}
 					stageType={props.currentStageType}
 					visitID={props.visitID}
-					
+
 					summaryFields={props.summaryFields}
 					fields={props.mutableFields}
 					patients={state.patients}
@@ -292,8 +245,6 @@ var Visit = React.createClass({
 					onStoreResource={this.topLevelStoreResource}/>
 			</div>
 		);
-
-							//onFindPrescription={this.topLevelAddPrescription}
 	}
 
 });

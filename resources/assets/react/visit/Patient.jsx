@@ -136,7 +136,6 @@ Visit.Patient = React.createClass({
 					// Fields stored as JSON arrays
 					case "multiselect":
 					case "file":
-					case "pharmacy":
 						if(defaultValue !== null && typeof defaultValue === "string") {
 							try {
 								defaultValue = JSON.parse(defaultValue)
@@ -273,6 +272,8 @@ Visit.Patient = React.createClass({
 						);
 						break;
 				}
+
+				console.groupEnd(); // "FIeld #..."
 
 				// Return fieldDOM back to map function
 				return fieldDOM;

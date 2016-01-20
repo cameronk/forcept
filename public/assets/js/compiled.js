@@ -3504,6 +3504,28 @@ var Utilities = {
 		}
 	},
 
+	timeAgo: function(time) {
+			var units = [
+			{ name: "second", limit: 60, in_seconds: 1 },
+			{ name: "minute", limit: 3600, in_seconds: 60 },
+			{ name: "hour", limit: 86400, in_seconds: 3600  },
+			{ name: "day", limit: 604800, in_seconds: 86400 },
+			{ name: "week", limit: 2629743, in_seconds: 604800  },
+			{ name: "month", limit: 31556926, in_seconds: 2629743 },
+			{ name: "year", limit: null, in_seconds: 31556926 }
+		];
+		var diff = (new Date() - new Date(time*1000)) / 1000;
+		if (diff < 5) return "now";
+
+		var i = 0, unit;
+		while (unit = units[i++]) {
+			if (diff < unit.limit || !unit.limit){
+				var diff =  Math.floor(diff / unit.in_seconds);
+				return diff + " " + unit.name + (diff>1 ? "s" : "");
+			}
+		};
+	},
+
 	/*
 	 * Eloquent returns some boolean fields as strings.
 	 * Use this function to check if a statement is true.
@@ -3703,8 +3725,6 @@ var Visit = React.createClass({displayName: "Visit",
 			// Apply generated fields to patient object
 			patient = Utilities.applyGeneratedFields(patient);
 
-			// __debug(patients);
-
 			// Push patients back to state
 			this.setState({
 				patients: patients
@@ -3730,54 +3750,9 @@ var Visit = React.createClass({displayName: "Visit",
 	},
 
 	/*
-	 *
-	 */
-	/*topLevelAddPrescription: function(patientID, drugs) {
-		console.log("[Visit]->topLevelAddPrescription()");
-
-		// Make sure drugs is a valid type
-		if(Array.isArray(drugs) && drugs.length > 0) {
-			var prescriptions = this.state.prescriptions;
-
-			var patientPrescriptions;
-
-			// If this is the first time we're seeing prescriptions for
-			// this patient, create a new prescriptions Array...
-			// otherwise, grab the old one.
-			if(prescriptions.hasOwnProperty(patientID)) {
-				patientPrescriptions = prescriptions[patientID];
-			} else {
-				patientPrescriptions = [];
-			}
-
-			// Loop through drugs found for this patient
-			for(var i = 0; i < drugs.length; i++) {
-				var thisDrug = drugs[i];
-				// Make sure the drug isn't already in the list
-				if(patientPrescriptions.indexOf(thisDrug) === -1) {
-					patientPrescriptions.push(thisDrug);
-				}
-
-			}
-
-			// Update patient record in prescriptions
-			prescriptions[patientID] = patientPrescriptions;
-
-		}
-
-		this.setState({
-			prescriptions: prescriptions
-		});
-	},*/
-
-	/*
 	 * Render Visit container
 	 */
 	render: function() {
-	// 	console.log("[Visit]->render(): Rendering visit container...resources are:");
-	// 	console.log(this.state.resources);
-	// 	console.log(" ");
-
 		var props = this.props,
 			state = this.state;
 
@@ -3799,7 +3774,7 @@ var Visit = React.createClass({displayName: "Visit",
 					containerTitle: props.containerTitle, 
 					stageType: props.currentStageType, 
 					visitID: props.visitID, 
-					
+
 					summaryFields: props.summaryFields, 
 					fields: props.mutableFields, 
 					patients: state.patients, 
@@ -3815,8 +3790,6 @@ var Visit = React.createClass({displayName: "Visit",
 					onStoreResource: this.topLevelStoreResource})
 			)
 		);
-
-							//onFindPrescription={this.topLevelAddPrescription}
 	}
 
 });
@@ -4727,6 +4700,25 @@ Visit.PatientsOverview = React.createClass({displayName: "PatientsOverview",
 			                    			// We might need to mutate the data
 			                    			switch(fieldType) {
 
+												/**
+												 * Date input
+												 */
+												case "date":
+													/*if(thisIterableField.hasOwnProperty('settings') && thisIterableField.settings.hasOwnProperty('useBroadMonthSelector') && isTrue(thisIterableField.settings.useBroadMonthSelector)) {
+														var date = new Date(),
+															split = thisPatientField.toString().split("/"); // mm/dd/yyyy
+
+															date.setMonth(parseInt(split[0]) - 1, split[1]);
+															date.setFullYear(split[2]);
+
+														value = Utilities.timeAgo(
+															date
+														);
+													} else {*/
+														value = thisPatientField.toString();
+													// }
+													break;
+
 			                    				/**
 			                    				 * Things with multiple lines
 			                    				 */
@@ -4740,7 +4732,6 @@ Visit.PatientsOverview = React.createClass({displayName: "PatientsOverview",
 			                    				 * Things stored as arrays
 			                    				 */
 			                    				case "multiselect":
-			                    				case "pharmacy":
 			                    					// Convert from JSON array to nice string
 													var arr;
 			                    					try {
@@ -4749,14 +4740,20 @@ Visit.PatientsOverview = React.createClass({displayName: "PatientsOverview",
 														arr = [];
 													}
 
+
 													// Make sure it worked
 			                    					if(Array.isArray(arr) && arr.length > 0) {
-														// console.log("[Visit.PatientsOverview] Found " + arr.length + " prescriptions for patient #" + patientID);
-														// console.log(props.hasOwnProperty("onFindPrescription"));
-														// if(fieldType === "pharmacy" && props.hasOwnProperty("onFindPrescription")) {
-															// props.onFindPrescription(patientID, arr);
-														// }
-			                    						value = arr.join(", ");
+			                    						value = (
+															React.createElement("ul", {className: "list-unstyled"}, 
+																arr.map(function(optionValue, optionIndex) {
+																	return (
+																		React.createElement("li", {key: [optionValue, optionIndex].join("-")}, 
+																			'\u26ac', " ", optionValue
+																		)
+																	);
+																})
+															)
+														);
 			                    					}
 
 			                    					console.log("Multiselect value: %s", value);
@@ -4784,20 +4781,15 @@ Visit.PatientsOverview = React.createClass({displayName: "PatientsOverview",
 														);
 													});
 
-			                    					/*var split = thisPatient[field].toString().split(";");
-			                    					var dataSection = split[0]; // data:image/png
-
-			                    					if(dataSection.split("/")[0] == "data:image") {
-				                    					value = (
-				                    						<div className="patient-photo-contain">
-				                    							<img src={thisField.toString()} />
-				                    						</div>
-				                    					);
-			                    					} else {
-			                    						value = "1 file, " + getFileSize(thisPatient[field]);
-			                    					}*/
-
 			                    					break;
+
+												case "pharmacy":
+													value = (
+														React.createElement("span", {className: "label label-default"}, 
+															"Set ID: ", thisPatientField.toString()
+														)
+													);
+													break;
 
 			                    				/**
 			                    				 * Everything else (single-value data points)
@@ -5045,7 +5037,6 @@ Visit.Patient = React.createClass({displayName: "Patient",
 					// Fields stored as JSON arrays
 					case "multiselect":
 					case "file":
-					case "pharmacy":
 						if(defaultValue !== null && typeof defaultValue === "string") {
 							try {
 								defaultValue = JSON.parse(defaultValue)
@@ -5182,6 +5173,8 @@ Visit.Patient = React.createClass({displayName: "Patient",
 						);
 						break;
 				}
+
+				console.groupEnd(); // "FIeld #..."
 
 				// Return fieldDOM back to map function
 				return fieldDOM;

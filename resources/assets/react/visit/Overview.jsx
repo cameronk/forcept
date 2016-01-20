@@ -183,6 +183,25 @@ Visit.PatientsOverview = React.createClass({
 			                    			// We might need to mutate the data
 			                    			switch(fieldType) {
 
+												/**
+												 * Date input
+												 */
+												case "date":
+													/*if(thisIterableField.hasOwnProperty('settings') && thisIterableField.settings.hasOwnProperty('useBroadMonthSelector') && isTrue(thisIterableField.settings.useBroadMonthSelector)) {
+														var date = new Date(),
+															split = thisPatientField.toString().split("/"); // mm/dd/yyyy
+
+															date.setMonth(parseInt(split[0]) - 1, split[1]);
+															date.setFullYear(split[2]);
+
+														value = Utilities.timeAgo(
+															date
+														);
+													} else {*/
+														value = thisPatientField.toString();
+													// }
+													break;
+
 			                    				/**
 			                    				 * Things with multiple lines
 			                    				 */
@@ -196,7 +215,6 @@ Visit.PatientsOverview = React.createClass({
 			                    				 * Things stored as arrays
 			                    				 */
 			                    				case "multiselect":
-			                    				case "pharmacy":
 			                    					// Convert from JSON array to nice string
 													var arr;
 			                    					try {
@@ -205,14 +223,20 @@ Visit.PatientsOverview = React.createClass({
 														arr = [];
 													}
 
+
 													// Make sure it worked
 			                    					if(Array.isArray(arr) && arr.length > 0) {
-														// console.log("[Visit.PatientsOverview] Found " + arr.length + " prescriptions for patient #" + patientID);
-														// console.log(props.hasOwnProperty("onFindPrescription"));
-														// if(fieldType === "pharmacy" && props.hasOwnProperty("onFindPrescription")) {
-															// props.onFindPrescription(patientID, arr);
-														// }
-			                    						value = arr.join(", ");
+			                    						value = (
+															<ul className="list-unstyled">
+																{arr.map(function(optionValue, optionIndex) {
+																	return (
+																		<li key={[optionValue, optionIndex].join("-")}>
+																			{'\u26ac'} {optionValue}
+																		</li>
+																	);
+																})}
+															</ul>
+														);
 			                    					}
 
 			                    					console.log("Multiselect value: %s", value);
@@ -240,20 +264,15 @@ Visit.PatientsOverview = React.createClass({
 														);
 													});
 
-			                    					/*var split = thisPatient[field].toString().split(";");
-			                    					var dataSection = split[0]; // data:image/png
-
-			                    					if(dataSection.split("/")[0] == "data:image") {
-				                    					value = (
-				                    						<div className="patient-photo-contain">
-				                    							<img src={thisField.toString()} />
-				                    						</div>
-				                    					);
-			                    					} else {
-			                    						value = "1 file, " + getFileSize(thisPatient[field]);
-			                    					}*/
-
 			                    					break;
+
+												case "pharmacy":
+													value = (
+														<span className="label label-default">
+															Set ID: {thisPatientField.toString()}
+														</span>
+													);
+													break;
 
 			                    				/**
 			                    				 * Everything else (single-value data points)

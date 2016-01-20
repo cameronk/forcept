@@ -265,7 +265,6 @@ class VisitController extends Controller
                     // Check if we should mutate the data (i.e. multiselect)
                     switch($stage->fields[$key]["type"]) {
                         case "file":
-                        case "pharmacy":
                         case "multiselect":
                             // Value is an array, convert to string
                             $data[$key] = json_encode($value);
