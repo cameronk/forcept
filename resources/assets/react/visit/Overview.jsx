@@ -187,17 +187,17 @@ Visit.PatientsOverview = React.createClass({
 												 * Date input
 												 */
 												case "date":
-													/*if(thisIterableField.hasOwnProperty('settings') && thisIterableField.settings.hasOwnProperty('useBroadMonthSelector') && isTrue(thisIterableField.settings.useBroadMonthSelector)) {
-														var date = new Date(),
-															split = thisPatientField.toString().split("/"); // mm/dd/yyyy
-
-															date.setMonth(parseInt(split[0]) - 1, split[1]);
-															date.setFullYear(split[2]);
-
-														value = Utilities.timeAgo(
-															date
-														);
-													} else {*/
+													// if(thisIterableField.hasOwnProperty('settings') && thisIterableField.settings.hasOwnProperty('useBroadMonthSelector') && isTrue(thisIterableField.settings.useBroadMonthSelector)) {
+													// 	var date = new Date(),
+													// 		split = thisPatientField.toString().split("/"); // mm/dd/yyyy
+													//
+													// 		date.setMonth(parseInt(split[0]) - 1, split[1]);
+													// 		date.setFullYear(split[2]);
+													//
+													// 	value = Utilities.timeAgo(
+													// 		date
+													// 	);
+													// } else {
 														value = thisPatientField.toString();
 													// }
 													break;
@@ -320,27 +320,30 @@ Visit.PatientsOverview = React.createClass({
 
 								console.groupEnd(); // End: "Field %i..."
 
-		                    	// Render the list item
-		                    	if(thisIterableField.type == "header") {
-		                    		if(props.mini == false) {
-			                    		return (
-			                    			<div className="list-group-item forcept-patient-overview-header-item" key={field + "-" + index}>
-			                    				<h5 className="text-center m-a-0">
-			                    					{thisIterableField.name}
-			                    				</h5>
-			                    			</div>
-			                    		);
+								// NOTE: maybe keep this?
+								if(foundData) {
+			                    	// Render the list item
+			                    	if(thisIterableField.type == "header") {
+			                    		if(props.mini == false) {
+				                    		return (
+				                    			<div className="list-group-item forcept-patient-overview-header-item" key={field + "-" + index}>
+				                    				<h5 className="text-center m-a-0">
+				                    					{thisIterableField.name}
+				                    				</h5>
+				                    			</div>
+				                    		);
+				                    	}
+			                    	} else {
+										return (
+											<div className="list-group-item" key={field + "-" + index}>
+												<dl>
+													<dt>{icon} &nbsp; {thisIterableField.name}</dt>
+													<dd>{foundData ? value : ""}</dd>
+												</dl>
+											</div>
+										);
 			                    	}
-		                    	} else {
-									return (
-										<div className="list-group-item" key={field + "-" + index}>
-											<dl>
-												<dt>{icon} &nbsp; {thisIterableField.name}</dt>
-												<dd>{foundData ? value : ""}</dd>
-											</dl>
-										</div>
-									);
-		                    	}
+								}
 	                    	}.bind(this))}
 		                </div>
 					</div>

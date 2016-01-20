@@ -90,7 +90,7 @@ class DataController extends Controller
                 // Loop through all stages, map to stageID
                 $stages = $stages->keys()->map(function($stageID) use ($stages) {
                     $stage = $stages[$stageID];
-                    $fields = collect($stage->fields);
+                    $fields = collect($stage->inputFields);
 
                     $columnsToQuery = $fields;
                     $patientStageData = DB::table($stage->tableName);
@@ -141,6 +141,9 @@ class DataController extends Controller
                                     $fieldID => array_count_values($arrayOfMultiSelectOptions->collapse()->toArray())
                                 ]);
                                 break;
+
+                            case "header":
+                            case "pharmacy":
                             case "file":
                                 return collect([]); // Cannot aggregate this file tpe
                                 break;
