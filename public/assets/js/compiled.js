@@ -4837,20 +4837,19 @@ Visit.PatientsOverview = React.createClass({displayName: "PatientsOverview",
 
 								console.groupEnd(); // End: "Field %i..."
 
-								// NOTE: maybe keep this?
-								if(foundData) {
-			                    	// Render the list item
-			                    	if(thisIterableField.type == "header") {
-			                    		if(props.mini == false) {
-				                    		return (
-				                    			React.createElement("div", {className: "list-group-item forcept-patient-overview-header-item", key: field + "-" + index}, 
-				                    				React.createElement("h5", {className: "text-center m-a-0"}, 
-				                    					thisIterableField.name
-				                    				)
-				                    			)
-				                    		);
-				                    	}
-			                    	} else {
+		                    	// Render the list item
+		                    	if(thisIterableField.type == "header") {
+		                    		if(props.mini == false) {
+			                    		return (
+			                    			React.createElement("div", {className: "list-group-item forcept-patient-overview-header-item", key: field + "-" + index}, 
+			                    				React.createElement("h5", {className: "text-center m-a-0"}, 
+			                    					thisIterableField.name
+			                    				)
+			                    			)
+			                    		);
+			                    	}
+		                    	} else {
+									if((props.mini == true && foundData) || props.mini == false) {
 										return (
 											React.createElement("div", {className: "list-group-item", key: field + "-" + index}, 
 												React.createElement("dl", null, 
@@ -4859,8 +4858,9 @@ Visit.PatientsOverview = React.createClass({displayName: "PatientsOverview",
 												)
 											)
 										);
-			                    	}
-								}
+									}
+		                    	}
+								
 	                    	}.bind(this))
 		                )
 					)

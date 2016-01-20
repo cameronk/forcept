@@ -320,20 +320,19 @@ Visit.PatientsOverview = React.createClass({
 
 								console.groupEnd(); // End: "Field %i..."
 
-								// NOTE: maybe keep this?
-								if(foundData) {
-			                    	// Render the list item
-			                    	if(thisIterableField.type == "header") {
-			                    		if(props.mini == false) {
-				                    		return (
-				                    			<div className="list-group-item forcept-patient-overview-header-item" key={field + "-" + index}>
-				                    				<h5 className="text-center m-a-0">
-				                    					{thisIterableField.name}
-				                    				</h5>
-				                    			</div>
-				                    		);
-				                    	}
-			                    	} else {
+		                    	// Render the list item
+		                    	if(thisIterableField.type == "header") {
+		                    		if(props.mini == false) {
+			                    		return (
+			                    			<div className="list-group-item forcept-patient-overview-header-item" key={field + "-" + index}>
+			                    				<h5 className="text-center m-a-0">
+			                    					{thisIterableField.name}
+			                    				</h5>
+			                    			</div>
+			                    		);
+			                    	}
+		                    	} else {
+									if((props.mini == true && foundData) || props.mini == false) {
 										return (
 											<div className="list-group-item" key={field + "-" + index}>
 												<dl>
@@ -342,8 +341,9 @@ Visit.PatientsOverview = React.createClass({
 												</dl>
 											</div>
 										);
-			                    	}
-								}
+									}
+		                    	}
+								
 	                    	}.bind(this))}
 		                </div>
 					</div>
