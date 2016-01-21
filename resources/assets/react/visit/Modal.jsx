@@ -8,19 +8,10 @@
  */
 Visit.FinishModal = React.createClass({
 
-	getInitialState: function() {
-		return {
-			isSubmitting: false,
-		};
-	},
-
 	/*
 	 * onComplete
 	 */
 	onComplete: function() {
-		this.setState({
-			isSubmitting: true
-		});
 		this.props.onConfirmFinishVisit(this.state.destination, this);
 	},
 
@@ -81,15 +72,10 @@ Visit.FinishModal = React.createClass({
 			}.bind(this));
 		}
 
-		// Change button text based on modal state
-		if(state.isSubmitting == true) {
-			buttonText = "Working...";
+		if(state.destination == "__checkout__") {
+			buttonText = "Check-out patients";
 		} else {
-			if(state.destination == "__checkout__") {
-				buttonText = "Check-out patients";
-			} else {
-				buttonText = "Move patients to " + (state.destination !== null ? stageNameKeyPairs[state.destination] : stageNameKeyPairs[defaultValue]);
-			}
+			buttonText = "Move patients to " + (state.destination !== null ? stageNameKeyPairs[state.destination] : stageNameKeyPairs[defaultValue]);
 		}
 
 		return (
@@ -112,7 +98,7 @@ Visit.FinishModal = React.createClass({
 			            	</div>
 			            </div>
 			            <div className="modal-footer">
-			                <button type="button" className="btn btn-success" disabled={state.isSubmitting == true} onClick={this.onComplete}>
+			                <button type="button" className="btn btn-success" onClick={this.onComplete}>
 			                	{buttonText}
 			                </button>
 			            </div>

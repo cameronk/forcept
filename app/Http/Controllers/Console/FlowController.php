@@ -248,7 +248,8 @@ class FlowController extends Controller
                         \Log::debug("-> renaming " . $columnName);
                         $table
                             ->renameColumn(sprintf("`%s`", $columnName), sprintf("`%s`", $columnName))
-                            ->comment( sprintf("Renamed column %s to %s at %s", $data['old'], $data['new'], date('r')) );
+                            ->comment( sprintf("Renamed column %s to %s at %s", $data['old'], $data['new'], date('r')) )
+                            ->change();
                     }
 
                     // Run deletions
@@ -265,12 +266,15 @@ class FlowController extends Controller
                         \Log::debug("-> adding " . $columnName . ": " . json_encode(($data)));
 
                         switch($data['type']) {
+                            case "multiselect":
                             case "file":
                                 // Create JSON column for storing file identifiers
-                                $table->json($columnName)->nullable();
+                                $table->json($columnName)
+                                    ->nullable()
+                                    ->comment('Column created ' . date('r') . ' w/ name ' . $data['name']);
                                 break;
                             default:
-                                // Create  VARCHAR(255) column for storing most inputs
+                                // Create VARCHAR(255) column for storing most inputs
                                 $table
                                     ->string($columnName)
                                     ->comment('Column created ' . date('r') . ' w/ name ' . $data['name']);

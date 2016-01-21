@@ -169,131 +169,128 @@ Visit.PatientsOverview = React.createClass({
 
 		                    		if(!(props.mini == true && isGeneratedField)) // Don't show generated fields in Mini mode
 		                    		{
-			                    		if( ["string", "number"].indexOf(typeof thisPatientField) !== -1 ) // If the field is a string or number
-			                    		{
+		                    			// We found data!
+		                    			foundData = true;
 
-			                    			// We found data!
-			                    			foundData = true;
+										// Grab field types
+										var fieldType = thisIterableField.type;
 
-											// Grab field types
-											var fieldType = thisIterableField.type;
+										console.log("Type: %s", fieldType);
 
-											console.log("Type: %s", fieldType);
+		                    			// We might need to mutate the data
+		                    			switch(fieldType) {
 
-			                    			// We might need to mutate the data
-			                    			switch(fieldType) {
+											/**
+											 * Date input
+											 */
+											case "date":
+												// if(thisIterableField.hasOwnProperty('settings') && thisIterableField.settings.hasOwnProperty('useBroadMonthSelector') && isTrue(thisIterableField.settings.useBroadMonthSelector)) {
+												// 	var date = new Date(),
+												// 		split = thisPatientField.toString().split("/"); // mm/dd/yyyy
+												//
+												// 		date.setMonth(parseInt(split[0]) - 1, split[1]);
+												// 		date.setFullYear(split[2]);
+												//
+												// 	value = Utilities.timeAgo(
+												// 		date
+												// 	);
+												// } else {
+													value = thisPatientField.toString();
+												// }
+												break;
 
-												/**
-												 * Date input
+		                    				/**
+		                    				 * Things with multiple lines
+		                    				 */
+		                    				case "textarea":
+		                    					value = (
+		                    						<p dangerouslySetInnerHTML={{ __html: thisPatientField.replace(/\n/g, "<br/>") }}></p>
+		                    					);
+		                    					break;
+
+		                    				/**
+		                    				 * Things stored as arrays
+		                    				 */
+		                    				case "multiselect":
+											case "file":
+		                    					// Convert from JSON array to nice string
+												var arr;
+
+												/*
+												 * The data should be an array already.
+												 * If so, just pass it back.
+												 * Otherwise, try to convert.
 												 */
-												case "date":
-													// if(thisIterableField.hasOwnProperty('settings') && thisIterableField.settings.hasOwnProperty('useBroadMonthSelector') && isTrue(thisIterableField.settings.useBroadMonthSelector)) {
-													// 	var date = new Date(),
-													// 		split = thisPatientField.toString().split("/"); // mm/dd/yyyy
-													//
-													// 		date.setMonth(parseInt(split[0]) - 1, split[1]);
-													// 		date.setFullYear(split[2]);
-													//
-													// 	value = Utilities.timeAgo(
-													// 		date
-													// 	);
-													// } else {
-														value = thisPatientField.toString();
-													// }
-													break;
-
-			                    				/**
-			                    				 * Things with multiple lines
-			                    				 */
-			                    				case "textarea":
-			                    					value = (
-			                    						<p dangerouslySetInnerHTML={{ __html: thisPatientField.replace(/\n/g, "<br/>") }}></p>
-			                    					);
-			                    					break;
-
-			                    				/**
-			                    				 * Things stored as arrays
-			                    				 */
-			                    				case "multiselect":
-			                    					// Convert from JSON array to nice string
-													var arr;
+												if(Array.isArray(thisPatientField)) {
+													arr = thisPatientField;
+												} else {
 			                    					try {
 														arr = JSON.parse(thisPatientField);
 													} catch(e) {
 														arr = [];
 													}
+												}
 
 
-													// Make sure it worked
-			                    					if(Array.isArray(arr) && arr.length > 0) {
-			                    						value = (
-															<ul className="list-unstyled">
-																{arr.map(function(optionValue, optionIndex) {
-																	return (
-																		<li key={[optionValue, optionIndex].join("-")}>
-																			{'\u26ac'} {optionValue}
-																		</li>
-																	);
-																})}
-															</ul>
-														);
-			                    					}
+												/*
+												 * Return a value as long as we
+												 * have more than one array value.
+												 */
+		                    					if(Array.isArray(arr) && arr.length > 0) {
 
-			                    					console.log("Multiselect value: %s", value);
-
-			                    					break;
-
-			                    				/**
-			                    				 * Things stored as base64
-			                    				 */
-			                    				case "file":
-
-													// Convert from JSON array to nice string
-													var arr;
-													try {
-														arr = JSON.parse(thisPatientField);
-													} catch(e) {
-														console.error("Failed to convert file resource array from string to array.");
-														arr = [];
+													/*
+													 * Run the switch loop again
+													 */
+													switch(fieldType) {
+														case "multiselect":
+															value = (
+																<ul className="list-unstyled">
+																	{arr.map(function(optionValue, optionIndex) {
+																		return (
+																			<li key={[optionValue, optionIndex].join("-")}>
+																				{'\u26ac'} {optionValue}
+																			</li>
+																		);
+																	})}
+																</ul>
+															);
+															break;
+														case "file":
+															value = arr.map(function(resourceID, index) {
+																return (
+																	<Fields.Resource
+																		id={resourceID} />
+																);
+															});
+															break;
 													}
 
-													value = arr.map(function(resourceID, index) {
-														return (
-															<Fields.Resource
-																id={resourceID} />
-														);
-													});
+		                    					}
 
-			                    					break;
+		                    					break;
 
-												case "pharmacy":
-													value = (
-														<span className="label label-default">
-															Set ID: {thisPatientField.toString()}
-														</span>
-													);
-													break;
 
-			                    				/**
-			                    				 * Everything else (single-value data points)
-			                    				 */
-			                    				default:
-			                    					value = thisPatientField.toString();
-			                    					break;
-			                    			}
-			                    		} else {
-											console.warning("Field isn't a string or number..");
-			                    			if( Array.isArray(thisPatientField) ) // If the data is an array
-			                    			{
-												console.info("We're good, it's an array!");
-			                    				// We found data!
-			                    				foundData = true;
-			                    				value = thisPatientField.join(", ");
-			                    			} else {
-			                    				// WTF is it?
-			                    				console.error("WARNING: unknown field data type");
-			                    			}
-			                    		}
+											/**
+											 * Pharmacy field
+											 *
+											 * Displays a small label with the
+											 * prescription set ID
+											 */
+											case "pharmacy":
+												value = (
+													<span className="label label-default">
+														Set ID: {thisPatientField.toString()}
+													</span>
+												);
+												break;
+
+		                    				/**
+		                    				 * Everything else (single-value data points)
+		                    				 */
+		                    				default:
+		                    					value = thisPatientField.toString();
+		                    					break;
+		                    			}
 			                    	}
 		                    	}
 								//-- End patient field checking --\\
@@ -343,7 +340,7 @@ Visit.PatientsOverview = React.createClass({
 										);
 									}
 		                    	}
-								
+
 	                    	}.bind(this))}
 		                </div>
 					</div>

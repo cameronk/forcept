@@ -140,11 +140,13 @@ class PatientController extends Controller
         switch($request->by) {
             case "name":
                 return response()->json([
-                    "status" => "success",
-                    "patients" => Patient::where('first_name', 'LIKE', '%' . $request->for . '%')
-                                ->orWhere('last_name', 'LIKE', '%' . $request->for . '%')
-                                ->orderBy('id', 'desc')
-                                ->get()->toArray()
+                    "status"    => "success",
+                    "patients"  =>  parent::runPatientConversions(
+                                        Patient::where('first_name', 'LIKE', '%' . $request->for . '%')
+                                            ->orWhere('last_name', 'LIKE', '%' . $request->for . '%')
+                                            ->orderBy('id', 'desc')
+                                            ->get()->toArray()
+                                    )
                 ]);
 
                 break;
@@ -152,10 +154,12 @@ class PatientController extends Controller
             case "forceptID":
                 return response()->json([
                     "status"    => "success",
-                    "patients" =>  Patient::where('id', '=', $request->for)
-                                    ->where('concrete', '=', 1)
-                                    ->orderBy('id', 'desc')
-                                    ->get()->toArray()
+                    "patients"  =>  parent::runPatientConversions(
+                                        Patient::where('id', '=', $request->for)
+                                            ->where('concrete', '=', 1)
+                                            ->orderBy('id', 'desc')
+                                            ->get()->toArray()
+                                    )
                 ]);
                 break;
 
@@ -179,7 +183,9 @@ class PatientController extends Controller
 
                 return response()->json([
                     "status"    => "success",
-                    "patients"  => $resp
+                    "patients"  =>  parent::runPatientConversions(
+                                        $resp
+                                    )
                 ]);
                 break;
             default:

@@ -18,7 +18,7 @@
         <div class="form-group row">
             <label for="stageType" class="col-sm-3 form-control-label">Upload mode</label>
             <div class="col-sm-9">
-                <select name="mode" class="form-control" id="stageType" required>
+                <select name="mode" class="form-control" id="stageType" disabled>
                     <option value="fresh">Delete already-existing field numbers and start fresh</option>
                     <option value="append">Keep old values, skip if field number already exists</option>
                     <option value="overwrite">Keep old values, overwrite old data if field number already exists</option>

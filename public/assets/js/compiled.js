@@ -863,6 +863,9 @@ Fields.Number = React.createClass({displayName: "Number",
  */
  Fields.Pharmacy = React.createClass({displayName: "Pharmacy",
 
+    /*
+     *
+     */
 	getInitialState: function() {
 		return {
 			status: "init",
@@ -873,6 +876,7 @@ Fields.Number = React.createClass({displayName: "Number",
 			drugs: {},
 
 			selected: {},
+            undoable: [],
 		};
 	},
 
@@ -897,10 +901,16 @@ Fields.Number = React.createClass({displayName: "Number",
 		console.groupEnd();
 	},
 
+    /*
+     *
+     */
 	loadPrescriptionSet: function() {
 		this.setState({ status: "loading" });
 	},
 
+    /*
+     *
+     */
 	savePrescriptionSet: function() {
 		if(this.state.setID !== null) {
 			this.setState({
@@ -940,6 +950,9 @@ Fields.Number = React.createClass({displayName: "Number",
 		}
 	},
 
+    /*
+     *
+     */
 	createPrescriptionSet: function() {
 		this.setState({ status: "loading" });
 
@@ -1005,6 +1018,9 @@ Fields.Number = React.createClass({displayName: "Number",
 		this.updateList();
 	},
 
+    /*
+     *
+     */
 	onSelectedDrugsChange: function(event) {
 		console.log("Selected drugs change:");
 		var options = event.target.options,
@@ -1046,18 +1062,56 @@ Fields.Number = React.createClass({displayName: "Number",
 	 */
 	onSignOff: function(drugKey) {
 		return function(event) {
-			var selected = this.state.selected;
-				// signedOff = this.state.signedOff;
+			var selected = this.state.selected,
+                undoable = this.state.undoable;
 
 			if(selected.hasOwnProperty(drugKey)) {
 				console.log("Signing off %s", drugKey);
 				selected[drugKey].done = true;
+                undoable.push(drugKey);
 			}
 
 			console.log("Signed off: %O", selected);
 
 			this.setState({
 				selected: selected,
+                undoable: undoable
+			});
+
+		}.bind(this);
+	},
+
+    /*
+     * Undo a sign-off action
+     */
+	onUndoSignOff: function(drugKey) {
+		return function(event) {
+			var selected = this.state.selected,
+                undoable = this.state.undoable;
+
+            /*
+             * if this drug key is actually in
+             * selected state Object
+             */
+			if(selected.hasOwnProperty(drugKey)) {
+				console.log("Unsigning %s", drugKey);
+				selected[drugKey].done = false;
+
+                /*
+                 * We should remove this key from the
+                 * undoable array stored in state.
+                 */
+                var undoIndex = undoable.indexOf(drugKey)
+                if(undoIndex !== -1) {
+                    delete undoable[undoIndex];
+                }
+			}
+
+			console.log("Undid sign off: %O", selected);
+
+			this.setState({
+				selected: selected,
+                undoable: undoable
 			});
 
 		}.bind(this);
@@ -1077,6 +1131,9 @@ Fields.Number = React.createClass({displayName: "Number",
 		}.bind(this);
 	},
 
+    /*
+     *
+     */
 	render: function() {
 
 		var props = this.props,
@@ -1162,10 +1219,8 @@ Fields.Number = React.createClass({displayName: "Number",
 						console.log("Selected: %O", state.selected);
 
 						saveButton = (
-							React.createElement("div", {className: "col-xs-12"}, 
-								React.createElement("div", {className: "btn btn-block btn-lg btn-success m-t", onClick: this.savePrescriptionSet}, 
-									state.status === "saving" ? "Working..." : (state.justSaved === true ? "Saved!" : "\u21ea Save prescription set")
-								)
+							React.createElement("button", {type: "button", className: "btn btn-block btn-lg btn-success m-t", disabled: state.status === "saving" ? true : false, onClick: this.savePrescriptionSet}, 
+								state.status === "saving" ? "Working..." : (state.justSaved === true ? "Saved!" : "\u21ea Save prescription set")
 							)
 						);
 
@@ -1176,7 +1231,8 @@ Fields.Number = React.createClass({displayName: "Number",
 							var thisDrug = state.drugs[drugKey],
 								thisSelection = state.selected[drugKey],
 								signedOff = isTrue(thisSelection.done),
-								preSignOffDOM;
+								preSignOffDOM,
+                                undoLink;
 
 							if(!signedOff) {
 								preSignOffDOM = (
@@ -1202,11 +1258,24 @@ Fields.Number = React.createClass({displayName: "Number",
 								);
 							}
 
+                            /*
+                             * If this drug key is listed as undoable (it was added this stage)
+                             * show the undo link
+                             */
+                            if(state.undoable.indexOf(drugKey) !== -1) {
+                                undoLink = (
+                                    React.createElement("a", {className: "btn-link", onClick: this.onUndoSignOff(drugKey)}, 
+                                        "(undo)"
+                                    )
+                                );
+                            }
+
 							return (
 								React.createElement("div", {className: "row m-t"}, 
 									React.createElement("div", {className: "col-xs-12"}, 
 										React.createElement("h6", null, 
-											signedOff ? ["\u2611", thisSelection.amount, "\u00d7"].join(" ") : "\u2610", " ", thisDrug.value
+											signedOff ? ["\u2611", thisSelection.amount, "\u00d7"].join(" ") : "\u2610", " ", thisDrug.value, 
+                                            undoLink
 										)
 									), 
 									preSignOffDOM
@@ -1238,10 +1307,6 @@ Fields.Number = React.createClass({displayName: "Number",
 				)
 			)
 		);
-
-		/*
-			{selectDrugs}
-			{selectedDrugs}*/
 
 	}
 });
@@ -2824,7 +2889,8 @@ FlowEditor.Field.Settings = React.createClass({displayName: "Settings",
 												placeholder: "Enter a value for this option", 
 												className: "form-control", 
 												value: thisOption.value, 
-												onChange: this.handleChangeOptionText(optionKey)}), 
+												onChange: this.handleChangeOptionText(optionKey), 
+												maxLength: 255}), 
 											React.createElement("span", {className: "input-group-btn"}, 
 												upButton, 
 												downButton, 
@@ -4152,7 +4218,7 @@ Visit.NewVisitControls = React.createClass({displayName: "NewVisitControls",
 		        	), 
 	        	React.createElement("div", {className: "btn-group btn-group-lg"}, 
 	        		React.createElement("img", {src: "/assets/img/loading.gif", className: loadingGifClasses, width: "52", height: "52"}), 
-	        		React.createElement("button", {type: "button", className: "btn btn-success", disabled: props.isLoading, onClick: props.onFinishVisit}, '\u2713', " Finish visit")
+	        		React.createElement("button", {type: "button", className: "btn btn-success", disabled: props.isLoading, onClick: props.onFinishVisit}, '\u2713', " Move visit")
 	        	)
 	        )
 	    );
@@ -4180,7 +4246,7 @@ Visit.StageVisitControls = React.createClass({displayName: "StageVisitControls",
 			React.createElement("div", {className: "btn-toolbar", role: "toolbar"}, 
 				React.createElement("div", {className: "btn-group btn-group-lg"}, 
 		        	React.createElement("img", {src: "/assets/img/loading.gif", className: loadingGifClasses, width: "52", height: "52"}), 
-	        		React.createElement("button", {type: "button", className: "btn btn-success", disabled: props.isLoading, onClick: props.onFinishVisit}, "Finish visit »")
+	        		React.createElement("button", {type: "button", className: "btn btn-success", disabled: props.isLoading, onClick: props.onFinishVisit}, '\u2713', " Move visit")
 		        )
 	        )
 	    );
@@ -4399,19 +4465,10 @@ Visit.ImportBlock = React.createClass({displayName: "ImportBlock",
  */
 Visit.FinishModal = React.createClass({displayName: "FinishModal",
 
-	getInitialState: function() {
-		return {
-			isSubmitting: false,
-		};
-	},
-
 	/*
 	 * onComplete
 	 */
 	onComplete: function() {
-		this.setState({
-			isSubmitting: true
-		});
 		this.props.onConfirmFinishVisit(this.state.destination, this);
 	},
 
@@ -4472,15 +4529,10 @@ Visit.FinishModal = React.createClass({displayName: "FinishModal",
 			}.bind(this));
 		}
 
-		// Change button text based on modal state
-		if(state.isSubmitting == true) {
-			buttonText = "Working...";
+		if(state.destination == "__checkout__") {
+			buttonText = "Check-out patients";
 		} else {
-			if(state.destination == "__checkout__") {
-				buttonText = "Check-out patients";
-			} else {
-				buttonText = "Move patients to " + (state.destination !== null ? stageNameKeyPairs[state.destination] : stageNameKeyPairs[defaultValue]);
-			}
+			buttonText = "Move patients to " + (state.destination !== null ? stageNameKeyPairs[state.destination] : stageNameKeyPairs[defaultValue]);
 		}
 
 		return (
@@ -4503,7 +4555,7 @@ Visit.FinishModal = React.createClass({displayName: "FinishModal",
 			            	)
 			            ), 
 			            React.createElement("div", {className: "modal-footer"}, 
-			                React.createElement("button", {type: "button", className: "btn btn-success", disabled: state.isSubmitting == true, onClick: this.onComplete}, 
+			                React.createElement("button", {type: "button", className: "btn btn-success", onClick: this.onComplete}, 
 			                	buttonText
 			                )
 			            )
@@ -4686,131 +4738,128 @@ Visit.PatientsOverview = React.createClass({displayName: "PatientsOverview",
 
 		                    		if(!(props.mini == true && isGeneratedField)) // Don't show generated fields in Mini mode
 		                    		{
-			                    		if( ["string", "number"].indexOf(typeof thisPatientField) !== -1 ) // If the field is a string or number
-			                    		{
+		                    			// We found data!
+		                    			foundData = true;
 
-			                    			// We found data!
-			                    			foundData = true;
+										// Grab field types
+										var fieldType = thisIterableField.type;
 
-											// Grab field types
-											var fieldType = thisIterableField.type;
+										console.log("Type: %s", fieldType);
 
-											console.log("Type: %s", fieldType);
+		                    			// We might need to mutate the data
+		                    			switch(fieldType) {
 
-			                    			// We might need to mutate the data
-			                    			switch(fieldType) {
+											/**
+											 * Date input
+											 */
+											case "date":
+												// if(thisIterableField.hasOwnProperty('settings') && thisIterableField.settings.hasOwnProperty('useBroadMonthSelector') && isTrue(thisIterableField.settings.useBroadMonthSelector)) {
+												// 	var date = new Date(),
+												// 		split = thisPatientField.toString().split("/"); // mm/dd/yyyy
+												//
+												// 		date.setMonth(parseInt(split[0]) - 1, split[1]);
+												// 		date.setFullYear(split[2]);
+												//
+												// 	value = Utilities.timeAgo(
+												// 		date
+												// 	);
+												// } else {
+													value = thisPatientField.toString();
+												// }
+												break;
 
-												/**
-												 * Date input
+		                    				/**
+		                    				 * Things with multiple lines
+		                    				 */
+		                    				case "textarea":
+		                    					value = (
+		                    						React.createElement("p", {dangerouslySetInnerHTML: { __html: thisPatientField.replace(/\n/g, "<br/>")}})
+		                    					);
+		                    					break;
+
+		                    				/**
+		                    				 * Things stored as arrays
+		                    				 */
+		                    				case "multiselect":
+											case "file":
+		                    					// Convert from JSON array to nice string
+												var arr;
+
+												/*
+												 * The data should be an array already.
+												 * If so, just pass it back.
+												 * Otherwise, try to convert.
 												 */
-												case "date":
-													// if(thisIterableField.hasOwnProperty('settings') && thisIterableField.settings.hasOwnProperty('useBroadMonthSelector') && isTrue(thisIterableField.settings.useBroadMonthSelector)) {
-													// 	var date = new Date(),
-													// 		split = thisPatientField.toString().split("/"); // mm/dd/yyyy
-													//
-													// 		date.setMonth(parseInt(split[0]) - 1, split[1]);
-													// 		date.setFullYear(split[2]);
-													//
-													// 	value = Utilities.timeAgo(
-													// 		date
-													// 	);
-													// } else {
-														value = thisPatientField.toString();
-													// }
-													break;
-
-			                    				/**
-			                    				 * Things with multiple lines
-			                    				 */
-			                    				case "textarea":
-			                    					value = (
-			                    						React.createElement("p", {dangerouslySetInnerHTML: { __html: thisPatientField.replace(/\n/g, "<br/>")}})
-			                    					);
-			                    					break;
-
-			                    				/**
-			                    				 * Things stored as arrays
-			                    				 */
-			                    				case "multiselect":
-			                    					// Convert from JSON array to nice string
-													var arr;
+												if(Array.isArray(thisPatientField)) {
+													arr = thisPatientField;
+												} else {
 			                    					try {
 														arr = JSON.parse(thisPatientField);
 													} catch(e) {
 														arr = [];
 													}
+												}
 
 
-													// Make sure it worked
-			                    					if(Array.isArray(arr) && arr.length > 0) {
-			                    						value = (
-															React.createElement("ul", {className: "list-unstyled"}, 
-																arr.map(function(optionValue, optionIndex) {
-																	return (
-																		React.createElement("li", {key: [optionValue, optionIndex].join("-")}, 
-																			'\u26ac', " ", optionValue
-																		)
-																	);
-																})
-															)
-														);
-			                    					}
+												/*
+												 * Return a value as long as we
+												 * have more than one array value.
+												 */
+		                    					if(Array.isArray(arr) && arr.length > 0) {
 
-			                    					console.log("Multiselect value: %s", value);
-
-			                    					break;
-
-			                    				/**
-			                    				 * Things stored as base64
-			                    				 */
-			                    				case "file":
-
-													// Convert from JSON array to nice string
-													var arr;
-													try {
-														arr = JSON.parse(thisPatientField);
-													} catch(e) {
-														console.error("Failed to convert file resource array from string to array.");
-														arr = [];
+													/*
+													 * Run the switch loop again
+													 */
+													switch(fieldType) {
+														case "multiselect":
+															value = (
+																React.createElement("ul", {className: "list-unstyled"}, 
+																	arr.map(function(optionValue, optionIndex) {
+																		return (
+																			React.createElement("li", {key: [optionValue, optionIndex].join("-")}, 
+																				'\u26ac', " ", optionValue
+																			)
+																		);
+																	})
+																)
+															);
+															break;
+														case "file":
+															value = arr.map(function(resourceID, index) {
+																return (
+																	React.createElement(Fields.Resource, {
+																		id: resourceID})
+																);
+															});
+															break;
 													}
 
-													value = arr.map(function(resourceID, index) {
-														return (
-															React.createElement(Fields.Resource, {
-																id: resourceID})
-														);
-													});
+		                    					}
 
-			                    					break;
+		                    					break;
 
-												case "pharmacy":
-													value = (
-														React.createElement("span", {className: "label label-default"}, 
-															"Set ID: ", thisPatientField.toString()
-														)
-													);
-													break;
 
-			                    				/**
-			                    				 * Everything else (single-value data points)
-			                    				 */
-			                    				default:
-			                    					value = thisPatientField.toString();
-			                    					break;
-			                    			}
-			                    		} else {
-											console.warning("Field isn't a string or number..");
-			                    			if( Array.isArray(thisPatientField) ) // If the data is an array
-			                    			{
-												console.info("We're good, it's an array!");
-			                    				// We found data!
-			                    				foundData = true;
-			                    				value = thisPatientField.join(", ");
-			                    			} else {
-			                    				// WTF is it?
-			                    				console.error("WARNING: unknown field data type");
-			                    			}
-			                    		}
+											/**
+											 * Pharmacy field
+											 *
+											 * Displays a small label with the
+											 * prescription set ID
+											 */
+											case "pharmacy":
+												value = (
+													React.createElement("span", {className: "label label-default"}, 
+														"Set ID: ", thisPatientField.toString()
+													)
+												);
+												break;
+
+		                    				/**
+		                    				 * Everything else (single-value data points)
+		                    				 */
+		                    				default:
+		                    					value = thisPatientField.toString();
+		                    					break;
+		                    			}
 			                    	}
 		                    	}
 								//-- End patient field checking --\\
@@ -4860,7 +4909,7 @@ Visit.PatientsOverview = React.createClass({displayName: "PatientsOverview",
 										);
 									}
 		                    	}
-								
+
 	                    	}.bind(this))
 		                )
 					)

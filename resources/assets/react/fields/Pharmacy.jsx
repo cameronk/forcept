@@ -8,6 +8,9 @@
  */
  Fields.Pharmacy = React.createClass({
 
+    /*
+     *
+     */
 	getInitialState: function() {
 		return {
 			status: "init",
@@ -18,6 +21,7 @@
 			drugs: {},
 
 			selected: {},
+            undoable: [],
 		};
 	},
 
@@ -42,10 +46,16 @@
 		console.groupEnd();
 	},
 
+    /*
+     *
+     */
 	loadPrescriptionSet: function() {
 		this.setState({ status: "loading" });
 	},
 
+    /*
+     *
+     */
 	savePrescriptionSet: function() {
 		if(this.state.setID !== null) {
 			this.setState({
@@ -85,6 +95,9 @@
 		}
 	},
 
+    /*
+     *
+     */
 	createPrescriptionSet: function() {
 		this.setState({ status: "loading" });
 
@@ -150,6 +163,9 @@
 		this.updateList();
 	},
 
+    /*
+     *
+     */
 	onSelectedDrugsChange: function(event) {
 		console.log("Selected drugs change:");
 		var options = event.target.options,
@@ -191,18 +207,56 @@
 	 */
 	onSignOff: function(drugKey) {
 		return function(event) {
-			var selected = this.state.selected;
-				// signedOff = this.state.signedOff;
+			var selected = this.state.selected,
+                undoable = this.state.undoable;
 
 			if(selected.hasOwnProperty(drugKey)) {
 				console.log("Signing off %s", drugKey);
 				selected[drugKey].done = true;
+                undoable.push(drugKey);
 			}
 
 			console.log("Signed off: %O", selected);
 
 			this.setState({
 				selected: selected,
+                undoable: undoable
+			});
+
+		}.bind(this);
+	},
+
+    /*
+     * Undo a sign-off action
+     */
+	onUndoSignOff: function(drugKey) {
+		return function(event) {
+			var selected = this.state.selected,
+                undoable = this.state.undoable;
+
+            /*
+             * if this drug key is actually in
+             * selected state Object
+             */
+			if(selected.hasOwnProperty(drugKey)) {
+				console.log("Unsigning %s", drugKey);
+				selected[drugKey].done = false;
+
+                /*
+                 * We should remove this key from the
+                 * undoable array stored in state.
+                 */
+                var undoIndex = undoable.indexOf(drugKey)
+                if(undoIndex !== -1) {
+                    delete undoable[undoIndex];
+                }
+			}
+
+			console.log("Undid sign off: %O", selected);
+
+			this.setState({
+				selected: selected,
+                undoable: undoable
 			});
 
 		}.bind(this);
@@ -222,6 +276,9 @@
 		}.bind(this);
 	},
 
+    /*
+     *
+     */
 	render: function() {
 
 		var props = this.props,
@@ -307,11 +364,9 @@
 						console.log("Selected: %O", state.selected);
 
 						saveButton = (
-							<div className="col-xs-12">
-								<div className="btn btn-block btn-lg btn-success m-t" onClick={this.savePrescriptionSet}>
-									{state.status === "saving" ? "Working..." : (state.justSaved === true ? "Saved!" : "\u21ea Save prescription set")}
-								</div>
-							</div>
+							<button type="button" className="btn btn-block btn-lg btn-success m-t" disabled={state.status === "saving" ? true : false} onClick={this.savePrescriptionSet}>
+								{state.status === "saving" ? "Working..." : (state.justSaved === true ? "Saved!" : "\u21ea Save prescription set")}
+							</button>
 						);
 
 						selectedDrugs = selectedKeys.map(function(drugKey) {
@@ -321,7 +376,8 @@
 							var thisDrug = state.drugs[drugKey],
 								thisSelection = state.selected[drugKey],
 								signedOff = isTrue(thisSelection.done),
-								preSignOffDOM;
+								preSignOffDOM,
+                                undoLink;
 
 							if(!signedOff) {
 								preSignOffDOM = (
@@ -347,11 +403,24 @@
 								);
 							}
 
+                            /*
+                             * If this drug key is listed as undoable (it was added this stage)
+                             * show the undo link
+                             */
+                            if(state.undoable.indexOf(drugKey) !== -1) {
+                                undoLink = (
+                                    <a className="btn-link" onClick={this.onUndoSignOff(drugKey)}>
+                                        (undo)
+                                    </a>
+                                );
+                            }
+
 							return (
 								<div className="row m-t">
 									<div className="col-xs-12">
 										<h6>
 											{signedOff ? ["\u2611", thisSelection.amount, "\u00d7"].join(" ") : "\u2610"} {thisDrug.value}
+                                            {undoLink}
 										</h6>
 									</div>
 									{preSignOffDOM}
@@ -383,10 +452,6 @@
 				</div>
 			</div>
 		);
-
-		/*
-			{selectDrugs}
-			{selectedDrugs}*/
 
 	}
 });

@@ -26,7 +26,7 @@ Visit.NewVisitControls = React.createClass({
 		        	</div>
 	        	<div className="btn-group btn-group-lg">
 	        		<img src="/assets/img/loading.gif" className={loadingGifClasses} width="52" height="52" />
-	        		<button type="button" className="btn btn-success" disabled={props.isLoading} onClick={props.onFinishVisit}>{'\u2713'} Finish visit</button>
+	        		<button type="button" className="btn btn-success" disabled={props.isLoading} onClick={props.onFinishVisit}>{'\u2713'} Move visit</button>
 	        	</div>
 	        </div>
 	    );
@@ -54,7 +54,7 @@ Visit.StageVisitControls = React.createClass({
 			<div className="btn-toolbar" role="toolbar">
 				<div className="btn-group btn-group-lg">
 		        	<img src="/assets/img/loading.gif" className={loadingGifClasses} width="52" height="52" />
-	        		<button type="button" className="btn btn-success" disabled={props.isLoading} onClick={props.onFinishVisit}>Finish visit &raquo;</button>
+	        		<button type="button" className="btn btn-success" disabled={props.isLoading} onClick={props.onFinishVisit}>{'\u2713'} Move visit</button>
 		        </div>
 	        </div>
 	    );

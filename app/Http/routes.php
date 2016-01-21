@@ -380,3 +380,16 @@ Route::get('auth/logout', [
 	'uses' => 'Auth\AuthController@getLogout'
 ]);
 Route::post('auth/login', 'Auth\AuthController@postLogin');
+
+
+/**
+
+Application notes:
+
+
+
+
+Locations that parse data based on field type:
+VisitController@handle (converts fields to proper type)
+
+**/

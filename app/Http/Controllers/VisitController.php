@@ -99,14 +99,6 @@ class VisitController extends Controller
 
             // Get patient data from PATIENT table
             $patients = [];
-            //$rootFieldsWithoutFiles = array();
-
-            // Push all non-file root fields to array
-            // foreach($rootFields as $fieldKey => $fieldData) {
-            //     if($fieldData['type'] !== "file"){
-            //         $rootFieldsWithoutFiles[] = $fieldKey;
-            //     }
-            // }
 
             // Get and apply patient data for all non-file fields
             foreach($visit->patients as $id) {
@@ -147,6 +139,7 @@ class VisitController extends Controller
 
                 \Log::debug($visitPatientsDataInThisStage);
 
+                // TODO: use parent::runPatientConversions instead?
                 foreach($visitPatientsDataInThisStage as $patient) {
                     \Log::debug("Patient:");
                     \Log::debug($patient->patient_id);
@@ -154,7 +147,11 @@ class VisitController extends Controller
                         \Log::debug("Patient values:");
                         \Log::debug($patientField);
                         \Log::debug($patientFieldValue);
-                        $patients[$patient->patient_id][$patientField] = $patientFieldValue;
+
+                        if(isset($allFields[$patientField]['type'])) {
+                            $pushValue;
+                            $patients[$patient->patient_id][$patientField] = parent::convert($allFields[$patientField]['type'], $patientFieldValue);
+                        }
                     }
                 }
 

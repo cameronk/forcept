@@ -567,7 +567,8 @@ FlowEditor.Field.Settings = React.createClass({
 												placeholder="Enter a value for this option"
 												className="form-control"
 												value={thisOption.value}
-												onChange={this.handleChangeOptionText(optionKey)} />
+												onChange={this.handleChangeOptionText(optionKey)}
+												maxLength={255} />
 											<span className="input-group-btn">
 												{upButton}
 												{downButton}
