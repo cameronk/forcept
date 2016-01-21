@@ -324,7 +324,8 @@
 							className="form-control forcept-field-select-drugs"
 							multiple={true}
 							size={10}
-							onChange={this.onSelectedDrugsChange}>
+							onChange={this.onSelectedDrugsChange}
+                            disabled={state.status === "saving"}>
 
 							{dataKeys.map(function(categoryKey, index) {
 								var thisCategory = state.data[categoryKey];
@@ -364,7 +365,7 @@
 						console.log("Selected: %O", state.selected);
 
 						saveButton = (
-							<button type="button" className="btn btn-block btn-lg btn-success m-t" disabled={state.status === "saving" ? true : false} onClick={this.savePrescriptionSet}>
+							<button type="button" className="btn btn-block btn-lg btn-success m-t" disabled={state.status === "saving"} onClick={this.savePrescriptionSet}>
 								{state.status === "saving" ? "Working..." : (state.justSaved === true ? "Saved!" : "\u21ea Save prescription set")}
 							</button>
 						);
@@ -389,12 +390,13 @@
 											<input
 												type="number"
 												min="1"
-												className="form-control form-control-sm"
+												className="form-control"
 												placeholder="Enter amount here"
-												defaultValue="1"
-												onChange={this.onDrugAmountChange(drugKey)}/>
+												defaultValue={state.selected[drugKey].amount}
+												onChange={this.onDrugAmountChange(drugKey)}
+                                                disabled={state.status === "saving"} />
 											<span className="input-group-btn">
-												<button type="button" className="btn btn-sm btn-success" onClick={this.onSignOff(drugKey)}>
+												<button type="button" className="btn btn-sm btn-success" onClick={this.onSignOff(drugKey)} disabled={state.status === "saving"}>
 													{"\u2713"} Done
 												</button>
 											</span>
@@ -419,8 +421,7 @@
 								<div className="row m-t">
 									<div className="col-xs-12">
 										<h6>
-											{signedOff ? ["\u2611", thisSelection.amount, "\u00d7"].join(" ") : "\u2610"} {thisDrug.value}
-                                            {undoLink}
+											{signedOff ? ["\u2611", thisSelection.amount, "\u00d7"].join(" ") : "\u2610"} {thisDrug.value} {undoLink}
 										</h6>
 									</div>
 									{preSignOffDOM}

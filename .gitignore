@@ -1,5 +1,7 @@
 /bootstrap/compiled.php
 
+.env
+
 composer.phar
 
 storage/imports/*
@@ -10,3 +12,4 @@ storage/imports/*
 /node_modules
 Homestead.yaml
 Homestead.json
+.env
