@@ -953,12 +953,12 @@ Fields.Number = React.createClass({displayName: "Number",
     /*
      *
      */
-	createPrescriptionSet: function() {
+	managePrescriptionSet: function() {
 		this.setState({ status: "loading" });
 
 		$.ajax({
 			type: "POST",
-			url: "/data/prescription-sets/create",
+			url: "/data/prescription-sets/manage",
 			data: {
 				_token: document.querySelector("meta[name='csrf-token']").getAttribute('value'),
 				patientID: this.props.patientID,
@@ -970,7 +970,7 @@ Fields.Number = React.createClass({displayName: "Number",
 					status: "view",
 					setID: resp.id
 				};
-				if(resp.hasOwnProperty("prescriptions")) {
+				if(resp.hasOwnProperty("prescriptions") && resp.prescriptions !== null) {
 					state.selected = resp.prescriptions;
 				}
 				this.setState(state);
@@ -1150,7 +1150,7 @@ Fields.Number = React.createClass({displayName: "Number",
 		switch(state.status) {
 			case "init":
 				renderDOM = (
-					React.createElement("div", {className: "btn btn-block btn-primary", onClick: this.createPrescriptionSet}, 
+					React.createElement("div", {className: "btn btn-block btn-primary", onClick: this.managePrescriptionSet}, 
 						'\u002b', " Load prescription set"
 					)
 				);

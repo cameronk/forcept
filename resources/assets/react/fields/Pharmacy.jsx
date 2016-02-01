@@ -98,12 +98,12 @@
     /*
      *
      */
-	createPrescriptionSet: function() {
+	managePrescriptionSet: function() {
 		this.setState({ status: "loading" });
 
 		$.ajax({
 			type: "POST",
-			url: "/data/prescription-sets/create",
+			url: "/data/prescription-sets/manage",
 			data: {
 				_token: document.querySelector("meta[name='csrf-token']").getAttribute('value'),
 				patientID: this.props.patientID,
@@ -115,7 +115,7 @@
 					status: "view",
 					setID: resp.id
 				};
-				if(resp.hasOwnProperty("prescriptions")) {
+				if(resp.hasOwnProperty("prescriptions") && resp.prescriptions !== null) {
 					state.selected = resp.prescriptions;
 				}
 				this.setState(state);
@@ -295,7 +295,7 @@
 		switch(state.status) {
 			case "init":
 				renderDOM = (
-					<div className="btn btn-block btn-primary" onClick={this.createPrescriptionSet}>
+					<div className="btn btn-block btn-primary" onClick={this.managePrescriptionSet}>
 						{'\u002b'} Load prescription set
 					</div>
 				);

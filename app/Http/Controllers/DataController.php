@@ -269,10 +269,12 @@ class DataController extends Controller
         }
     }
 
-
+    /**
+     *
+     */
     public function prescriptionSets(Request $request, $method) {
         switch($method) {
-            case "create":
+            case "manage":
                 if($request->has('patientID') && $request->has('visitID')) {
                     $check = PrescriptionSet::where('visit_id', $request->visitID)->where('patient_id', $request->patientID);
                     if($check->count() > 0) {
