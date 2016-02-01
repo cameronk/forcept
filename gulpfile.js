@@ -5,6 +5,7 @@ var uglify = require('gulp-uglify');
 var rename = require('gulp-rename');
 var concat = require('gulp-concat');
 var addsrc = require('gulp-add-src');
+var changed = require('gulp-changed');
 
 gulp.task('default', function () {
 
@@ -18,14 +19,16 @@ gulp.task('default', function () {
 
     // Uncompressed development version
     SassSheets
+        .pipe(changed("./public/assets/css"))
         .pipe(rename(function(path) {
             path.extname = ".css";
         }))
-        .pipe(sass().on('error', sass.logError))
+        .pipe(sass())
         .pipe(gulp.dest('./public/assets/css'));
 
     // Compressed production version
     SassSheets
+        .pipe(changed("./public/assets/css"))
         .pipe(rename(function(path) {
             path.extname = ".min.css";
         }))
@@ -33,7 +36,6 @@ gulp.task('default', function () {
             outputStyle: 'compressed'
         }))
         .pipe(gulp.dest('./public/assets/css'));
-
 
 
     /**
@@ -72,6 +74,7 @@ gulp.task('default', function () {
 
     // Build compiled development version
     ReactScripts
+    .pipe(changed("./public/assets/js"))
         .pipe(react())
         .pipe(concat('compiled.js'))
         .pipe(gulp.dest('./public/assets/js'));
@@ -79,6 +82,7 @@ gulp.task('default', function () {
 
     // Build compiled production version
     ReactScripts
+        .pipe(changed("./public/assets/js"))
         .pipe(react())
         .pipe(concat('compiled.min.js'))
         .pipe(uglify({
