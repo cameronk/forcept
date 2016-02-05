@@ -316,9 +316,11 @@
 				);
 
 				var selectedDrugs,
+                    selectedDrugsHeader,
 					saveButton;
 
 				if(dataKeys.length > 0) {
+
 					drugPicker = (
 						<select
 							className="form-control forcept-field-select-drugs"
@@ -363,6 +365,13 @@
 
 					if(selectedKeys.length > 0) {
 						console.log("Selected: %O", state.selected);
+
+                        selectedDrugsHeader = (
+                            <h4 className="m-t">
+                                <span className="label label-success m-r">{selectedKeys.length}</span>
+                                Selected / completed medications
+                            </h4>
+                        );
 
 						saveButton = (
 							<button type="button" className="btn btn-block btn-lg btn-success m-t" disabled={state.status === "saving"} onClick={this.savePrescriptionSet}>
@@ -435,6 +444,7 @@
 				renderDOM = (
 					<span>
 						{drugPicker}
+                        {selectedDrugsHeader}
 						{selectedDrugs}
 						{saveButton}
 					</span>

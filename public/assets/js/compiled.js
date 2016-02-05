@@ -1171,9 +1171,11 @@ Fields.Number = React.createClass({displayName: "Number",
 				);
 
 				var selectedDrugs,
+                    selectedDrugsHeader,
 					saveButton;
 
 				if(dataKeys.length > 0) {
+
 					drugPicker = (
 						React.createElement("select", {
 							className: "form-control forcept-field-select-drugs", 
@@ -1218,6 +1220,13 @@ Fields.Number = React.createClass({displayName: "Number",
 
 					if(selectedKeys.length > 0) {
 						console.log("Selected: %O", state.selected);
+
+                        selectedDrugsHeader = (
+                            React.createElement("h4", {className: "m-t"}, 
+                                React.createElement("span", {className: "label label-success m-r"}, selectedKeys.length), 
+                                "Selected / completed medications"
+                            )
+                        );
 
 						saveButton = (
 							React.createElement("button", {type: "button", className: "btn btn-block btn-lg btn-success m-t", disabled: state.status === "saving", onClick: this.savePrescriptionSet}, 
@@ -1290,6 +1299,7 @@ Fields.Number = React.createClass({displayName: "Number",
 				renderDOM = (
 					React.createElement("span", null, 
 						drugPicker, 
+                        selectedDrugsHeader, 
 						selectedDrugs, 
 						saveButton
 					)
