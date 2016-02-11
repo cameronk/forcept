@@ -72,9 +72,6 @@ gulp.task('default', function () {
         .pipe(concat('compiled.js'))
         .pipe(gulp.dest('./public/assets/js'));
 
-
-
-
 });
 
 gulp.task("vendor", function() {

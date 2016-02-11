@@ -97,7 +97,7 @@ DataDisplays.FlowOverview = React.createClass({displayName: "FlowOverview",
 				React.createElement("div", {className: "row"}, 
 					Object.keys(this.state.stages).map(function(stageID, index) {
 						return (
-							React.createElement("div", {className: "col-xs-12 col-sm-6 col-md-4", key: "flow-overview-stage-" + index}, 
+							React.createElement("div", {className: "col-xs-12 col-sm-6 col-md-4 col-lg-3", key: "flow-overview-stage-" + index}, 
 								React.createElement("div", {className: "card"}, 
 									React.createElement("div", {className: "card-block"}, 
 										React.createElement("h4", {className: "card-title text-xs-center m-b"}, 

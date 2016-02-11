@@ -58,7 +58,7 @@ DataDisplays.FlowOverview = React.createClass({
 				<div className="row">
 					{Object.keys(this.state.stages).map(function(stageID, index) {
 						return (
-							<div className="col-xs-12 col-sm-6 col-md-4" key={"flow-overview-stage-" + index}>
+							<div className="col-xs-12 col-sm-6 col-md-4 col-lg-3" key={"flow-overview-stage-" + index}>
 								<div className="card">
 									<div className="card-block">
 										<h4 className="card-title text-xs-center m-b">

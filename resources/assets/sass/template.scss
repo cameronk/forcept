@@ -5,6 +5,9 @@
 // Bootstrap and respective variables
 @import "bootstrap/scss/bootstrap";
 
+// Font awesome
+@import "font-awesome/scss/font-awesome";
+
 
 // Forcept variables
 $forcept-navbar-height:    4rem;
@@ -23,8 +26,8 @@ $forcept-navbar-height:    4rem;
  */
 @include media-breakpoint-up(xl) {
     #page-content {
-        max-width: 90%;
-        margin: 0 auto;
+        // max-width: 90%;
+        // margin: 0 auto;
     }
 }
 
@@ -56,7 +59,7 @@ $forcept-navbar-height:    4rem;
 
 // Content
 @import "content";
-@import "signin";    
+@import "signin";
 
 // Console
 @import "console";
@@ -65,5 +68,5 @@ $forcept-navbar-height:    4rem;
 // Stage visits viewer
 @import "stage-visits";
 
-// Data display 
+// Data display
 @import "data-displays";
