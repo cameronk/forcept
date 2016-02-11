@@ -68,7 +68,9 @@
 
 
 <!--| Yield: content |-->
-@yield('content')
+<div id="page-content">
+    @yield('content')
+</div>
 
 
 <!--| Footer |-->

@@ -16,7 +16,6 @@ var DataDisplays = {
 };
 
 DataDisplays.RangeModule = React.createClass({displayName: "RangeModule",
-
 	render: function() {
 		return (
 			React.createElement("div", {className: "row date-range"}, 
@@ -91,41 +90,38 @@ DataDisplays.FlowOverview = React.createClass({displayName: "FlowOverview",
 
 	render: function() {
 		return (
-			React.createElement("blockquote", {className: "blockquote", id: "display-flow-overview"}, 
-				React.createElement("h2", null, "Flow overview"), 
-				React.createElement("hr", null), 
-				React.createElement("div", {className: "row"}, 
-					Object.keys(this.state.stages).map(function(stageID, index) {
-						return (
-							React.createElement("div", {className: "col-xs-12 col-sm-6 col-md-4 col-lg-3", key: "flow-overview-stage-" + index}, 
-								React.createElement("div", {className: "card"}, 
-									React.createElement("div", {className: "card-block"}, 
-										React.createElement("h4", {className: "card-title text-xs-center m-b"}, 
-											this.state.stages[stageID].name
+			React.createElement("div", {className: "row"}, 
+				Object.keys(this.state.stages).map(function(stageID, index) {
+					return (
+						React.createElement("div", {className: "col-xs-12 col-sm-6 col-md-4 col-lg-2", key: "flow-overview-stage-" + index}, 
+							React.createElement("div", {className: "card"}, 
+								React.createElement("div", {className: "card-block"}, 
+									React.createElement("h4", {className: "card-title text-xs-center m-b"}, 
+										this.state.stages[stageID].name
+									), 
+									React.createElement("hr", null), 
+									React.createElement("div", {className: "row"}, 
+										React.createElement("div", {className: "col-xs-12 col-sm-6 text-xs-center"}, 
+											React.createElement("h2", null, React.createElement("span", {className: "label label-primary label-rounded"}, this.state.stages[stageID]['visits'])), 
+											React.createElement("h5", {className: "text-muted"}, "visit", this.state.stages[stageID]['visits'] == 1 ? "" : "s")
 										), 
-										React.createElement("hr", null), 
-										React.createElement("div", {className: "row"}, 
-											React.createElement("div", {className: "col-xs-12 col-sm-6 text-xs-center"}, 
-												React.createElement("h2", null, React.createElement("span", {className: "label label-primary label-rounded"}, this.state.stages[stageID]['visits'])), 
-												React.createElement("h5", {className: "text-muted"}, "visit", this.state.stages[stageID]['visits'] == 1 ? "" : "s")
-											), 
-											React.createElement("div", {className: "col-xs-12 col-sm-6 text-xs-center"}, 
-												React.createElement("h2", null, React.createElement("span", {className: "label label-primary label-rounded"}, this.state.stages[stageID]['patients'])), 
-												React.createElement("h5", {className: "text-muted"}, "patient", this.state.stages[stageID]['patients'] == 1 ? "" : "s")
-											)
+										React.createElement("div", {className: "col-xs-12 col-sm-6 text-xs-center"}, 
+											React.createElement("h2", null, React.createElement("span", {className: "label label-primary label-rounded"}, this.state.stages[stageID]['patients'])), 
+											React.createElement("h5", {className: "text-muted"}, "patient", this.state.stages[stageID]['patients'] == 1 ? "" : "s")
 										)
 									)
 								)
 							)
-						);
-					}.bind(this))
-				), 
-				React.createElement("hr", null), 
-				React.createElement(DataDisplays.RangeModule, {
-					from: this.state.from, 
-					to: this.state.to, 
-					onChangeFrom: this.changeFromDate, 
-					onChangeTo: this.changeToDate})
+						)
+					);
+				}.bind(this)), 
+				React.createElement("div", {className: "col-xs-12"}, 
+					React.createElement(DataDisplays.RangeModule, {
+						from: this.state.from, 
+						to: this.state.to, 
+						onChangeFrom: this.changeFromDate, 
+						onChangeTo: this.changeToDate})
+				)
 			)
 		);
 
@@ -3656,6 +3652,7 @@ var Visit = React.createClass({displayName: "Visit",
 			isSubmitting: false,
 			progress: 0,
 			confirmFinishVisitResponse: null,
+			visiblePatient: 0,
 
 			patients: {},
 			resources: {},
@@ -3764,17 +3761,59 @@ var Visit = React.createClass({displayName: "Visit",
 	 */
 	handlePatientAdd: function( patient ) {
 		var patients = this.state.patients;
-
+		console.log("Adding patient %s", patient.id);
 		if(patients.hasOwnProperty(patient.id)) {
 			// Patient already in Visit
 		} else {
 			// Update state with new patient
+			console.log(typeof patient.id);
 			patients[patient.id] = Utilities.applyGeneratedFields(patient);
 			this.setState({
 				confirmFinishVisitResponse: null,
-				patients: patients
+				patients: patients,
+				visiblePatient: patient.id
 			});
 		}
+	},
+
+
+	/*
+	 * Add a bare patient record
+	 */
+	handlePatientAddfromScratch: function(patientData) {
+		return function(event) {
+			var data = {
+				"_token": document.querySelector("meta[name='csrf-token']").getAttribute('value')
+			};
+
+			if(arguments.length > 0 && patientData !== null && typeof patientData === "object") {
+				data["importedFieldData"] = patientData;
+			}
+
+			// Set state as loading
+			// this.isLoading(true);
+			console.log(data);
+
+			$.ajax({
+				type: "POST",
+				url: "/patients/create",
+				data: data,
+				success: function(resp) {
+					console.log("success");
+					if(resp.status == "success") {
+						this.handlePatientAdd(resp.patient);
+					}
+				}.bind(this),
+				error: function(resp) {
+					console.log("handlePatientAddfromScratch: error");
+					console.log(resp);
+					// console.log(resp);
+				},
+				complete: function() {
+					// this.isLoading(false);
+				}.bind(this)
+			});
+		}.bind(this);
 	},
 
 	/*
@@ -3831,40 +3870,128 @@ var Visit = React.createClass({displayName: "Visit",
 	 */
 	render: function() {
 		var props = this.props,
-			state = this.state;
+			state = this.state,
+			patientKeys = Object.keys(state.patients),
+			patientRow,
+			createPatientControl,
+			importPatientControl;
+
+		console.log("typeof first: %s, typeof visible: %s", typeof patientKeys[0], typeof state.visiblePatient.toString());
+		console.log("%s patient keys, %s is visible, located: %s", patientKeys.length, state.visiblePatient, patientKeys.indexOf(state.visiblePatient.toString()));
+
+		if(patientKeys.length === 0 || state.visiblePatient === 0) {
+			patientRow = (
+				React.createElement("div", null, "no patients yet")
+			);
+		} else {
+			if(patientKeys.indexOf(state.visiblePatient.toString()) !== -1) {
+				patientRow = (
+					React.createElement("div", {className: "row"}, 
+
+						React.createElement(Visit.PatientsOverview, {
+							fields: props.patientFields, 
+							patients: state.patients, 
+							mini: false, 
+							resources: state.resources}), 
+
+						React.createElement(Visit.Patient, {
+							/*
+							 * Stage type
+							 */
+							stageType: props.currentStageType, 
+
+							/*
+							 * Visit
+							 */
+							visitID: props.visitID, 
+
+							/*
+							 * Patient record
+							 */
+							patient: state.patients[state.visiblePatient], 
+							id: state.visiblePatient, 
+							index: 0, 
+
+							/*
+							 * All available fields
+							 */
+							fields: props.mutableFields, 
+
+							/*
+							 * Fields to summarize at the top of each patient
+							 */
+							summaryFields: props.summaryFields, 
+
+							/*
+							 * Event handlers
+							 */
+						    onPatientDataChange: this.topLevelPatientStateChange, 
+						    onStoreResource: this.topLevelStoreResource})
+					)
+				);
+			} else {
+				patientRow = (
+					React.createElement("div", null, "test")
+				);
+			}
+		}
+
+		if(props.controlsType === 'new-visit') {
+			createPatientControl = (
+				React.createElement("li", {className: "nav-item pull-right"}, 
+					React.createElement("a", {className: "nav-link", onClick: this.handlePatientAddfromScratch(false)}, 
+						React.createElement("span", {className: "fa fa-plus"}), 
+						"  Create new"
+					)
+				)
+			);
+			importPatientControl = (
+				React.createElement("li", {className: "nav-item pull-right"}, 
+					React.createElement("a", {className: "nav-link"}, 
+						React.createElement("span", {className: "fa fa-download"}), 
+						"  Import"
+					)
+				)
+			);
+		}
 
 		return (
-			React.createElement("div", {className: "row"}, 
+			React.createElement("div", {className: "container-fluid"}, 
 				React.createElement(Visit.FinishModal, {
 					stages: props.stages, 
 					onConfirmFinishVisit: this.handleConfirmFinishVisit}), 
 
-				React.createElement(Visit.PatientsOverview, {
-					fields: props.patientFields, 
-					patients: state.patients, 
-					mini: false, 
-					resources: state.resources}), 
+				/** Page content header **/
+				React.createElement("div", {className: "row", id: "page-header"}, 
+					React.createElement("div", {className: "col-xs-12"}, 
+						React.createElement("h4", null, 
+							React.createElement("span", {className: ['fa', (props.controlsType == 'new-visit' ? 'fa-plus' : 'fa-clipboard')].join(' ')}), 
+							"  ", props.containerTitle
+						)
+					)
+				), 
 
-				React.createElement(Visit.PatientsContainer, {
-					_token: props._token, 
-					controlsType: props.controlsType, 
-					containerTitle: props.containerTitle, 
-					stageType: props.currentStageType, 
-					visitID: props.visitID, 
+				/** Page content inline list **/
+				React.createElement("div", {className: "row", id: "page-header-secondary"}, 
+					React.createElement("div", {className: "col-xs-12"}, 
+						React.createElement("ul", {className: "nav nav-pills", role: "tablist"}, 
+							patientKeys.map(function(patientID, index) {
+								return (
+									React.createElement("li", {className: "nav-item"}, 
+										React.createElement("a", {className: "nav-link" + (patientID == state.visiblePatient ? " active" : "")}, 
+											state.patients[patientID].full_name
+										)
+									)
+								);
+							}), 
+							createPatientControl, 
+							importPatientControl
+						)
+					)
+				), 
 
-					summaryFields: props.summaryFields, 
-					fields: props.mutableFields, 
-					patients: state.patients, 
-					prescriptions: state.prescriptions, 
-
-					isSubmitting: state.isSubmitting, 
-					progress: state.progress, 
-					confirmFinishVisitResponse: state.confirmFinishVisitResponse, 
-
-					onFinishVisit: this.handleFinishVisit, 
-					onPatientAdd: this.handlePatientAdd, 
-					onPatientDataChange: this.topLevelPatientStateChange, 
-					onStoreResource: this.topLevelStoreResource})
+				/** Visible patient **/
+				patientRow
 			)
 		);
 	}

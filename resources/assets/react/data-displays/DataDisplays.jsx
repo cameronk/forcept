@@ -16,7 +16,6 @@ var DataDisplays = {
 };
 
 DataDisplays.RangeModule = React.createClass({
-
 	render: function() {
 		return (
 			<div className="row date-range">

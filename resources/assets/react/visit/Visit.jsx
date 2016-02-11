@@ -34,6 +34,7 @@ var Visit = React.createClass({
 			isSubmitting: false,
 			progress: 0,
 			confirmFinishVisitResponse: null,
+			visiblePatient: 0,
 
 			patients: {},
 			resources: {},
@@ -142,17 +143,59 @@ var Visit = React.createClass({
 	 */
 	handlePatientAdd: function( patient ) {
 		var patients = this.state.patients;
-
+		console.log("Adding patient %s", patient.id);
 		if(patients.hasOwnProperty(patient.id)) {
 			// Patient already in Visit
 		} else {
 			// Update state with new patient
+			console.log(typeof patient.id);
 			patients[patient.id] = Utilities.applyGeneratedFields(patient);
 			this.setState({
 				confirmFinishVisitResponse: null,
-				patients: patients
+				patients: patients,
+				visiblePatient: patient.id
 			});
 		}
+	},
+
+
+	/*
+	 * Add a bare patient record
+	 */
+	handlePatientAddfromScratch: function(patientData) {
+		return function(event) {
+			var data = {
+				"_token": document.querySelector("meta[name='csrf-token']").getAttribute('value')
+			};
+
+			if(arguments.length > 0 && patientData !== null && typeof patientData === "object") {
+				data["importedFieldData"] = patientData;
+			}
+
+			// Set state as loading
+			// this.isLoading(true);
+			console.log(data);
+
+			$.ajax({
+				type: "POST",
+				url: "/patients/create",
+				data: data,
+				success: function(resp) {
+					console.log("success");
+					if(resp.status == "success") {
+						this.handlePatientAdd(resp.patient);
+					}
+				}.bind(this),
+				error: function(resp) {
+					console.log("handlePatientAddfromScratch: error");
+					console.log(resp);
+					// console.log(resp);
+				},
+				complete: function() {
+					// this.isLoading(false);
+				}.bind(this)
+			});
+		}.bind(this);
 	},
 
 	/*
@@ -209,40 +252,128 @@ var Visit = React.createClass({
 	 */
 	render: function() {
 		var props = this.props,
-			state = this.state;
+			state = this.state,
+			patientKeys = Object.keys(state.patients),
+			patientRow,
+			createPatientControl,
+			importPatientControl;
+
+		console.log("typeof first: %s, typeof visible: %s", typeof patientKeys[0], typeof state.visiblePatient.toString());
+		console.log("%s patient keys, %s is visible, located: %s", patientKeys.length, state.visiblePatient, patientKeys.indexOf(state.visiblePatient.toString()));
+
+		if(patientKeys.length === 0 || state.visiblePatient === 0) {
+			patientRow = (
+				<div>no patients yet</div>
+			);
+		} else {
+			if(patientKeys.indexOf(state.visiblePatient.toString()) !== -1) {
+				patientRow = (
+					<div className="row">
+
+						<Visit.PatientsOverview
+							fields={props.patientFields}
+							patients={state.patients}
+							mini={false}
+							resources={state.resources} />
+
+						<Visit.Patient
+							/*
+							 * Stage type
+							 */
+							stageType={props.currentStageType}
+
+							/*
+							 * Visit
+							 */
+							visitID={props.visitID}
+
+							/*
+							 * Patient record
+							 */
+							patient={state.patients[state.visiblePatient]}
+							id={state.visiblePatient}
+							index={0}
+
+							/*
+							 * All available fields
+							 */
+							fields={props.mutableFields}
+
+							/*
+							 * Fields to summarize at the top of each patient
+							 */
+							summaryFields={props.summaryFields}
+
+							/*
+							 * Event handlers
+							 */
+						    onPatientDataChange={this.topLevelPatientStateChange}
+						    onStoreResource={this.topLevelStoreResource} />
+					</div>
+				);
+			} else {
+				patientRow = (
+					<div>test</div>
+				);
+			}
+		}
+
+		if(props.controlsType === 'new-visit') {
+			createPatientControl = (
+				<li className="nav-item pull-right">
+					<a className="nav-link" onClick={this.handlePatientAddfromScratch(false)}>
+						<span className="fa fa-plus"></span>
+						&nbsp; Create new
+					</a>
+				</li>
+			);
+			importPatientControl = (
+				<li className="nav-item pull-right">
+					<a className="nav-link">
+						<span className="fa fa-download"></span>
+						&nbsp; Import
+					</a>
+				</li>
+			);
+		}
 
 		return (
-			<div className="row">
+			<div className="container-fluid">
 				<Visit.FinishModal
 					stages={props.stages}
 					onConfirmFinishVisit={this.handleConfirmFinishVisit} />
 
-				<Visit.PatientsOverview
-					fields={props.patientFields}
-					patients={state.patients}
-					mini={false}
-					resources={state.resources} />
+				{/** Page content header **/}
+				<div className="row" id="page-header">
+					<div className="col-xs-12">
+						<h4>
+							<span className={['fa', (props.controlsType == 'new-visit' ? 'fa-plus' : 'fa-clipboard')].join(' ')}></span>
+							&nbsp; {props.containerTitle}
+						</h4>
+					</div>
+				</div>
 
-				<Visit.PatientsContainer
-					_token={props._token}
-					controlsType={props.controlsType}
-					containerTitle={props.containerTitle}
-					stageType={props.currentStageType}
-					visitID={props.visitID}
+				{/** Page content inline list **/}
+				<div className="row" id="page-header-secondary">
+					<div className="col-xs-12">
+						<ul className="nav nav-pills" role="tablist">
+							{patientKeys.map(function(patientID, index) {
+								return (
+									<li className="nav-item">
+										<a className={"nav-link" + (patientID == state.visiblePatient ? " active" : "")}>
+											{state.patients[patientID].full_name}
+										</a>
+									</li>
+								);
+							})}
+							{createPatientControl}
+							{importPatientControl}
+						</ul>
+					</div>
+				</div>
 
-					summaryFields={props.summaryFields}
-					fields={props.mutableFields}
-					patients={state.patients}
-					prescriptions={state.prescriptions}
-
-					isSubmitting={state.isSubmitting}
-					progress={state.progress}
-					confirmFinishVisitResponse={state.confirmFinishVisitResponse}
-
-					onFinishVisit={this.handleFinishVisit}
-					onPatientAdd={this.handlePatientAdd}
-					onPatientDataChange={this.topLevelPatientStateChange}
-					onStoreResource={this.topLevelStoreResource}/>
+				{/** Visible patient **/}
+				{patientRow}
 			</div>
 		);
 	}

@@ -2,6 +2,60 @@
  * _content.scss
  */
 
- #page-content {
+#page-content {
     margin-top: $forcept-navbar-height;
- }
+
+    @include media-breakpoint-down(sm) {
+        margin-top: 38px;
+    }
+
+    padding: 0 !important;
+
+    #page-header {
+        padding-top: $spacer-y * 1.5;
+        padding-bottom: $spacer-y * 1.5;
+        background: $forcept-content-header-background;
+
+        h4 {
+            margin: 0;
+        }
+    }
+
+    #page-header-secondary {
+        border-top: 1px solid $forcept-content-header-secondary;
+        border-bottom: 1px solid $forcept-content-header-secondary;
+        background: darken($forcept-content-header-background, 0.5%);
+
+        ul.nav {
+
+            li.nav-item {
+                margin-left: 0;
+
+                a {
+                    padding-top: 7px;
+                    padding-left: 22px;
+                    padding-right: 22px;
+                    padding-bottom: 7px;
+                }
+
+                a.active {
+                    background: none;
+                    font-weight: bolder;
+                    color: $gray;
+                    border-bottom: 2px solid $forcept-content-header-secondary;
+                    padding-bottom: 5px;
+                }
+
+                a:hover {
+                    background: $forcept-content-header-secondary;
+                    border-bottom: 2px solid $forcept-content-header-secondary;
+                    padding-bottom: 5px;
+                }
+                a:hover:not(:disabled):not(.active) {
+                    cursor: pointer;
+                }
+
+            }
+        }
+    }
+}

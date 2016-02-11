@@ -5,12 +5,11 @@
 // Bootstrap and respective variables
 @import "bootstrap/scss/bootstrap";
 
-// Font awesome
-@import "font-awesome/scss/font-awesome";
-
 
 // Forcept variables
 $forcept-navbar-height:    4rem;
+$forcept-content-header-background: #f5f5f5;
+$forcept-content-header-secondary: darken($forcept-content-header-background, 10%);
 
 
 /**
@@ -18,17 +17,6 @@ $forcept-navbar-height:    4rem;
  */
 #forcept-debug-content.hidden {
     display: none;
-}
-
-
-/**
- * Control page content size based on viewport
- */
-@include media-breakpoint-up(xl) {
-    #page-content {
-        // max-width: 90%;
-        // margin: 0 auto;
-    }
 }
 
 

@@ -1,4 +1,5 @@
 <script type="text/javascript" src="{{ asset('/assets/jquery/jquery-2.1.4.min.js') }}"></script>
+<link rel="stylesheet" type="text/css" href="{{ asset('/assets/font-awesome-4.5.0/css/font-awesome.min.css') }}" />
 <?php
 switch($type) {
     case "main":
