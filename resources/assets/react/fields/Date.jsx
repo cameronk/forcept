@@ -10,6 +10,7 @@
 
 	getInitialState: function() {
 		return {
+            value: null,
 			broadMonthDetractor: null
 		};
 	},
@@ -37,6 +38,29 @@
 		}.bind(this);
 	},
 
+    /*
+     *
+     */
+    componentWillMount: function() {
+        this.setValue(this.props.hasOwnProperty("value") ? this.props.value : null);
+    },
+
+    /*
+     *
+     */
+    componentWillReceiveProps: function( newProps ) {
+        this.setValue(newProps.hasOwnProperty("value") ? newProps.value : null);
+    },
+
+    /*
+     *
+     */
+    setValue: function(value) {
+        this.setState({
+            value: value
+        });
+    },
+
 	onDateInputChange: function(event) {
 		// Bubble event up to handler passed from Visit
 		// (pass field ID and event)
@@ -45,6 +69,7 @@
 
 	render: function() {
 		var props = this.props,
+            state = this.state,
 			dateDOM;
 
 		if(props.hasOwnProperty('settings')
@@ -101,7 +126,7 @@
 
 					id={this.props.id}
 					placeholder={this.props.name + " goes here"}
-					defaultValue={this.props.defaultValue !== null ? this.props.defaultValue : null}
+					value={state.value}
 					onChange={this.onDateInputChange} />
 			);
 		}

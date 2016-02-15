@@ -78,6 +78,8 @@ var Utilities = {
 
 		// Patient full name
 		var fullName = null;
+		var abbrName = null;
+
 		if(
 			typeof patient.first_name === "string"
 			&& typeof patient.last_name === "string"
@@ -85,16 +87,22 @@ var Utilities = {
 			&& patient.last_name.length > 0
 		) {
 			fullName = patient.first_name + " " + patient.last_name;
+			abbrName = patient.first_name[0].toUpperCase() + " " + patient.last_name;
 		} else {
+			fullName = "Unnamed Patient";
+			abbrName = "Unnamed Patient";
 			if(typeof patient.first_name === "string" && patient.first_name.length > 0 ) {
 				fullName = patient.first_name;
+				abbrName = patient.first_name;
 			}
 			if(typeof patient.last_name === "string" && patient.last_name.length > 0) {
 				fullName = patient.last_name;
+				abbrName = patient.last_name;
 			}
 		}
 
 		patient.full_name = fullName;
+		patient.abbr_name = abbrName;
 
 
 		// Age

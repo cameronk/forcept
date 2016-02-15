@@ -360,6 +360,7 @@ Fields.FieldLabel = React.createClass({displayName: "FieldLabel",
 
 	getInitialState: function() {
 		return {
+            value: null,
 			broadMonthDetractor: null
 		};
 	},
@@ -387,6 +388,29 @@ Fields.FieldLabel = React.createClass({displayName: "FieldLabel",
 		}.bind(this);
 	},
 
+    /*
+     *
+     */
+    componentWillMount: function() {
+        this.setValue(this.props.hasOwnProperty("value") ? this.props.value : null);
+    },
+
+    /*
+     *
+     */
+    componentWillReceiveProps: function( newProps ) {
+        this.setValue(newProps.hasOwnProperty("value") ? newProps.value : null);
+    },
+
+    /*
+     *
+     */
+    setValue: function(value) {
+        this.setState({
+            value: value
+        });
+    },
+
 	onDateInputChange: function(event) {
 		// Bubble event up to handler passed from Visit
 		// (pass field ID and event)
@@ -395,6 +419,7 @@ Fields.FieldLabel = React.createClass({displayName: "FieldLabel",
 
 	render: function() {
 		var props = this.props,
+            state = this.state,
 			dateDOM;
 
 		if(props.hasOwnProperty('settings')
@@ -451,7 +476,7 @@ Fields.FieldLabel = React.createClass({displayName: "FieldLabel",
 
 					id: this.props.id, 
 					placeholder: this.props.name + " goes here", 
-					defaultValue: this.props.defaultValue !== null ? this.props.defaultValue : null, 
+					value: state.value, 
 					onChange: this.onDateInputChange})
 			);
 		}
@@ -1444,6 +1469,8 @@ Fields.Select = React.createClass({displayName: "Select",
 	 */
 	getInitialState: function() {
 		return {
+			value: "",
+
 			isCustomDataOptionSelected: false,
 			customDataDefaultValue: ""
 		};
@@ -1453,47 +1480,80 @@ Fields.Select = React.createClass({displayName: "Select",
 	 * Before the field mounts...
 	 */
 	componentWillMount: function() {
-		var props = this.props,
-			options,
+		this.handleUpdate(this.props);
+	},
+
+	/*
+	 *
+	 */
+	componentWillReceiveProps: function( newProps ) {
+		this.handleUpdate(newProps);
+	},
+
+	/*
+	 *
+	 */
+	handleUpdate: function( props ) {
+
+		var options,
 			optionsKeys,
 			optionsValues = [];
 
-		console.groupCollapsed("  Fields.Select: mount '%s'", props.name);
-			console.log("Props: %O", props);
+		console.groupCollapsed("  Fields.Select: handleUpdate '%s'", props.name);
+		console.log("Props: %O", props);
 
-		if(props.multiple !== true) {
+		this.setValue(props, function() {
 
-			if(props.settings.hasOwnProperty('options')) {
-				options = props.settings.options;
-				optionsKeys = Object.keys(options);
-			} else {
-				options = {};
-				optionsKeys = [];
-			}
+			if(props.multiple !== true) {
 
-			console.log("Options keys: %O", optionsKeys);
+				if(props.settings.hasOwnProperty('options')) {
+					options = props.settings.options;
+					optionsKeys = Object.keys(options);
+				} else {
+					options = {};
+					optionsKeys = [];
+				}
 
-			// Push all option values to an array.
-			optionsKeys.map(function(key) {
-				optionsValues.push(options[key].value);
-			});
+				console.log("Options keys: %O", optionsKeys);
 
-			console.log("Options values: %O", optionsValues);
-			console.log("Default value: %s", props.defaultValue);
-			console.log("IndexOf value: %i", optionsValues.indexOf(props.defaultValue));
-
-			// Check if our value is NOT a valid option value
-			if(typeof props.defaultValue === "string" && optionsValues.indexOf(props.defaultValue) === -1) {
-				console.log("Default value exists but isn't a valid value, enabling custom data box");
-				this.setState({
-					isCustomDataOptionSelected: true,
-					customDataDefaultValue: props.defaultValue
+				// Push all option values to an array.
+				optionsKeys.map(function(key) {
+					optionsValues.push(options[key].value);
 				});
+
+				// Check if our value is NOT a valid option value
+				if(typeof props.value === "string" && optionsValues.indexOf(props.value) === -1) {
+					console.log("Default value exists but isn't a valid value, enabling custom data box");
+					this.setState({
+						value: "__custom__",
+						isCustomDataOptionSelected: true,
+						customDataTextValue: props.value
+					});
+				} else {
+					this.setState({
+						isCustomDataOptionSelected: false,
+						customDataTextValue: ""
+					})
+				}
 			}
 
-		}
+		}.bind(this));
+		console.groupEnd(); // end: "Fields.Select: handleUpdate"
+	},
 
-		console.groupEnd(); // end: "Fields.Select: mount"
+	/*
+	 *
+	 */
+	setValue: function(props, cb) {
+		this.setState({
+			value: props.value !== null
+				? props.value
+				: (
+					props.multiple
+					? []
+					: "__default__"
+				)
+		}, cb);
 	},
 
 	/*
@@ -1595,7 +1655,7 @@ Fields.Select = React.createClass({displayName: "Select",
 						className: "form-control", 
 						placeholder: "Enter custom data here", 
 						onChange: this.onCustomDataInputChange, 
-						defaultValue: state.customDataDefaultValue})
+						defaultValue: state.customDataTextValue})
 				);
 			}
 		}
@@ -1615,27 +1675,16 @@ Fields.Select = React.createClass({displayName: "Select",
 		}.bind(this));
 
 		// Set size if this is a multiselect input
-		var size = props.multiple ? (optionsKeys.length > 30 ? 30 : optionsKeys.length ) : 1,
-			defaultValue = state.customDataDefaultValue.length > 0
-							? "__default__"
-							: (
-								props.defaultValue !== null
-								? props.defaultValue
-								: (
-									props.multiple
-									? []
-									: "__default__"
-								)
-							);
+		var size = props.multiple ? (optionsKeys.length > 30 ? 30 : optionsKeys.length ) : 1;
 
-		console.log("Calculated default value: %s", defaultValue);
+		console.log("Calculated selected value: %s", state.value);
 
 		// Build the select input
 		displaySelect = (
 			React.createElement("select", {
 				className: "form-control", 
 				onChange: this.onSelectInputChange, 
-				defaultValue: defaultValue, 
+				value: state.value, 
 				multiple: props.multiple, 
 				size: size}, 
 					defaultOption, 
@@ -1658,14 +1707,65 @@ Fields.Select = React.createClass({displayName: "Select",
 	}
 });
 
+/**
+ * fields/Text.jsx
+ * @author Cameron Kelley
+ *
+ * Properties:
+ * - onChange (function): 	handle a change to this field's data
+ */
 Fields.Text = React.createClass({displayName: "Text",
+
+	/*
+	 *
+	 */
+	getInitialState: function() {
+		return {
+			value: ""
+		};
+	},
+
+	/*
+	 *
+	 */
+	componentWillMount: function() {
+		console.groupCollapsed("  Fields.Text: mount '%s'", this.props.name);
+			console.log("Props: %O", this.props);
+			this.setState({
+				value: this.props.value !== null ? this.props.value : null
+			});
+		console.groupEnd();
+	},
+
+	/*
+	 *
+	 */
+	componentWillReceiveProps: function( newProps ) {
+		console.groupCollapsed("  Fields.Text: receiveProps '%s'", newProps.name);
+			console.log("Props: %O", newProps);
+			this.setState({
+				value: newProps.value !== null ? newProps.value : null
+			});
+		console.groupEnd();
+	},
+
+	/*
+	 *
+	 */
 	onTextInputChange: function(event) {
 		// Bubble event up to handler passed from Visit
 		// (pass field ID and event)
 		this.props.onChange(this.props.id, event.target.value);
 	},
 
+	/*
+	 *
+	 */
 	render: function() {
+		console.groupCollapsed("  Fields.Text: render '%s'", this.props.name);
+			console.log("Props: %O", this.props);
+			console.log("State: %O", this.state);
+		console.groupEnd();
 		return (
 			React.createElement("div", {className: "form-group row"}, 
 				React.createElement(Fields.FieldLabel, React.__spread({},  this.props)), 
@@ -1678,7 +1778,7 @@ Fields.Text = React.createClass({displayName: "Text",
 
 						id: this.props.id, 
 						placeholder: this.props.name + " goes here", 
-						defaultValue: this.props.defaultValue !== null ? this.props.defaultValue : null, 
+						value: this.state.value, 
 						onChange: this.onTextInputChange})
 				)
 			)
@@ -1686,55 +1786,140 @@ Fields.Text = React.createClass({displayName: "Text",
 	}
 });
 
-Fields.Textarea = React.createClass({displayName: "Textarea",
-	onTextareaInputChange: function(event) {
+/**
+ * fields/Textarea.jsx
+ * @author Cameron Kelley
+ *
+ * Properties:
+ * - onChange (function): 	handle a change to this field's data
+ */
+Fields.TextArea = React.createClass({displayName: "TextArea",
+
+	/*
+	 *
+	 */
+	getInitialState: function() {
+		return {
+			value: null,
+		};
+	},
+
+	/*
+	 *
+	 */
+	componentWillMount: function() {
+		this.setValue(this.props);
+	},
+
+	/*
+	 *
+	 */
+	componentWillReceiveProps: function( newProps ) {
+		this.setValue(newProps);
+	},
+
+	/*
+	 *
+	 */
+	setValue: function( props ) {
+		this.setState({
+			value: props.hasOwnProperty('value') ? props.value : ""
+		});
+	},
+
+	/*
+	 *
+	 */
+	onTextAreaInputChange: function(event) {
 		// Bubble event up to handler passed from Visit
 		// (pass field ID and event)
 		this.props.onChange(this.props.id, event.target.value);
 	},
 
+	/*
+	 *
+	 */
 	render: function() {
+		var props = this.props,
+			state = this.state;
+
+		console.groupCollapsed("  Fields.TextArea: render '%s'", this.props.name);
+			console.log("Props: %O", this.props);
+			console.log("State: %O", this.state);
+		console.groupEnd();
+
+
 		return (
 			React.createElement("div", {className: "form-group row"}, 
-				React.createElement(Fields.FieldLabel, React.__spread({},  this.props)), 
+				React.createElement(Fields.FieldLabel, React.__spread({},  props)), 
 				React.createElement("div", {className: Fields.inputColumnClasses}, 
 					React.createElement("textarea", {
 						className: "form-control", 
 						autoComplete: "off", 
 						maxLength: "255", 
 
-						id: this.props.id, 
-						placeholder: this.props.name + " goes here", 
-						defaultValue: this.props.defaultValue !== null ? this.props.defaultValue : null, 
-						onChange: this.onTextareaInputChange})
+						id: props.id, 
+						placeholder: props.name + " goes here", 
+						value: state.value, 
+						onChange: this.onTextAreaInputChange})
 				)
 			)
 		);
 	}
 });
 
-Fields.YesNo = React.createClass({displayName: "YesNo",
+/**
+ * fields/YesNo.jsx
+ * @author Cameron Kelley
+ *
+ * Properties:
+ * - onChange (function): 	handle a change to this field's data
+ */
+ Fields.YesNo = React.createClass({displayName: "YesNo",
 
+	/*
+	 *
+	 */
 	getInitialState: function() {
 		return {
 			yes: null,
 		};
 	},
 
+	/*
+	 *
+	 */
 	componentWillMount: function() {
+		this.setValue(this.props);
+	},
 
-		var props = this.props;
+	/*
+	 *
+	 */
+	componentWillReceiveProps: function( newProps ) {
+		this.setValue(newProps);
+	},
 
-		// If data, set
-		if(props.hasOwnProperty('defaultValue')
-			&& props.defaultValue !== null
-			&& ["yes", "no"].indexOf(props.defaultValue.toLowerCase()) !== -1) {
+	/*
+	 *
+	 */
+	setValue: function(props) {
+		if(!props.hasOwnProperty('value')
+			|| props.value === null
+			|| ["yes", "no"].indexOf(props.value.toLowerCase()) === -1) {
 			this.setState({
-				yes: props.defaultValue.toLowerCase() == "yes"
+				yes: null,
+			});
+		} else {
+			this.setState({
+				yes: props.value.toLowerCase() === "yes"
 			});
 		}
 	},
 
+	/*
+	 *
+	 */
 	onYesNoInputChange: function(status) {
 		return function(evt) {
 			console.log("Caught yes/no input change -> " + status);
@@ -1748,6 +1933,9 @@ Fields.YesNo = React.createClass({displayName: "YesNo",
 		}.bind(this);
 	},
 
+	/*
+	 *
+	 */
 	render: function() {
 
 		var props = this.props,
@@ -1758,20 +1946,18 @@ Fields.YesNo = React.createClass({displayName: "YesNo",
 				React.createElement(Fields.FieldLabel, React.__spread({},  props)), 
 				React.createElement("div", {className: Fields.inputColumnClasses}, 
 					React.createElement("div", {className: "btn-group btn-group-block", "data-toggle": "buttons"}, 
-						React.createElement("label", {className: "btn btn-primary-outline" + (state.yes == true ? " active" : ""), onClick: this.onYesNoInputChange(true)}, 
+						React.createElement("label", {className: "btn btn-primary-outline" + (state.yes === true ? " active" : ""), onClick: this.onYesNoInputChange(true)}, 
 							React.createElement("input", {type: "radio", 
 								name: props.name + "-options", 
 								autoComplete: "off", 
-
-								defaultChecked: state.yes == true}), 
+								checked: state.yes === true}), 
 							"Yes"
 						), 
-						React.createElement("label", {className: "btn btn-primary-outline" + (state.yes == false ? " active" : ""), onClick: this.onYesNoInputChange(false)}, 
+						React.createElement("label", {className: "btn btn-primary-outline" + (state.yes === false ? " active" : ""), onClick: this.onYesNoInputChange(false)}, 
 							React.createElement("input", {type: "radio", 
 								name: props.name + "-options", 
 								autoComplete: "off", 
-
-								defaultChecked: state.yes == false}), 
+								checked: state.yes === false}), 
 							"No"
 						)
 					)
@@ -3522,6 +3708,8 @@ var Utilities = {
 
 		// Patient full name
 		var fullName = null;
+		var abbrName = null;
+
 		if(
 			typeof patient.first_name === "string"
 			&& typeof patient.last_name === "string"
@@ -3529,16 +3717,22 @@ var Utilities = {
 			&& patient.last_name.length > 0
 		) {
 			fullName = patient.first_name + " " + patient.last_name;
+			abbrName = patient.first_name[0].toUpperCase() + " " + patient.last_name;
 		} else {
+			fullName = "Unnamed Patient";
+			abbrName = "Unnamed Patient";
 			if(typeof patient.first_name === "string" && patient.first_name.length > 0 ) {
 				fullName = patient.first_name;
+				abbrName = patient.first_name;
 			}
 			if(typeof patient.last_name === "string" && patient.last_name.length > 0) {
 				fullName = patient.last_name;
+				abbrName = patient.last_name;
 			}
 		}
 
 		patient.full_name = fullName;
+		patient.abbr_name = abbrName;
 
 
 		// Age
@@ -3649,7 +3843,10 @@ var Visit = React.createClass({displayName: "Visit",
 	 */
 	getInitialState: function() {
 		return {
-			isSubmitting: false,
+
+			displayState: "default",
+			// isSubmitting: false,
+
 			progress: 0,
 			confirmFinishVisitResponse: null,
 			visiblePatient: 0,
@@ -3701,7 +3898,8 @@ var Visit = React.createClass({displayName: "Visit",
 
 		// Update state to submitting
 		this.setState({
-			isSubmitting: true,
+			// isSubmitting: true,
+			displayState: "submitting"
 		});
 
 		// Go ahead and close the modal
@@ -3776,6 +3974,15 @@ var Visit = React.createClass({displayName: "Visit",
 		}
 	},
 
+	/*
+	 *
+	 */
+	setDisplayState: function(state) {
+		this.setState({
+			displayState: state
+		});
+	},
+
 
 	/*
 	 * Add a bare patient record
@@ -3791,8 +3998,7 @@ var Visit = React.createClass({displayName: "Visit",
 			}
 
 			// Set state as loading
-			// this.isLoading(true);
-			console.log(data);
+			this.setDisplayState("loading");
 
 			$.ajax({
 				type: "POST",
@@ -3807,10 +4013,10 @@ var Visit = React.createClass({displayName: "Visit",
 				error: function(resp) {
 					console.log("handlePatientAddfromScratch: error");
 					console.log(resp);
-					// console.log(resp);
 				},
 				complete: function() {
 					// this.isLoading(false);
+					this.setDisplayState("default");
 				}.bind(this)
 			});
 		}.bind(this);
@@ -3822,6 +4028,17 @@ var Visit = React.createClass({displayName: "Visit",
 	handleFinishVisit: function( isDoneLoading ) {
 		$("#visit-finish-modal")
 			.modal('show');
+	},
+
+	/*
+	 *
+	 */
+	switchVisiblePatient: function( patientID ) {
+		return function(event) {
+			this.setState({
+				visiblePatient: patientID
+			});
+		}.bind(this);
 	},
 
 
@@ -3840,6 +4057,8 @@ var Visit = React.createClass({displayName: "Visit",
 
 			// Apply generated fields to patient object
 			patient = Utilities.applyGeneratedFields(patient);
+
+			__debug(patients);
 
 			// Push patients back to state
 			this.setState({
@@ -3874,23 +4093,32 @@ var Visit = React.createClass({displayName: "Visit",
 			patientKeys = Object.keys(state.patients),
 			patientRow,
 			createPatientControl,
-			importPatientControl;
+			importPatientControl,
+			loadingItem,
+			controlsDisabled = state.displayState !== "default";
 
 		console.log("typeof first: %s, typeof visible: %s", typeof patientKeys[0], typeof state.visiblePatient.toString());
 		console.log("%s patient keys, %s is visible, located: %s", patientKeys.length, state.visiblePatient, patientKeys.indexOf(state.visiblePatient.toString()));
 
 		if(patientKeys.length === 0 || state.visiblePatient === 0) {
 			patientRow = (
-				React.createElement("div", null, "no patients yet")
+				React.createElement("div", {className: "row p-t", id: "page-header-message-block"}, 
+					React.createElement("div", {className: "col-xs-2 text-xs-right hidden-sm-down"}, 
+						React.createElement("h1", {className: "display-3"}, React.createElement("span", {className: "fa fa-user-times"}))
+					), 
+					React.createElement("div", {className: "col-xs-10 p-t"}, 
+						React.createElement("h2", null, React.createElement("span", {className: "fa fa-user-times hidden-md-up"}), " No patients in this visit"), 
+						React.createElement("p", null, "Try adding some — click the ", React.createElement("span", {className: "fa fa-plus"}), " icon above.")
+					)
+				)
 			);
 		} else {
 			if(patientKeys.indexOf(state.visiblePatient.toString()) !== -1) {
 				patientRow = (
-					React.createElement("div", {className: "row"}, 
-
-						React.createElement(Visit.PatientsOverview, {
+					React.createElement("div", {className: "row" + (controlsDisabled ? " disabled" : "")}, 
+						React.createElement(Visit.Overview, {
 							fields: props.patientFields, 
-							patients: state.patients, 
+							patient: state.patients[state.visiblePatient], 
 							mini: false, 
 							resources: state.resources}), 
 
@@ -3939,20 +4167,30 @@ var Visit = React.createClass({displayName: "Visit",
 		if(props.controlsType === 'new-visit') {
 			createPatientControl = (
 				React.createElement("li", {className: "nav-item pull-right"}, 
-					React.createElement("a", {className: "nav-link", onClick: this.handlePatientAddfromScratch(false)}, 
+					React.createElement("a", {className: "nav-link nav-button" + (controlsDisabled ? " disabled" : ""), disabled: controlsDisabled, onClick: this.handlePatientAddfromScratch(false)}, 
 						React.createElement("span", {className: "fa fa-plus"}), 
-						"  Create new"
+						React.createElement("span", {className: "hidden-md-down"}, "  Create new")
 					)
 				)
 			);
 			importPatientControl = (
 				React.createElement("li", {className: "nav-item pull-right"}, 
-					React.createElement("a", {className: "nav-link"}, 
+					React.createElement("a", {className: "nav-link nav-button" + (controlsDisabled ? " disabled" : ""), disabled: controlsDisabled}, 
 						React.createElement("span", {className: "fa fa-download"}), 
-						"  Import"
+						React.createElement("span", {className: "hidden-md-down"}, "  Import")
 					)
 				)
 			);
+		}
+
+		switch(state.displayState) {
+			case "loading":
+				loadingItem = (
+					React.createElement("li", {className: "nav-item"}, 
+						React.createElement("img", {src: "/assets/img/loading.gif"})
+					)
+				);
+				break;
 		}
 
 		return (
@@ -3964,10 +4202,7 @@ var Visit = React.createClass({displayName: "Visit",
 				/** Page content header **/
 				React.createElement("div", {className: "row", id: "page-header"}, 
 					React.createElement("div", {className: "col-xs-12"}, 
-						React.createElement("h4", null, 
-							React.createElement("span", {className: ['fa', (props.controlsType == 'new-visit' ? 'fa-plus' : 'fa-clipboard')].join(' ')}), 
-							"  ", props.containerTitle
-						)
+						React.createElement("h4", null, props.containerTitle)
 					)
 				), 
 
@@ -3978,14 +4213,16 @@ var Visit = React.createClass({displayName: "Visit",
 							patientKeys.map(function(patientID, index) {
 								return (
 									React.createElement("li", {className: "nav-item"}, 
-										React.createElement("a", {className: "nav-link" + (patientID == state.visiblePatient ? " active" : "")}, 
-											state.patients[patientID].full_name
+										React.createElement("a", {onClick: this.switchVisiblePatient(patientID), className: "nav-link" + (patientID == state.visiblePatient ? " active" : "")}, 
+											React.createElement("span", {className: "label label-default"}, patientID), 
+											"  ", state.patients[patientID].abbr_name
 										)
 									)
 								);
-							}), 
-							createPatientControl, 
-							importPatientControl
+							}.bind(this)), 
+							loadingItem, 
+							importPatientControl, 
+							createPatientControl
 						)
 					)
 				), 
@@ -4706,15 +4943,15 @@ Visit.FinishModal = React.createClass({displayName: "FinishModal",
 });
 
 /*
- * Patients overview (left sidebar)
+ * Patient overview
  *
  * Accepted properties:
  * - fields: Object of ALL fields for ALL stages up to THIS CURRENT STAGE for displaying patient metadata
- * - patients: Object of patients w/ data as pulled from database
+ * - patient: Patient object w/ data as pulled from database
  *
  * - mini: should this display as a card instead of a column
  */
-Visit.PatientsOverview = React.createClass({displayName: "PatientsOverview",
+Visit.Overview = React.createClass({displayName: "Overview",
 
 	/*
 	 * Render patient overview blocks
@@ -4722,13 +4959,13 @@ Visit.PatientsOverview = React.createClass({displayName: "PatientsOverview",
 	render: function() {
 
 		var props = this.props,
-			patientKeys = Object.keys(props.patients),
-			countPatients = patientKeys.length,
+			// patientKeys = Object.keys(props.patients),
+			// countPatients = patientKeys.length,
 			patientOverviews,
 			iterableFields;
 
 		console.group("Visit.PatientsOverview: render (mini=%s)", props.mini);
-			console.log("Patients to overview: %i", countPatients);
+			// console.log("Patients to overview: %i", countPatients);
 			console.log("Properties: %O", props);
 
 		// Copy the local patient fields property to a new variable
@@ -4745,15 +4982,16 @@ Visit.PatientsOverview = React.createClass({displayName: "PatientsOverview",
 		delete iterableFields["photo"];
 
 		// If there are patients in the props object
-		if(countPatients > 0) {
+		// if(countPatients > 0) {
 
 			//-- Begin mapping patient keys --\\
-			patientOverviews = patientKeys.map(function(patientID, index) {
+			patientOverview = (function() {
 				var cardHeader,
 					photo,
-					thisPatient = props.patients[patientID];
+					patientID = props.patient.id;
+					thisPatient = props.patient;
 
-				console.groupCollapsed("Card #%i: Patient %s", index, patientID);
+				console.groupCollapsed("Patient %s", patientID);
 
 				//-- Begin search for patient photo --\\
 				if(thisPatient.hasOwnProperty('photo') && thisPatient.photo !== null) {
@@ -4827,20 +5065,21 @@ Visit.PatientsOverview = React.createClass({displayName: "PatientsOverview",
 				}
 				//-- End photo search --\\
 
+					//<span className="label label-info">#{index + 1}</span>
+					/*
+					<div className="card-block">
+						<h4 className="card-title text-xs-center m-a-0">
+							<strong>
+								{Utilities.getFullName(thisPatient)}
+							</strong>
+						</h4>
+					</div>*/
 				// Show header if we're not in Mini mode
 				if(props.mini === false) {
 					cardHeader = (
 						React.createElement("span", null, 
 			               	React.createElement("div", {className: "card-header"}, 
-			                    React.createElement("span", {className: "label label-info"}, "#", index + 1), 
 			                    React.createElement("span", {className: "label label-default"}, patientID)
-			                ), 
-			                React.createElement("div", {className: "card-block"}, 
-			                	React.createElement("h4", {className: "card-title text-xs-center m-a-0"}, 
-			                		React.createElement("strong", null, 
-										Utilities.getFullName(thisPatient)
-									)
-			                	)
 			                ), 
 			                photo
 			            )
@@ -5059,16 +5298,18 @@ Visit.PatientsOverview = React.createClass({displayName: "PatientsOverview",
 				// Return the patient card DOM
 				return patientCardDOM;
 
-			}.bind(this));
+			})();
+
+			// }.bind(this));
 			//-- End patient fields map --\\
 
-		} else { //-- end: if there are patients in the patient object --\\
-			patientOverviews = (
-				React.createElement("div", {className: "alert alert-info hidden-sm-down"}, 
-					"No patients within this visit."
-				)
+		/*} else { //-- end: if there are patients in the patient object --\\
+			patientOverview = (
+				<div className="alert alert-info hidden-sm-down">
+					No patients within this visit.
+				</div>
 			);
-		}
+		}*/
 
 		console.log("Done with PatientOverview group...");
 		console.groupEnd(); // End: "PatientsOverview"
@@ -5077,12 +5318,12 @@ Visit.PatientsOverview = React.createClass({displayName: "PatientsOverview",
 		if(props.mini == true) {
 			return (
 		        React.createElement("div", {className: "col-xs-12 col-lg-6"}, 
-		           patientOverviews
+		           patientOverview
 		        )
 			);
 		} else return (
 	        React.createElement("div", {className: "col-xs-12 col-sm-12 col-md-4 col-xl-3"}, 
-	           patientOverviews
+	           patientOverview
 	        )
 	    );
 	}
@@ -5157,15 +5398,7 @@ Visit.Patient = React.createClass({displayName: "Patient",
 			console.log("Right column: %O", rightColumnFields);
 
 			summary = (
-				React.createElement("div", {className: "row"}, 
-					React.createElement(Visit.PatientsOverview, {
-						fields: leftColumnFields, 
-						patients: patientsObjectSpoof, 
-						mini: true}), 
-					React.createElement(Visit.PatientsOverview, {
-						fields: rightColumnFields, 
-						patients: patientsObjectSpoof, 
-						mini: true})
+				React.createElement("div", {className: "row"}
 				)
 			);
 		}
@@ -5181,7 +5414,7 @@ Visit.Patient = React.createClass({displayName: "Patient",
 					var fieldDOM,
 						thisField = summaryFields[fieldID],
 						thisPatient = props.patient,
-						defaultValue = thisPatient.hasOwnProperty(fieldID) ? thisPatient[fieldID] : null;
+						defaultValue = thisPatient.hasOwnProperty(fieldID) ? thisPatient[fieldID] : "";
 
 					console.groupCollapsed("Field #%i: '%s' %O", index, thisField.name, thisField);
 						console.log("Type: %s", thisField.type);
@@ -5216,11 +5449,12 @@ Visit.Patient = React.createClass({displayName: "Patient",
 				var fieldDOM,
 					thisField = fields[fieldID],
 					thisPatient = props.patient,
-					defaultValue = thisPatient.hasOwnProperty(fieldID) ? thisPatient[fieldID] : null;
+					defaultValue = thisPatient.hasOwnProperty(fieldID) ? thisPatient[fieldID] : "";
 
 				console.groupCollapsed("Field #%i: '%s' %O", index, thisField.name, thisField);
 					console.log("Type: %s", thisField.type);
 					console.log("Default value: %s", defaultValue);
+					console.log("thisPatient has fieldID property: %s", thisPatient.hasOwnProperty(fieldID));
 
 				// Mutate data as necessary per field type
 				switch(thisField.type) {
@@ -5248,7 +5482,7 @@ Visit.Patient = React.createClass({displayName: "Patient",
 						fieldDOM = (
 							React.createElement(Fields.Text, React.__spread({}, 
 								thisField, 
-								{defaultValue: defaultValue, 
+								{value: defaultValue, 
 								onChange: this.handleFieldChange, 
 								key: fieldID, 
 								id: fieldID}))
@@ -5256,9 +5490,9 @@ Visit.Patient = React.createClass({displayName: "Patient",
 						break;
 					case "textarea":
 						fieldDOM = (
-							React.createElement(Fields.Textarea, React.__spread({}, 
+							React.createElement(Fields.TextArea, React.__spread({}, 
 								thisField, 
-								{defaultValue: defaultValue, 
+								{value: defaultValue, 
 								onChange: this.handleFieldChange, 
 								key: fieldID, 
 								id: fieldID}))
@@ -5278,7 +5512,7 @@ Visit.Patient = React.createClass({displayName: "Patient",
 						fieldDOM = (
 							React.createElement(Fields.Date, React.__spread({}, 
 								thisField, 
-								{defaultValue: defaultValue, 
+								{value: defaultValue, 
 								onChange: this.handleFieldChange, 
 								key: fieldID, 
 								id: fieldID}))
@@ -5289,7 +5523,7 @@ Visit.Patient = React.createClass({displayName: "Patient",
 							React.createElement(Fields.Select, React.__spread({}, 
 								thisField, 
 								{multiple: false, 
-								defaultValue: defaultValue, 
+								value: defaultValue, 
 								onChange: this.handleFieldChange, 
 								key: fieldID, 
 								id: fieldID}))
@@ -5321,7 +5555,7 @@ Visit.Patient = React.createClass({displayName: "Patient",
 						fieldDOM = (
 							React.createElement(Fields.YesNo, React.__spread({}, 
 								thisField, 
-								{defaultValue: defaultValue, 
+								{value: defaultValue, 
 								onChange: this.handleFieldChange, 
 								key: fieldID, 
 								id: fieldID}))

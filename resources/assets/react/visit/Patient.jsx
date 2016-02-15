@@ -67,14 +67,6 @@ Visit.Patient = React.createClass({
 
 			summary = (
 				<div className="row">
-					<Visit.PatientsOverview
-						fields={leftColumnFields}
-						patients={patientsObjectSpoof}
-						mini={true} />
-					<Visit.PatientsOverview
-						fields={rightColumnFields}
-						patients={patientsObjectSpoof}
-						mini={true} />
 				</div>
 			);
 		}
@@ -90,7 +82,7 @@ Visit.Patient = React.createClass({
 					var fieldDOM,
 						thisField = summaryFields[fieldID],
 						thisPatient = props.patient,
-						defaultValue = thisPatient.hasOwnProperty(fieldID) ? thisPatient[fieldID] : null;
+						defaultValue = thisPatient.hasOwnProperty(fieldID) ? thisPatient[fieldID] : "";
 
 					console.groupCollapsed("Field #%i: '%s' %O", index, thisField.name, thisField);
 						console.log("Type: %s", thisField.type);
@@ -125,11 +117,12 @@ Visit.Patient = React.createClass({
 				var fieldDOM,
 					thisField = fields[fieldID],
 					thisPatient = props.patient,
-					defaultValue = thisPatient.hasOwnProperty(fieldID) ? thisPatient[fieldID] : null;
+					defaultValue = thisPatient.hasOwnProperty(fieldID) ? thisPatient[fieldID] : "";
 
 				console.groupCollapsed("Field #%i: '%s' %O", index, thisField.name, thisField);
 					console.log("Type: %s", thisField.type);
 					console.log("Default value: %s", defaultValue);
+					console.log("thisPatient has fieldID property: %s", thisPatient.hasOwnProperty(fieldID));
 
 				// Mutate data as necessary per field type
 				switch(thisField.type) {
@@ -157,7 +150,7 @@ Visit.Patient = React.createClass({
 						fieldDOM = (
 							<Fields.Text
 								{...thisField}
-								defaultValue={defaultValue}
+								value={defaultValue}
 								onChange={this.handleFieldChange}
 								key={fieldID}
 								id={fieldID} />
@@ -165,9 +158,9 @@ Visit.Patient = React.createClass({
 						break;
 					case "textarea":
 						fieldDOM = (
-							<Fields.Textarea
+							<Fields.TextArea
 								{...thisField}
-								defaultValue={defaultValue}
+								value={defaultValue}
 								onChange={this.handleFieldChange}
 								key={fieldID}
 								id={fieldID} />
@@ -187,7 +180,7 @@ Visit.Patient = React.createClass({
 						fieldDOM = (
 							<Fields.Date
 								{...thisField}
-								defaultValue={defaultValue}
+								value={defaultValue}
 								onChange={this.handleFieldChange}
 								key={fieldID}
 								id={fieldID} />
@@ -198,7 +191,7 @@ Visit.Patient = React.createClass({
 							<Fields.Select
 								{...thisField}
 								multiple={false}
-								defaultValue={defaultValue}
+								value={defaultValue}
 								onChange={this.handleFieldChange}
 								key={fieldID}
 								id={fieldID} />
@@ -230,7 +223,7 @@ Visit.Patient = React.createClass({
 						fieldDOM = (
 							<Fields.YesNo
 								{...thisField}
-								defaultValue={defaultValue}
+								value={defaultValue}
 								onChange={this.handleFieldChange}
 								key={fieldID}
 								id={fieldID} />

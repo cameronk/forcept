@@ -1,13 +1,13 @@
 /*
- * Patients overview (left sidebar)
+ * Patient overview
  *
  * Accepted properties:
  * - fields: Object of ALL fields for ALL stages up to THIS CURRENT STAGE for displaying patient metadata
- * - patients: Object of patients w/ data as pulled from database
+ * - patient: Patient object w/ data as pulled from database
  *
  * - mini: should this display as a card instead of a column
  */
-Visit.PatientsOverview = React.createClass({
+Visit.Overview = React.createClass({
 
 	/*
 	 * Render patient overview blocks
@@ -15,13 +15,13 @@ Visit.PatientsOverview = React.createClass({
 	render: function() {
 
 		var props = this.props,
-			patientKeys = Object.keys(props.patients),
-			countPatients = patientKeys.length,
+			// patientKeys = Object.keys(props.patients),
+			// countPatients = patientKeys.length,
 			patientOverviews,
 			iterableFields;
 
 		console.group("Visit.PatientsOverview: render (mini=%s)", props.mini);
-			console.log("Patients to overview: %i", countPatients);
+			// console.log("Patients to overview: %i", countPatients);
 			console.log("Properties: %O", props);
 
 		// Copy the local patient fields property to a new variable
@@ -38,15 +38,16 @@ Visit.PatientsOverview = React.createClass({
 		delete iterableFields["photo"];
 
 		// If there are patients in the props object
-		if(countPatients > 0) {
+		// if(countPatients > 0) {
 
 			//-- Begin mapping patient keys --\\
-			patientOverviews = patientKeys.map(function(patientID, index) {
+			patientOverview = (function() {
 				var cardHeader,
 					photo,
-					thisPatient = props.patients[patientID];
+					patientID = props.patient.id;
+					thisPatient = props.patient;
 
-				console.groupCollapsed("Card #%i: Patient %s", index, patientID);
+				console.groupCollapsed("Patient %s", patientID);
 
 				//-- Begin search for patient photo --\\
 				if(thisPatient.hasOwnProperty('photo') && thisPatient.photo !== null) {
@@ -120,20 +121,21 @@ Visit.PatientsOverview = React.createClass({
 				}
 				//-- End photo search --\\
 
+					//<span className="label label-info">#{index + 1}</span>
+					/*
+					<div className="card-block">
+						<h4 className="card-title text-xs-center m-a-0">
+							<strong>
+								{Utilities.getFullName(thisPatient)}
+							</strong>
+						</h4>
+					</div>*/
 				// Show header if we're not in Mini mode
 				if(props.mini === false) {
 					cardHeader = (
 						<span>
 			               	<div className="card-header">
-			                    <span className="label label-info">#{index + 1}</span>
 			                    <span className="label label-default">{patientID}</span>
-			                </div>
-			                <div className="card-block">
-			                	<h4 className="card-title text-xs-center m-a-0">
-			                		<strong>
-										{Utilities.getFullName(thisPatient)}
-									</strong>
-			                	</h4>
 			                </div>
 			                {photo}
 			            </span>
@@ -352,16 +354,18 @@ Visit.PatientsOverview = React.createClass({
 				// Return the patient card DOM
 				return patientCardDOM;
 
-			}.bind(this));
+			})();
+
+			// }.bind(this));
 			//-- End patient fields map --\\
 
-		} else { //-- end: if there are patients in the patient object --\\
-			patientOverviews = (
+		/*} else { //-- end: if there are patients in the patient object --\\
+			patientOverview = (
 				<div className="alert alert-info hidden-sm-down">
 					No patients within this visit.
 				</div>
 			);
-		}
+		}*/
 
 		console.log("Done with PatientOverview group...");
 		console.groupEnd(); // End: "PatientsOverview"
@@ -370,12 +374,12 @@ Visit.PatientsOverview = React.createClass({
 		if(props.mini == true) {
 			return (
 		        <div className="col-xs-12 col-lg-6">
-		           {patientOverviews}
+		           {patientOverview}
 		        </div>
 			);
 		} else return (
 	        <div className="col-xs-12 col-sm-12 col-md-4 col-xl-3">
-	           {patientOverviews}
+	           {patientOverview}
 	        </div>
 	    );
 	}

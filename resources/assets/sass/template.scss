@@ -35,7 +35,11 @@ $forcept-content-header-secondary: darken($forcept-content-header-background, 10
     line-height: $input-height-lg;
 }
 
-
+// add disabled class for row
+.row.disabled {
+    opacity: 0.4;
+    pointer-events: none;
+}
 
 
 /**

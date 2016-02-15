@@ -1,25 +1,55 @@
-Fields.YesNo = React.createClass({
+/**
+ * fields/YesNo.jsx
+ * @author Cameron Kelley
+ *
+ * Properties:
+ * - onChange (function): 	handle a change to this field's data
+ */
+ Fields.YesNo = React.createClass({
 
+	/*
+	 *
+	 */
 	getInitialState: function() {
 		return {
 			yes: null,
 		};
 	},
 
+	/*
+	 *
+	 */
 	componentWillMount: function() {
+		this.setValue(this.props);
+	},
 
-		var props = this.props;
+	/*
+	 *
+	 */
+	componentWillReceiveProps: function( newProps ) {
+		this.setValue(newProps);
+	},
 
-		// If data, set
-		if(props.hasOwnProperty('defaultValue')
-			&& props.defaultValue !== null
-			&& ["yes", "no"].indexOf(props.defaultValue.toLowerCase()) !== -1) {
+	/*
+	 *
+	 */
+	setValue: function(props) {
+		if(!props.hasOwnProperty('value')
+			|| props.value === null
+			|| ["yes", "no"].indexOf(props.value.toLowerCase()) === -1) {
 			this.setState({
-				yes: props.defaultValue.toLowerCase() == "yes"
+				yes: null,
+			});
+		} else {
+			this.setState({
+				yes: props.value.toLowerCase() === "yes"
 			});
 		}
 	},
 
+	/*
+	 *
+	 */
 	onYesNoInputChange: function(status) {
 		return function(evt) {
 			console.log("Caught yes/no input change -> " + status);
@@ -33,6 +63,9 @@ Fields.YesNo = React.createClass({
 		}.bind(this);
 	},
 
+	/*
+	 *
+	 */
 	render: function() {
 
 		var props = this.props,
@@ -43,20 +76,18 @@ Fields.YesNo = React.createClass({
 				<Fields.FieldLabel {...props} />
 				<div className={Fields.inputColumnClasses}>
 					<div className="btn-group btn-group-block" data-toggle="buttons">
-						<label className={"btn btn-primary-outline" + (state.yes == true ? " active" : "")} onClick={this.onYesNoInputChange(true)}>
+						<label className={"btn btn-primary-outline" + (state.yes === true ? " active" : "")} onClick={this.onYesNoInputChange(true)}>
 							<input type="radio"
 								name={props.name + "-options"}
 								autoComplete="off"
-
-								defaultChecked={state.yes == true} />
+								checked={state.yes === true} />
 							Yes
 						</label>
-						<label className={"btn btn-primary-outline" + (state.yes == false ? " active" : "")} onClick={this.onYesNoInputChange(false)} >
+						<label className={"btn btn-primary-outline" + (state.yes === false ? " active" : "")} onClick={this.onYesNoInputChange(false)} >
 							<input type="radio"
 								name={props.name + "-options"}
 								autoComplete="off"
-
-								defaultChecked={state.yes == false} />
+								checked={state.yes === false} />
 							No
 						</label>
 					</div>

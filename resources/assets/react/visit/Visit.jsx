@@ -31,7 +31,10 @@ var Visit = React.createClass({
 	 */
 	getInitialState: function() {
 		return {
-			isSubmitting: false,
+
+			displayState: "default",
+			// isSubmitting: false,
+
 			progress: 0,
 			confirmFinishVisitResponse: null,
 			visiblePatient: 0,
@@ -83,7 +86,8 @@ var Visit = React.createClass({
 
 		// Update state to submitting
 		this.setState({
-			isSubmitting: true,
+			// isSubmitting: true,
+			displayState: "submitting"
 		});
 
 		// Go ahead and close the modal
@@ -158,6 +162,15 @@ var Visit = React.createClass({
 		}
 	},
 
+	/*
+	 *
+	 */
+	setDisplayState: function(state) {
+		this.setState({
+			displayState: state
+		});
+	},
+
 
 	/*
 	 * Add a bare patient record
@@ -173,8 +186,7 @@ var Visit = React.createClass({
 			}
 
 			// Set state as loading
-			// this.isLoading(true);
-			console.log(data);
+			this.setDisplayState("loading");
 
 			$.ajax({
 				type: "POST",
@@ -189,10 +201,10 @@ var Visit = React.createClass({
 				error: function(resp) {
 					console.log("handlePatientAddfromScratch: error");
 					console.log(resp);
-					// console.log(resp);
 				},
 				complete: function() {
 					// this.isLoading(false);
+					this.setDisplayState("default");
 				}.bind(this)
 			});
 		}.bind(this);
@@ -204,6 +216,17 @@ var Visit = React.createClass({
 	handleFinishVisit: function( isDoneLoading ) {
 		$("#visit-finish-modal")
 			.modal('show');
+	},
+
+	/*
+	 *
+	 */
+	switchVisiblePatient: function( patientID ) {
+		return function(event) {
+			this.setState({
+				visiblePatient: patientID
+			});
+		}.bind(this);
 	},
 
 
@@ -222,6 +245,8 @@ var Visit = React.createClass({
 
 			// Apply generated fields to patient object
 			patient = Utilities.applyGeneratedFields(patient);
+
+			__debug(patients);
 
 			// Push patients back to state
 			this.setState({
@@ -256,23 +281,32 @@ var Visit = React.createClass({
 			patientKeys = Object.keys(state.patients),
 			patientRow,
 			createPatientControl,
-			importPatientControl;
+			importPatientControl,
+			loadingItem,
+			controlsDisabled = state.displayState !== "default";
 
 		console.log("typeof first: %s, typeof visible: %s", typeof patientKeys[0], typeof state.visiblePatient.toString());
 		console.log("%s patient keys, %s is visible, located: %s", patientKeys.length, state.visiblePatient, patientKeys.indexOf(state.visiblePatient.toString()));
 
 		if(patientKeys.length === 0 || state.visiblePatient === 0) {
 			patientRow = (
-				<div>no patients yet</div>
+				<div className="row p-t" id="page-header-message-block">
+					<div className="col-xs-2 text-xs-right hidden-sm-down">
+						<h1 className="display-3"><span className="fa fa-user-times"></span></h1>
+					</div>
+					<div className="col-xs-10 p-t">
+						<h2><span className="fa fa-user-times hidden-md-up"></span> No patients in this visit</h2>
+						<p>Try adding some &mdash; click the <span className="fa fa-plus"></span> icon above.</p>
+					</div>
+				</div>
 			);
 		} else {
 			if(patientKeys.indexOf(state.visiblePatient.toString()) !== -1) {
 				patientRow = (
-					<div className="row">
-
-						<Visit.PatientsOverview
+					<div className={"row" + (controlsDisabled ? " disabled" : "")}>
+						<Visit.Overview
 							fields={props.patientFields}
-							patients={state.patients}
+							patient={state.patients[state.visiblePatient]}
 							mini={false}
 							resources={state.resources} />
 
@@ -321,20 +355,30 @@ var Visit = React.createClass({
 		if(props.controlsType === 'new-visit') {
 			createPatientControl = (
 				<li className="nav-item pull-right">
-					<a className="nav-link" onClick={this.handlePatientAddfromScratch(false)}>
+					<a className={"nav-link nav-button" + (controlsDisabled ? " disabled" : "")} disabled={controlsDisabled} onClick={this.handlePatientAddfromScratch(false)}>
 						<span className="fa fa-plus"></span>
-						&nbsp; Create new
+						<span className="hidden-md-down">&nbsp; Create new</span>
 					</a>
 				</li>
 			);
 			importPatientControl = (
 				<li className="nav-item pull-right">
-					<a className="nav-link">
+					<a className={"nav-link nav-button" + (controlsDisabled ? " disabled" : "")} disabled={controlsDisabled}>
 						<span className="fa fa-download"></span>
-						&nbsp; Import
+						<span className="hidden-md-down">&nbsp; Import</span>
 					</a>
 				</li>
 			);
+		}
+
+		switch(state.displayState) {
+			case "loading":
+				loadingItem = (
+					<li className="nav-item">
+						<img src="/assets/img/loading.gif" />
+					</li>
+				);
+				break;
 		}
 
 		return (
@@ -346,10 +390,7 @@ var Visit = React.createClass({
 				{/** Page content header **/}
 				<div className="row" id="page-header">
 					<div className="col-xs-12">
-						<h4>
-							<span className={['fa', (props.controlsType == 'new-visit' ? 'fa-plus' : 'fa-clipboard')].join(' ')}></span>
-							&nbsp; {props.containerTitle}
-						</h4>
+						<h4>{props.containerTitle}</h4>
 					</div>
 				</div>
 
@@ -360,14 +401,16 @@ var Visit = React.createClass({
 							{patientKeys.map(function(patientID, index) {
 								return (
 									<li className="nav-item">
-										<a className={"nav-link" + (patientID == state.visiblePatient ? " active" : "")}>
-											{state.patients[patientID].full_name}
+										<a onClick={this.switchVisiblePatient(patientID)} className={"nav-link" + (patientID == state.visiblePatient ? " active" : "")}>
+											<span className="label label-default">{patientID}</span>
+											&nbsp; {state.patients[patientID].abbr_name}
 										</a>
 									</li>
 								);
-							})}
-							{createPatientControl}
+							}.bind(this))}
+							{loadingItem}
 							{importPatientControl}
+							{createPatientControl}
 						</ul>
 					</div>
 				</div>

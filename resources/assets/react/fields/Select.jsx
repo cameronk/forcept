@@ -14,6 +14,8 @@ Fields.Select = React.createClass({
 	 */
 	getInitialState: function() {
 		return {
+			value: "",
+
 			isCustomDataOptionSelected: false,
 			customDataDefaultValue: ""
 		};
@@ -23,47 +25,80 @@ Fields.Select = React.createClass({
 	 * Before the field mounts...
 	 */
 	componentWillMount: function() {
-		var props = this.props,
-			options,
+		this.handleUpdate(this.props);
+	},
+
+	/*
+	 *
+	 */
+	componentWillReceiveProps: function( newProps ) {
+		this.handleUpdate(newProps);
+	},
+
+	/*
+	 *
+	 */
+	handleUpdate: function( props ) {
+
+		var options,
 			optionsKeys,
 			optionsValues = [];
 
-		console.groupCollapsed("  Fields.Select: mount '%s'", props.name);
-			console.log("Props: %O", props);
+		console.groupCollapsed("  Fields.Select: handleUpdate '%s'", props.name);
+		console.log("Props: %O", props);
 
-		if(props.multiple !== true) {
+		this.setValue(props, function() {
 
-			if(props.settings.hasOwnProperty('options')) {
-				options = props.settings.options;
-				optionsKeys = Object.keys(options);
-			} else {
-				options = {};
-				optionsKeys = [];
-			}
+			if(props.multiple !== true) {
 
-			console.log("Options keys: %O", optionsKeys);
+				if(props.settings.hasOwnProperty('options')) {
+					options = props.settings.options;
+					optionsKeys = Object.keys(options);
+				} else {
+					options = {};
+					optionsKeys = [];
+				}
 
-			// Push all option values to an array.
-			optionsKeys.map(function(key) {
-				optionsValues.push(options[key].value);
-			});
+				console.log("Options keys: %O", optionsKeys);
 
-			console.log("Options values: %O", optionsValues);
-			console.log("Default value: %s", props.defaultValue);
-			console.log("IndexOf value: %i", optionsValues.indexOf(props.defaultValue));
-
-			// Check if our value is NOT a valid option value
-			if(typeof props.defaultValue === "string" && optionsValues.indexOf(props.defaultValue) === -1) {
-				console.log("Default value exists but isn't a valid value, enabling custom data box");
-				this.setState({
-					isCustomDataOptionSelected: true,
-					customDataDefaultValue: props.defaultValue
+				// Push all option values to an array.
+				optionsKeys.map(function(key) {
+					optionsValues.push(options[key].value);
 				});
+
+				// Check if our value is NOT a valid option value
+				if(typeof props.value === "string" && optionsValues.indexOf(props.value) === -1) {
+					console.log("Default value exists but isn't a valid value, enabling custom data box");
+					this.setState({
+						value: "__custom__",
+						isCustomDataOptionSelected: true,
+						customDataTextValue: props.value
+					});
+				} else {
+					this.setState({
+						isCustomDataOptionSelected: false,
+						customDataTextValue: ""
+					})
+				}
 			}
 
-		}
+		}.bind(this));
+		console.groupEnd(); // end: "Fields.Select: handleUpdate"
+	},
 
-		console.groupEnd(); // end: "Fields.Select: mount"
+	/*
+	 *
+	 */
+	setValue: function(props, cb) {
+		this.setState({
+			value: props.value !== null
+				? props.value
+				: (
+					props.multiple
+					? []
+					: "__default__"
+				)
+		}, cb);
 	},
 
 	/*
@@ -165,7 +200,7 @@ Fields.Select = React.createClass({
 						className="form-control"
 						placeholder="Enter custom data here"
 						onChange={this.onCustomDataInputChange}
-						defaultValue={state.customDataDefaultValue} />
+						defaultValue={state.customDataTextValue} />
 				);
 			}
 		}
@@ -185,27 +220,16 @@ Fields.Select = React.createClass({
 		}.bind(this));
 
 		// Set size if this is a multiselect input
-		var size = props.multiple ? (optionsKeys.length > 30 ? 30 : optionsKeys.length ) : 1,
-			defaultValue = state.customDataDefaultValue.length > 0
-							? "__default__"
-							: (
-								props.defaultValue !== null
-								? props.defaultValue
-								: (
-									props.multiple
-									? []
-									: "__default__"
-								)
-							);
+		var size = props.multiple ? (optionsKeys.length > 30 ? 30 : optionsKeys.length ) : 1;
 
-		console.log("Calculated default value: %s", defaultValue);
+		console.log("Calculated selected value: %s", state.value);
 
 		// Build the select input
 		displaySelect = (
 			<select
 				className="form-control"
 				onChange={this.onSelectInputChange}
-				defaultValue={defaultValue}
+				value={state.value}
 				multiple={props.multiple}
 				size={size}>
 					{defaultOption}
