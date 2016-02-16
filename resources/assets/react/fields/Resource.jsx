@@ -1,29 +1,79 @@
+/**
+ * fields/Resource.jsx
+ * @author Cameron Kelley
+ *
+ * Properties:
+ * - resouce: Resource object
+ *
+ * Format of resource object:
+ *  {
+ *		"type": [resource type],
+ *		"data": [base64 data string]
+ *	}
+ */
+
 Fields.Resource = React.createClass({
+
+	/*
+	 *
+	 */
 	getInitialState: function() {
 		return {
 			isFetching: false,
 			resource:{}
 		};
 	},
+
+	/*
+	 *
+	 */
 	componentWillMount: function() {
+		this.setValue(this.props);
+	},
 
-		var props = this.props;
+	/*
+	 *
+	 */
+	componentWillReceiveProps: function(newProps) {
+		this.setValue(newProps);
+	},
 
+	/*
+	 *
+	 */
+	setValue: function(props) {
+		// To display a resource object,
+		// we must have received the object as a property
+		// (and it can't be null)
+		console.log("Caught setValue for resource");
+		console.log("props: %O", props);
 		if(props.hasOwnProperty('resource')
-		&& props.resource !== null
-		&& typeof props.resource === "object") {
+			&& props.resource !== null
+			&& typeof props.resource === "object") {
 
-			if(!props.resource.hasOwnProperty('data')) {
-				// No data found for this resource. We must load it.
-				this.fetchData();
-			}
-
+			// Push resource object to state.
 			this.setState({
 				resource: props.resource
+			}, function() {
+				// Load data for resource if none found in resource object
+				if(!props.resource.hasOwnProperty('data') || props.resource.data.length === 0) {
+					console.log("HEADS UP: data not found for resource!");
+					console.log(props);
+					this.fetchData();
+				}
+			}.bind(this));
+
+		} else {
+			// Otherwise, reset state back to no resources
+			this.setState({
+				resource: {}
 			});
 		}
 	},
 
+	/*
+	 *
+	 */
 	fetchData: function() {
 
 		var props = this.props,
@@ -40,7 +90,7 @@ Fields.Resource = React.createClass({
 			success: function(resp) {
 				var resource = state.resource;
 					resource['type'] = resp.type;
-					resource['base64'] = resp.base64;
+					resource['data'] = resp.data;
 
 				this.setState({
 					isFetching: false,
@@ -53,17 +103,18 @@ Fields.Resource = React.createClass({
 		});
 	},
 
+	/*
+	 *
+	 */
 	render: function() {
 
 		var props = this.props,
 			state = this.state;
-			resource = state.resource;
-
-		var renderResource;
-		var loading = function() {
-			renderResource = "Loading";
-		};
-
+			resource = state.resource,
+			renderResource = "Loading",
+			loading = function() {
+				renderResource = "Loading";
+			};
 
 		console.log("[Fields.Resource][" + props.id + "]->render() with state:");
 		console.log(state);
@@ -78,10 +129,10 @@ Fields.Resource = React.createClass({
 					if(type.match("image/*")) {
 						console.log("[Fields.Resource][" + props.id + "]: type matches image");
 
-						if(resource.hasOwnProperty('base64')) {
+						if(resource.hasOwnProperty('data')) {
 							try {
 								renderResource = (
-									<img src={resource.base64} />
+									<img src={resource.data} />
 								);
 							} catch(e) {
 								renderResource = "error!";

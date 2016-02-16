@@ -234,6 +234,7 @@ class DataController extends Controller
                 }
 
                 foreach($files as $fileKey => $fileData) {
+
                     $splitTypeAndBase64 = explode(";", $fileData);
                     \Log::debug($splitTypeAndBase64);
                     $dataType = explode(":", $splitTypeAndBase64[0]);
@@ -243,7 +244,7 @@ class DataController extends Controller
 
                     $resource = new Resource;
                         $resource->type = $dataType[1];
-                        $resource->base64 = $base64;
+                        $resource->data = $base64;
                         $resource->save();
 
                         $message[$resource->id] = array(
@@ -259,7 +260,11 @@ class DataController extends Controller
                     $resource = Resource::where('id', $request->id);
                     if($resource->count() > 0) {
                         $resource = $resource->first(["id", "type", "base64"]);
-                        return response()->json(["status" => "success", "type" => $resource->type, "base64" => $this->constructBase64File($resource)]);
+                        return response()->json([
+                            "status" => "success",
+                            "type" => $resource->type,
+                            "data" => $this->constructBase64File($resource)
+                        ]);
                     }
                 } else return response()->json(["status" => "failure", "message" => "Missing ID parameter."]);
                 break;
@@ -327,7 +332,7 @@ class DataController extends Controller
      * @return String
      */
     public function constructBase64File($resource) {
-        return "data:" . $resource->type . ";base64," . $resource->base64;
+        return "data:" . $resource->type . ";base64," . $resource->data;
     }
 
     /**

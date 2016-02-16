@@ -5,6 +5,7 @@
  * Properties:
  * - onChange (function): 	handle a change to this field's data
  */
+
 Fields.TextArea = React.createClass({
 
 	/*
@@ -52,14 +53,14 @@ Fields.TextArea = React.createClass({
 	 *
 	 */
 	render: function() {
+
 		var props = this.props,
 			state = this.state;
 
-		console.groupCollapsed("  Fields.TextArea: render '%s'", this.props.name);
+		console.group("  Fields.TextArea: render '%s'", this.props.name);
 			console.log("Props: %O", this.props);
 			console.log("State: %O", this.state);
 		console.groupEnd();
-
 
 		return (
 			<div className="form-group row">

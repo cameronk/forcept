@@ -42,9 +42,9 @@ Fields.Select = React.createClass({
 
 		var options,
 			optionsKeys,
-			optionsValues = [];
+			optionsValues = [""]; // Empty string is a valid value (otherwise, it'll display the custom data text box)
 
-		console.groupCollapsed("  Fields.Select: handleUpdate '%s'", props.name);
+		console.group("  Fields.Select: handleUpdate '%s'", props.name);
 		console.log("Props: %O", props);
 
 		this.setValue(props, function() {
@@ -167,7 +167,7 @@ Fields.Select = React.createClass({
 			customDataOption,
 			customDataInput;
 
-		console.groupCollapsed("  Fields.Select: render '%s'", props.name);
+		console.group("  Fields.Select: render '%s'", props.name);
 			console.log("State: %O", state);
 
 		// Check if this field had options within the settings object

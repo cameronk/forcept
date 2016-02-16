@@ -287,7 +287,7 @@
 			selectedKeys = Object.keys(state.selected),
 			renderDOM;
 
-		console.groupCollapsed("  Fields.Pharmacy: render '%s'", props.name);
+		console.group("  Fields.Pharmacy: render '%s'", props.name);
 		console.log("Props: %O", props);
 		console.log("State: %O", state);
 

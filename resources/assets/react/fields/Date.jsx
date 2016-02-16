@@ -6,71 +6,87 @@
  * - settings:
  *   - useBroadMonthSelector: if true, show a basic month selector instead of date input
  */
- Fields.Date = React.createClass({
 
+Fields.Date = React.createClass({
+
+    /*
+     *
+     */
 	getInitialState: function() {
 		return {
-            value: null,
+            value: "",
 			broadMonthDetractor: null
 		};
-	},
-
-	onBroadMonthSelectorChange: function(amount) {
-		return function(evt) {
-			var now = new Date();
-				now.setMonth(now.getMonth() + amount);
-
-			this.setState({
-				broadMonthDetractor: amount
-			});
-
-			var newDate = [
-				(now.getMonth()) < 9
-					? "0" + (now.getMonth() + 1)
-					: (now.getMonth() + 1),
-				now.getDate(),
-				now.getFullYear()
-			].join("/");
-			console.log("Date: onBroadMonthSelectorChange -> %s", newDate);
-
-			this.props.onChange(this.props.id, newDate);
-
-		}.bind(this);
 	},
 
     /*
      *
      */
     componentWillMount: function() {
-        this.setValue(this.props.hasOwnProperty("value") ? this.props.value : null);
+        this.setValue(this.props);
     },
 
     /*
      *
      */
-    componentWillReceiveProps: function( newProps ) {
-        this.setValue(newProps.hasOwnProperty("value") ? newProps.value : null);
+    componentWillReceiveProps: function(newProps) {
+        this.setValue(newProps);
     },
 
     /*
      *
      */
-    setValue: function(value) {
+    setValue: function(props) {
         this.setState({
-            value: value
+            value: (props.hasOwnProperty("value") && props.value !== null) ? props.value : ""
         });
     },
 
+    /*
+     *
+     */
+	onBroadMonthSelectorChange: function(amount) {
+		return function(evt) {
+			console.log("Date: onBroadMonthSelectorChange -> %s", amount);
+			this.props.onChange(this.props.id, amount);
+		}.bind(this);
+	},
+
+    /*
+     *
+     */
 	onDateInputChange: function(event) {
 		// Bubble event up to handler passed from Visit
 		// (pass field ID and event)
 		this.props.onChange(this.props.id, event.target.value);
 	},
 
+    /*
+     *
+     * @return String
+     */
+    getMonth: function(modifier) {
+
+        // set up javascript date and switch month
+        var now = new Date();
+            now.setMonth(now.getMonth() + modifier);
+
+		return [
+			(now.getMonth()) < 9
+				? "0" + (now.getMonth() + 1)
+				: (now.getMonth() + 1),
+			now.getDate(),
+			now.getFullYear()
+		].join("/");
+    },
+
+    /*
+     *
+     */
 	render: function() {
-		var props = this.props,
-            state = this.state,
-			dateDOM;
+		var dateDOM,
+            props = this.props,
+            state = this.state;
 
 		if(props.hasOwnProperty('settings')
 			&& props.settings.hasOwnProperty('useBroadMonthSelector')
@@ -102,9 +118,11 @@
 			dateDOM = (
 				<div className="btn-group btn-group-block" data-toggle="buttons">
 					{monthDetractors.map(function(detractor, index) {
-						var active = (this.state.broadMonthDetractor === detractor.amount);
+                        var active = (state.value === detractor.amount);
 						return (
-							<label className={"btn btn-primary-outline" + (active ? " active" : "")} onClick={this.onBroadMonthSelectorChange(detractor.amount)}>
+							<label key={props.id + "-detractor-button-" + index}
+                                    className={"btn btn-primary-outline" + (active ? " active" : "")}
+                                    onClick={this.onBroadMonthSelectorChange(detractor.amount)}>
 								<input type="radio"
 									name={detractor.name + "-options"}
 									autoComplete="off"

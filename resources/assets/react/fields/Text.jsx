@@ -5,6 +5,7 @@
  * Properties:
  * - onChange (function): 	handle a change to this field's data
  */
+
 Fields.Text = React.createClass({
 
 	/*
@@ -20,24 +21,23 @@ Fields.Text = React.createClass({
 	 *
 	 */
 	componentWillMount: function() {
-		console.groupCollapsed("  Fields.Text: mount '%s'", this.props.name);
-			console.log("Props: %O", this.props);
-			this.setState({
-				value: this.props.value !== null ? this.props.value : null
-			});
-		console.groupEnd();
+		this.setValue(this.props);
 	},
 
 	/*
 	 *
 	 */
-	componentWillReceiveProps: function( newProps ) {
-		console.groupCollapsed("  Fields.Text: receiveProps '%s'", newProps.name);
-			console.log("Props: %O", newProps);
-			this.setState({
-				value: newProps.value !== null ? newProps.value : null
-			});
-		console.groupEnd();
+	componentWillReceiveProps: function(newProps) {
+		this.setValue(newProps);
+	},
+
+	/*
+	 *
+	 */
+	setValue: function(props) {
+		this.setState({
+			value: (props.hasOwnProperty('value') && props.value !== null) ?  props.value : ""
+		});
 	},
 
 	/*
@@ -53,13 +53,18 @@ Fields.Text = React.createClass({
 	 *
 	 */
 	render: function() {
-		console.groupCollapsed("  Fields.Text: render '%s'", this.props.name);
-			console.log("Props: %O", this.props);
-			console.log("State: %O", this.state);
+
+		var props = this.props,
+			state = this.state;
+
+		console.group("  Fields.Text: render '%s'", props.name);
+			console.log("Props: %O", props);
+			console.log("State: %O", state);
 		console.groupEnd();
+
 		return (
 			<div className="form-group row">
-				<Fields.FieldLabel {...this.props} />
+				<Fields.FieldLabel {...props} />
 				<div className={Fields.inputColumnClasses}>
 					<input
 						type="text"
@@ -67,9 +72,9 @@ Fields.Text = React.createClass({
 						autoComplete="off"
 						maxLength="255"
 
-						id={this.props.id}
-						placeholder={this.props.name + " goes here"}
-						value={this.state.value}
+						id={props.id}
+						placeholder={props.name + " goes here"}
+						value={state.value}
 						onChange={this.onTextInputChange} />
 				</div>
 			</div>

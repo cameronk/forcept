@@ -262,7 +262,7 @@ var Visit = React.createClass({
 	 *
 	 */
 	topLevelStoreResource: function(resourceID, resource) {
-		console.log("[Visit]->topLevelStoreResource(): resourceID=" + resourceID + ", resource=" + resource);
+		console.log("[Visit]->topLevelStoreResource(): resourceID=%s, resource=%O", resourceID, resource);
 
 		var resources = this.state.resources;
 			resources[resourceID] = resource;
@@ -400,8 +400,9 @@ var Visit = React.createClass({
 						<ul className="nav nav-pills" role="tablist">
 							{patientKeys.map(function(patientID, index) {
 								return (
-									<li className="nav-item">
-										<a onClick={this.switchVisiblePatient(patientID)} className={"nav-link" + (patientID == state.visiblePatient ? " active" : "")}>
+									<li className="nav-item" key={"patient-tab-" + patientID}>
+										<a  onClick={this.switchVisiblePatient(patientID)}
+											className={"nav-link" + (patientID == state.visiblePatient ? " active" : "")}>
 											<span className="label label-default">{patientID}</span>
 											&nbsp; {state.patients[patientID].abbr_name}
 										</a>

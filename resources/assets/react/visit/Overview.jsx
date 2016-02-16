@@ -4,9 +4,9 @@
  * Accepted properties:
  * - fields: Object of ALL fields for ALL stages up to THIS CURRENT STAGE for displaying patient metadata
  * - patient: Patient object w/ data as pulled from database
- *
  * - mini: should this display as a card instead of a column
  */
+
 Visit.Overview = React.createClass({
 
 	/*
@@ -14,14 +14,10 @@ Visit.Overview = React.createClass({
 	 */
 	render: function() {
 
-		var props = this.props,
-			// patientKeys = Object.keys(props.patients),
-			// countPatients = patientKeys.length,
-			patientOverviews,
-			iterableFields;
+		var patientOverviews, iterableFields,
+			props = this.props;
 
-		console.group("Visit.PatientsOverview: render (mini=%s)", props.mini);
-			// console.log("Patients to overview: %i", countPatients);
+		console.groupCollapsed("Visit.PatientsOverview: render (mini=%s)", props.mini); // keep this collapsed
 			console.log("Properties: %O", props);
 
 		// Copy the local patient fields property to a new variable
@@ -32,340 +28,328 @@ Visit.Overview = React.createClass({
 			iterableFields = jQuery.extend(jQuery.extend({}, props.fields), Visit.generatedFields);
 		}
 
-		// Remove fields that are displayed differently than normal
+		// Remove fields that have custom display settings
 		delete iterableFields["first_name"];
 		delete iterableFields["last_name"];
 		delete iterableFields["photo"];
 
-		// If there are patients in the props object
-		// if(countPatients > 0) {
+		//-- Build patientOverview card --\\
+		patientOverview = (function() {
 
-			//-- Begin mapping patient keys --\\
-			patientOverview = (function() {
-				var cardHeader,
-					photo,
-					patientID = props.patient.id;
-					thisPatient = props.patient;
+			var cardHeader, photo,
+				patientID = props.patient.id,
+				thisPatient = props.patient;
 
-				console.groupCollapsed("Patient %s", patientID);
+			console.group("Patient ID #%s: %O", patientID, thisPatient);
 
-				//-- Begin search for patient photo --\\
-				if(thisPatient.hasOwnProperty('photo') && thisPatient.photo !== null) {
+			//-- Begin search for patient photo --\\
+			if(thisPatient.hasOwnProperty('photo') && thisPatient.photo !== null) {
 
-					console.group("Photo:");
-						console.log("This patient has a photo property.");
+				var resources = props.hasOwnProperty("resources") ? props.resources : {}, // Grab resources passed as properties to Overview
+					resourceKeys = []; // Array of resource IDs to search for / fetch
 
-					var resourceKeys,
-						resources = props.hasOwnProperty("resources") ? props.resources : {};
+				console.group("Photo:");
+					console.log("This patient has a photo property.");
 
-					try {
-						if(typeof thisPatient.photo === "string") {
-							console.log("The photo property is a STRING");
+				try {
+					if(typeof thisPatient.photo === "string") {
+						console.log("The photo property is a STRING");
 
-							// Attempt to..
-							try {
-								// Parse JSON from database as string
-								resourceKeys = JSON.parse(thisPatient.photo);
-							} catch(e) {
-								console.error("Failed to parse photo string into JSON array.");
-								resourceKeys = [];
-							}
-
-						} else {
-							console.log("The photo property is NOT a STRING");
-							console.info("Photo property type: %s", typeof thisPatient.photo);
-
-							// Otherwise, just push the object
-							resourceKeys = thisPatient.photo;
+						// Attempt to...
+						try {
+							// ...parse JSON from database as string
+							resourceKeys = JSON.parse(thisPatient.photo);
+						} catch(e) {
+							console.error("Failed to parse photo string into JSON array.");
+							resourceKeys = [];
 						}
-					} catch(e) {
-						console.error("Some sort of error parsing photo string (not a JSON error...)");
-						resourceKeys = [];
+
+					} else {
+						console.log("The photo property is NOT a STRING");
+						console.info("Photo property type: %s", typeof thisPatient.photo);
+
+						// Otherwise, just push the object
+						resourceKeys = thisPatient.photo;
 					}
-
-					if(resourceKeys.length > 0) {
-
-						// Since Photo field only allows one upload, we'll grab the first key in the array
-						// (it's probably the only key...)
-						var photoKey = resourceKeys[0];
-
-						console.log("Photo resource ID is %i, checking resource storage...", photoKey);
-
-						// Check if we have this resource in storage already.
-						if(resources.hasOwnProperty(photoKey)) {
-
-							// For the immutable Photo input, the one and only file is the patient photo.
-							var photoData = resources[photoKey];
-
-							console.log("Photo found in preloaded resources: %O", photoData);
-
-							photo = (
-								<Fields.Resource
-									id={photoKey}
-									resource={{ type: "image/jpeg", base64: photoData.data}} />
-							);
-
-						} else {
-							console.log("Photo not found in resources, creating resource object with instructions to grab resource via AJAX");
-
-							photo = (
-								<Fields.Resource
-									id={photoKey}
-									resource={{ type: "image/jpeg" }} />
-							);
-						}
-					}
-
-					console.groupEnd(); // End "Photo:"
-
-				}
-				//-- End photo search --\\
-
-					//<span className="label label-info">#{index + 1}</span>
-					/*
-					<div className="card-block">
-						<h4 className="card-title text-xs-center m-a-0">
-							<strong>
-								{Utilities.getFullName(thisPatient)}
-							</strong>
-						</h4>
-					</div>*/
-				// Show header if we're not in Mini mode
-				if(props.mini === false) {
-					cardHeader = (
-						<span>
-			               	<div className="card-header">
-			                    <span className="label label-default">{patientID}</span>
-			                </div>
-			                {photo}
-			            </span>
-			        );
+				} catch(e) {
+					console.error("Some sort of error parsing photo string (not a JSON error...)");
+					resourceKeys = [];
 				}
 
-				//-- Begin render patient card --\\
-				var patientCardDOM = (
-					<div className="card forcept-patient-summary" key={patientID}>
-						{cardHeader}
-		              	<div className="list-group list-group-flush">
-		                    {Object.keys(iterableFields).map(function(field, index) {
+				// If we found some resources to load...
+				if(resourceKeys.length > 0) {
 
-		                    	var thisIterableField = iterableFields[field],
-									foundData = false,
-									isGeneratedField = Visit.generatedFields.hasOwnProperty(field),
-									value = "No data",
-									icon;
+					// Since Photo field only allows one upload, we'll grab the first key in the array
+					// (it's probably the only key...)
+					var photoKey = resourceKeys[0];
 
-								console.group("Field #%i: %s", index, thisIterableField.name);
+					console.log("Photo resource ID is %s, checking resource storage...", photoKey);
 
+					// Check if we have this resource in storage already.
+					if(resources.hasOwnProperty(photoKey)) {
 
-								//-- Begin patient field checking --\\
-		                    	if(
-		                    		thisPatient.hasOwnProperty(field) 	// If this field exists in the patient data
-		                    		&& thisPatient[field] !== null	 	// If the data for this field is null, show "No data"
-		                    		&& thisPatient[field].length > 0	// If string length == 0 or array length == 0, show "No data"
-		                    	) {
+						// For the immutable Photo input, the one and only file is the patient photo.
+						var photoData = resources[photoKey];
 
-									var thisPatientField = thisPatient[field];
+						console.log("Photo found in preloaded resources: %O", photoData);
 
-									console.info("Patient data: %O", thisPatientField);
+						photo = (
+							<Fields.Resource
+								id={photoKey}
+								resource={{ type: "image/jpeg", data: photoData.data}} />
+						);
 
-		                    		if(!(props.mini == true && isGeneratedField)) // Don't show generated fields in Mini mode
-		                    		{
-		                    			// We found data!
-		                    			foundData = true;
+					} else {
+						console.log("Photo not found in resources, creating resource object with instructions to grab resource via AJAX");
 
-										// Grab field types
-										var fieldType = thisIterableField.type;
+						photo = (
+							<Fields.Resource
+								id={photoKey}
+								resource={{ type: "image/jpeg" }} />
+						);
+					}
+				}
 
-										console.log("Type: %s", fieldType);
+				console.groupEnd(); // End "Photo:"
 
-		                    			// We might need to mutate the data
-		                    			switch(fieldType) {
+			}
+			//-- End photo search --\\
 
-											/**
-											 * Date input
+				//<span className="label label-info">#{index + 1}</span>
+				/*
+				<div className="card-block">
+					<h4 className="card-title text-xs-center m-a-0">
+						<strong>
+							{Utilities.getFullName(thisPatient)}
+						</strong>
+					</h4>
+				</div>*/
+			// Show header if we're not in Mini mode
+			if(props.mini === false) {
+				cardHeader = (
+					<span>
+		               	<div className="card-header">
+		                    <span className="label label-default">{patientID}</span>
+		                </div>
+		                {photo}
+		            </span>
+		        );
+			}
+
+			//-- Begin render patient card --\\
+			var patientCardDOM = (
+				<div className="card forcept-patient-summary" key={patientID}>
+					{cardHeader}
+	              	<div className="list-group list-group-flush">
+	                    {Object.keys(iterableFields).map(function(field, index) {
+
+	                    	var thisIterableField = iterableFields[field],
+								foundData = false,
+								isGeneratedField = Visit.generatedFields.hasOwnProperty(field),
+								value = "No data", icon;
+
+							console.group("Iterable field #%i: %s", index + 1, thisIterableField.name);
+
+							//-- Begin patient field checking --\\
+	                    	if(
+	                    		thisPatient.hasOwnProperty(field) 	// If this field exists in the patient data
+	                    		&& thisPatient[field] !== null	 	// If the data for this field is null, show "No data"
+	                    		&& thisPatient[field].toString().length > 0	// If string length == 0 or array length == 0, show "No data"
+	                    	) {
+
+								// Cache this field
+								var thisPatientField = thisPatient[field];
+
+								console.info("Patient data: %O", thisPatientField);
+
+	                    		if(!(props.mini == true && isGeneratedField)) // Don't show generated fields in Mini mode
+	                    		{
+	                    			// We found data!
+	                    			foundData = true;
+
+									// Grab field types
+									var fieldType = thisIterableField.type;
+
+									console.log("Type: %s", fieldType);
+
+	                    			// We might need to mutate the data
+	                    			switch(fieldType) {
+
+										/**
+										 * Date input
+										 */
+										case "date":
+											// if(thisIterableField.hasOwnProperty('settings') && thisIterableField.settings.hasOwnProperty('useBroadMonthSelector') && isTrue(thisIterableField.settings.useBroadMonthSelector)) {
+											// 	var date = new Date(),
+											// 		split = thisPatientField.toString().split("/"); // mm/dd/yyyy
+											//
+											// 		date.setMonth(parseInt(split[0]) - 1, split[1]);
+											// 		date.setFullYear(split[2]);
+											//
+											// 	value = Utilities.timeAgo(
+											// 		date
+											// 	);
+											// } else {
+												value = thisPatientField.toString();
+											// }
+											break;
+
+	                    				/**
+	                    				 * Things with multiple lines
+	                    				 */
+	                    				case "textarea":
+	                    					value = (
+	                    						<p dangerouslySetInnerHTML={{ __html: thisPatientField.replace(/\n/g, "<br/>") }}></p>
+	                    					);
+	                    					break;
+
+	                    				/**
+	                    				 * Things stored as arrays
+	                    				 */
+	                    				case "multiselect":
+										case "file":
+	                    					// Convert from JSON array to nice string
+											var arr;
+
+											/*
+											 * The data should be an array already.
+											 * If so, just pass it back.
+											 * Otherwise, try to convert.
 											 */
-											case "date":
-												// if(thisIterableField.hasOwnProperty('settings') && thisIterableField.settings.hasOwnProperty('useBroadMonthSelector') && isTrue(thisIterableField.settings.useBroadMonthSelector)) {
-												// 	var date = new Date(),
-												// 		split = thisPatientField.toString().split("/"); // mm/dd/yyyy
-												//
-												// 		date.setMonth(parseInt(split[0]) - 1, split[1]);
-												// 		date.setFullYear(split[2]);
-												//
-												// 	value = Utilities.timeAgo(
-												// 		date
-												// 	);
-												// } else {
-													value = thisPatientField.toString();
-												// }
-												break;
+											if(Array.isArray(thisPatientField)) {
+												arr = thisPatientField;
+											} else {
+		                    					try {
+													arr = JSON.parse(thisPatientField);
+												} catch(e) {
+													arr = [];
+												}
+											}
 
-		                    				/**
-		                    				 * Things with multiple lines
-		                    				 */
-		                    				case "textarea":
-		                    					value = (
-		                    						<p dangerouslySetInnerHTML={{ __html: thisPatientField.replace(/\n/g, "<br/>") }}></p>
-		                    					);
-		                    					break;
 
-		                    				/**
-		                    				 * Things stored as arrays
-		                    				 */
-		                    				case "multiselect":
-											case "file":
-		                    					// Convert from JSON array to nice string
-												var arr;
+											/*
+											 * Return a value as long as we
+											 * have more than one array value.
+											 */
+	                    					if(Array.isArray(arr) && arr.length > 0) {
 
 												/*
-												 * The data should be an array already.
-												 * If so, just pass it back.
-												 * Otherwise, try to convert.
+												 * Run the switch loop again
 												 */
-												if(Array.isArray(thisPatientField)) {
-													arr = thisPatientField;
-												} else {
-			                    					try {
-														arr = JSON.parse(thisPatientField);
-													} catch(e) {
-														arr = [];
-													}
+												switch(fieldType) {
+													case "multiselect":
+														value = (
+															<ul className="list-unstyled">
+																{arr.map(function(optionValue, optionIndex) {
+																	return (
+																		<li key={[optionValue, optionIndex].join("-")}>
+																			{'\u26ac'} {optionValue}
+																		</li>
+																	);
+																})}
+															</ul>
+														);
+														break;
+													case "file":
+														value = arr.map(function(resourceID, index) {
+															return (
+																<Fields.Resource
+																	id={resourceID} />
+															);
+														});
+														break;
 												}
 
+	                    					}
 
-												/*
-												 * Return a value as long as we
-												 * have more than one array value.
-												 */
-		                    					if(Array.isArray(arr) && arr.length > 0) {
-
-													/*
-													 * Run the switch loop again
-													 */
-													switch(fieldType) {
-														case "multiselect":
-															value = (
-																<ul className="list-unstyled">
-																	{arr.map(function(optionValue, optionIndex) {
-																		return (
-																			<li key={[optionValue, optionIndex].join("-")}>
-																				{'\u26ac'} {optionValue}
-																			</li>
-																		);
-																	})}
-																</ul>
-															);
-															break;
-														case "file":
-															value = arr.map(function(resourceID, index) {
-																return (
-																	<Fields.Resource
-																		id={resourceID} />
-																);
-															});
-															break;
-													}
-
-		                    					}
-
-		                    					break;
+	                    					break;
 
 
-											/**
-											 * Pharmacy field
-											 *
-											 * Displays a small label with the
-											 * prescription set ID
-											 */
-											case "pharmacy":
-												value = (
-													<span className="label label-default">
-														Set ID: {thisPatientField.toString()}
-													</span>
-												);
-												break;
+										/**
+										 * Pharmacy field
+										 *
+										 * Displays a small label with the
+										 * prescription set ID
+										 */
+										case "pharmacy":
+											value = (
+												<span className="label label-default">
+													Set ID: {thisPatientField.toString()}
+												</span>
+											);
+											break;
 
-		                    				/**
-		                    				 * Everything else (single-value data points)
-		                    				 */
-		                    				default:
-		                    					value = thisPatientField.toString();
-		                    					break;
-		                    			}
-			                    	}
+	                    				/**
+	                    				 * Everything else (single-value data points)
+	                    				 */
+	                    				default:
+	                    					value = thisPatientField.toString();
+	                    					break;
+	                    			}
 		                    	}
-								//-- End patient field checking --\\
+	                    	} else {
+								console.log("No data.");
+							}
+							//-- End patient field checking --\\
 
 
-		                    	// Choose which icon to display
-		                    	if(!isGeneratedField) {
-		                    		if(foundData) {
-		                    			icon = (
-		                    				<span className="text-success">
-		                    					{"\u2713"}
-		                    				</span>
-		                    			);
-		                    		} else {
-		                    			icon = (
-		                    				<span className="text-danger">
-		                    					{"\u2717"}
-		                    				</span>
-		                    			);
-		                    		}
-		                    	} else {
-		                    		icon = "\u27a0";
+	                    	// Choose which icon to display
+	                    	if(!isGeneratedField) {
+	                    		if(foundData) {
+	                    			icon = (
+	                    				<span className="text-success">
+	                    					{"\u2713"}
+	                    				</span>
+	                    			);
+	                    		} else {
+	                    			icon = (
+	                    				<span className="text-danger">
+	                    					{"\u2717"}
+	                    				</span>
+	                    			);
+	                    		}
+	                    	} else {
+	                    		icon = "\u27a0";
+	                    	}
+
+							console.groupEnd(); // End: "Field %i..."
+
+	                    	// Render the list item
+	                    	if(thisIterableField.type == "header") {
+	                    		if(props.mini == false) {
+		                    		return (
+		                    			<div className="list-group-item forcept-patient-overview-header-item" key={field + "-" + index}>
+		                    				<h5 className="text-center m-a-0">
+		                    					{thisIterableField.name}
+		                    				</h5>
+		                    			</div>
+		                    		);
 		                    	}
+	                    	} else {
+								if((props.mini == true && foundData) || props.mini == false) {
+									return (
+										<div className="list-group-item" key={field + "-" + index}>
+											<dl>
+												<dt>{icon} &nbsp; {thisIterableField.name}</dt>
+												<dd>{foundData ? value : ""}</dd>
+											</dl>
+										</div>
+									);
+								}
+	                    	}
 
-								console.groupEnd(); // End: "Field %i..."
-
-		                    	// Render the list item
-		                    	if(thisIterableField.type == "header") {
-		                    		if(props.mini == false) {
-			                    		return (
-			                    			<div className="list-group-item forcept-patient-overview-header-item" key={field + "-" + index}>
-			                    				<h5 className="text-center m-a-0">
-			                    					{thisIterableField.name}
-			                    				</h5>
-			                    			</div>
-			                    		);
-			                    	}
-		                    	} else {
-									if((props.mini == true && foundData) || props.mini == false) {
-										return (
-											<div className="list-group-item" key={field + "-" + index}>
-												<dl>
-													<dt>{icon} &nbsp; {thisIterableField.name}</dt>
-													<dd>{foundData ? value : ""}</dd>
-												</dl>
-											</div>
-										);
-									}
-		                    	}
-
-	                    	}.bind(this))}
-		                </div>
-					</div>
-				);
-				//-- End build patient card DOM --\\
-
-				console.groupEnd(); // End "Patient %i"
-
-				// Return the patient card DOM
-				return patientCardDOM;
-
-			})();
-
-			// }.bind(this));
-			//-- End patient fields map --\\
-
-		/*} else { //-- end: if there are patients in the patient object --\\
-			patientOverview = (
-				<div className="alert alert-info hidden-sm-down">
-					No patients within this visit.
+                    	}.bind(this))}
+	                </div>
 				</div>
 			);
-		}*/
+			//-- End build patient card DOM --\\
+
+			console.groupEnd(); // End "Patient %i"
+
+			// Return the patient card DOM
+			return patientCardDOM;
+
+		})();
 
 		console.log("Done with PatientOverview group...");
 		console.groupEnd(); // End: "PatientsOverview"
@@ -377,11 +361,13 @@ Visit.Overview = React.createClass({
 		           {patientOverview}
 		        </div>
 			);
-		} else return (
-	        <div className="col-xs-12 col-sm-12 col-md-4 col-xl-3">
-	           {patientOverview}
-	        </div>
-	    );
+		} else {
+			return (
+		        <div className="col-xs-12 col-sm-12 col-md-4 col-xl-3">
+		           {patientOverview}
+		        </div>
+		    );
+		}
 	}
 
 });

@@ -1,4 +1,17 @@
+/**
+ * fields/File.jsx
+ * @author Cameron Kelley
+ *
+ * Properties:
+ * - onChange (function): 	handle successful file upload
+ * - onStore (function): 	handle individual file storage
+ */
+
 Fields.File = React.createClass({
+
+	/*
+	 *
+	 */
 	getInitialState: function() {
 		return {
 			isUploading: false,	// Are we uploading to the server?
@@ -12,120 +25,170 @@ Fields.File = React.createClass({
 		};
 	},
 
+	/*
+	 *
+	 */
 	componentWillMount: function() {
-		var props = this.props;
-		if(props.hasOwnProperty("defaultValue") && props.defaultValue !== null && Array.isArray(props.defaultValue)) {
+		console.group("  Fields.File: componentWillMount '%s'", this.props.name);
+		this.setValue(this.props);
+		console.groupEnd();
+	},
+
+	/*
+	 *
+	 */
+	componentWillReceiveProps: function(newProps) {
+		console.group("  Fields.File: componentWillReceiveProps '%s'", newProps.name);
+		this.setValue(newProps);
+		console.groupEnd();
+	},
+
+	/*
+	 *
+	 */
+	setValue: function(props) {
+		console.log("Props: %O", props);
+		console.log("State: %O", this.state);
+		if(props.hasOwnProperty("value") && props.value !== null && Array.isArray(props.value)) {
+			console.log("Pre-existing resources value located. Applying to state.");
 			this.setState({
-				resources: props.defaultValue
+				resources: props.value,
+				status: "",
+				message: "",
+				isParsing: false
+			});
+		} else {
+			console.log("No resources located. Resetting resources array.");
+			this.setState({
+				resources: [],
+				status: "",
+				message: "",
+				isParsing: false
 			});
 		}
 	},
 
-	onFileInputChange: function(event) {
-
-		// Remove any previous messages
+	/*
+	 * Remove any previously applied messages
+	 */
+	resetMessages: function() {
 		this.setState({
 			status: "",
 			message: "",
 			isParsing: true
 		});
+	},
 
-		var files = event.target.files,
+	/*
+	 *
+	 */
+	onFileInputChange: function(event) {
+
+		var props = this.props,
+			state = this.state,
+			files = event.target.files,
 			filesLength = files.length,
 			modifiedFiles = [],
 			done = function() {
-				console.log("[Fields.File] modifiedFiles count: " + modifiedFiles.length);
+				console.log("Completed file processing loop.");
+				console.log("Modified file count: %s", modifiedFiles.length);
 				this.setState({
 					files: modifiedFiles,
 					isParsing: false
 				});
 			}.bind(this);
 
-		setTimeout(function() {
-			for(var i = 0; i < filesLength; i++) {
-				var thisFile = files[i],
-					reader = new FileReader(),
-					n = i;
+		console.group("  Fields.File: onFileInputChange '%s'", props.name);
+		this.resetMessages();
 
-				console.log("[Fields.File] working with file " + i);
+		// Loop through all files loaded into input
+		for(var i = 0; i < filesLength; i++) {
 
-				if(thisFile.type.match('image.*')) {
+			var thisFile = files[i], // Grab the file from our files array
+				reader = new FileReader(), // Initialize a new FileReader
+				n = i; // Store index to prevent loop completion checking problems
 
-					var maxWidth = (this.props.hasOwnProperty("maxWidth") ? this.props.maxWidth : 310),
-						maxHeight = (this.props.hasOwnProperty("maxHeight") ? this.props.maxHeight : 310);
+			if(thisFile.type.match('image.*')) {
 
-					// onLoad: reader
-					reader.onload = function(readerEvent) {
+				var maxWidth = (props.hasOwnProperty("maxWidth") ? props.maxWidth : 310),
+					maxHeight = (props.hasOwnProperty("maxHeight") ? props.maxHeight : 310);
 
-						console.log("[Fields.File][" + n + "] caught reader.onload");
+				// onLoad: reader
+				reader.onload = function(readerEvent) {
 
-						// Create a new image and load our data into it
-						var image = new Image();
+					// Create a new image and load our data into it
+					var image = new Image();
 
-						// onLoad: image
-						image.onload = function(imageEvent) {
+					// onLoad: image
+					image.onload = function(imageEvent) {
 
-							console.log("[Fields.File][" + n + "] caught image.onload");
+						// Setup canvas element, grab width/height of image
+						var canvas = document.createElement("canvas"),
+							width = image.width,
+							height = image.height;
 
-							// Setup canvas element, grab width/height of image
-							var canvas = document.createElement("canvas"),
-								width = image.width,
-								height = image.height;
-
-							// Figure out what our final width / height should be
-							if (width > height) {
-								if (width > maxWidth) {
-									height *= maxWidth / width;
-									width = maxWidth;
-								}
-							} else {
-								if (height > maxHeight) {
-									width *= maxHeight / height;
-									height = maxHeight;
-								}
+						// Figure out what our final width / height should be
+						if (width > height) {
+							if (width > maxWidth) {
+								height *= maxWidth / width;
+								width = maxWidth;
 							}
-
-							// Size our canvas appropriately
-							canvas.width = width;
-							canvas.height = height;
-
-							console.log("[Fields.File][" + n + "] " + width + "x" + height);
-
-							// Push image to canvas context
-							canvas.getContext("2d").drawImage(image, 0, 0, width, height);
-
-							console.log("[Fields.File][" + n + "] image/jpeg @ 0.5 is:");
-							console.log(canvas.toDataURL("image/jpeg", 0.5));
-
-							modifiedFiles[n] = canvas.toDataURL("image/jpeg", 0.5);
-
-							if((n + 1) == filesLength) {
-								done();
+						} else {
+							if (height > maxHeight) {
+								width *= maxHeight / height;
+								height = maxHeight;
 							}
-						};
+						}
 
-						image.src = readerEvent.target.result;
+						// Size our canvas appropriately
+						canvas.width = width;
+						canvas.height = height;
 
+						// console.log("Size: %spx by %spx", width, height);
+
+						// Push image to canvas context
+						canvas.getContext("2d").drawImage(image, 0, 0, width, height);
+
+						modifiedFiles[n] = canvas.toDataURL("image/jpeg", 0.5);
+
+						if((n + 1) == filesLength) {
+							done();
+						}
 					};
 
-					reader.readAsDataURL(thisFile);
+					image.src = readerEvent.target.result;
 
-				} else {
-					reader.onload = function(evt) {
-						modifiedFiles[n] = evt.target.result;
-					};
+				};
 
-					reader.readAsDataURL(thisFile);
-				}
+				reader.readAsDataURL(thisFile);
 
+			} else {
+				reader.onload = function(evt) {
+					modifiedFiles[n] = evt.target.result;
+				};
+
+				reader.readAsDataURL(thisFile);
 			}
-		}.bind(this), 100);
+
+			console.groupEnd(); // end file #%i
+
+		}
+
+		console.groupEnd(); // end onFileInputChange
+
 	},
 
 	/*
 	 *
 	 */
 	handleUploadFiles: function() {
+
+		var props = this.props,
+			state = this.state,
+			data = {};
+
+		console.group("  Fields.File: handleUploadFiles '%s'", props.name);
+
 		// Set state as uploading this file.
 		this.setState({
 			isUploading: true,
@@ -133,13 +196,11 @@ Fields.File = React.createClass({
 			statusMessage: ""
 		});
 
-		var data = {},
-			state = this.state;
-
-		// Push all files loaded as inputs
+		// Push all loaded files to data object for uploading.
 		for(var i = 0; i < state.files.length; i++) {
-			console.log("[Fields.File](handleUploadFiles) file " + i + " has data");
-			console.log(state.files[i]);
+			console.group("...file #%i", i);
+			console.log("Data: %s", state.files[i]);
+			console.groupEnd();
 			data["file-" + i] = state.files[i];
 		}
 
@@ -151,6 +212,8 @@ Fields.File = React.createClass({
 			url: "/data/resources/upload",
 			data: data,
 			xhr: function() {
+
+				// Grab XHR object from window
 				var xhr = new window.XMLHttpRequest();
 
 				// TODO fix this
@@ -179,13 +242,12 @@ Fields.File = React.createClass({
 					status: "success",
 					message: "File(s) uploaded successfully!"
 				}, function() {
-					var props = this.props;
 					props.onChange(props.id, resourceKeys);
 					for(i = 0; i < resourceKeys.length; i++) {
 						var k = resourceKeys[i];
 						props.onStore(k, resources[k]);
 					}
-				}.bind(this));
+				});
 			}.bind(this),
 			error: function(resp) {
 				this.setState({
@@ -194,11 +256,18 @@ Fields.File = React.createClass({
 					status: "failure",
 					message: "An error occurred during upload."
 				});
-			}.bind(this)
+			}.bind(this),
+			complete: function() {
+				console.groupEnd(); // end handleUploadFiles
+			}
 		});
 
+		console.groupEnd(); // end handleUploadFiles
 	},
 
+	/*
+	 *
+	 */
 	handleRemoveResource: function(resourceID) {
 		var storage = this.state._storage,
 			resources = this.state.resources,
@@ -221,6 +290,9 @@ Fields.File = React.createClass({
 		}.bind(this));
 	},
 
+	/*
+	 *
+	 */
 	render: function() {
 		var props = this.props,
 			state = this.state,
@@ -277,6 +349,7 @@ Fields.File = React.createClass({
 		} else {
 			// Check if we're currently uploading
 			if(!state.isUploading) {
+
 				// No resources found - show file input.
 				var uploadButton;
 
@@ -321,7 +394,6 @@ Fields.File = React.createClass({
 
 		}
 
-		// <h6>{this.state.fileSize > 0 ? getFileSize(this.state.fileSize) : ""}</h6>
 		return (
 			<div className="form-group row">
 				<Fields.FieldLabel {...props} />

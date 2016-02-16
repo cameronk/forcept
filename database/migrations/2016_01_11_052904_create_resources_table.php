@@ -18,7 +18,7 @@ class CreateResourcesTable extends Migration
             $table->integer('uploaded_by');
             $table->string('type');
             $table->boolean('referenced')->default(true);
-            $table->longText('base64');
+            $table->longText('data');
             $table->timestamps();
         });
 

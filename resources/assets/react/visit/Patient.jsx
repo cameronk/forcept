@@ -3,6 +3,7 @@
  *
  * Properties:
  */
+
 Visit.Patient = React.createClass({
 
 	/*
@@ -36,10 +37,10 @@ Visit.Patient = React.createClass({
 			summaryFields = props.summaryFields,
 			summaryFieldsKeys = Object.keys(summaryFields),
 			countSummaryFields = summaryFieldsKeys.length,
-			name = props.patient.full_name !== null ? props.patient.full_name : "Unnamed patient",
+			name = (props.patient.full_name !== null) ? props.patient.full_name : "Unnamed patient",
 			summary;
 
-		console.groupCollapsed("Visit.Patient: render");
+		console.groupCollapsed("Visit.Patient: render"); // keep this collapsed
 			console.log("Stage type: %s", props.stageType);
 			console.log("Iterable field count: %i", countFields);
 			console.log("Iterable field keys: %O", fieldKeys);
@@ -84,7 +85,7 @@ Visit.Patient = React.createClass({
 						thisPatient = props.patient,
 						defaultValue = thisPatient.hasOwnProperty(fieldID) ? thisPatient[fieldID] : "";
 
-					console.groupCollapsed("Field #%i: '%s' %O", index, thisField.name, thisField);
+					console.group("Field #%i: '%s' %O", index, thisField.name, thisField);
 						console.log("Type: %s", thisField.type);
 						console.log("Default value: %s", defaultValue);
 
@@ -119,7 +120,7 @@ Visit.Patient = React.createClass({
 					thisPatient = props.patient,
 					defaultValue = thisPatient.hasOwnProperty(fieldID) ? thisPatient[fieldID] : "";
 
-				console.groupCollapsed("Field #%i: '%s' %O", index, thisField.name, thisField);
+				console.group("Field #%i: '%s' %O", index, thisField.name, thisField);
 					console.log("Type: %s", thisField.type);
 					console.log("Default value: %s", defaultValue);
 					console.log("thisPatient has fieldID property: %s", thisPatient.hasOwnProperty(fieldID));
@@ -170,7 +171,7 @@ Visit.Patient = React.createClass({
 						fieldDOM = (
 							<Fields.Number
 								{...thisField}
-								defaultValue={defaultValue}
+								value={defaultValue}
 								onChange={this.handleFieldChange}
 								key={fieldID}
 								id={fieldID} />
@@ -212,7 +213,7 @@ Visit.Patient = React.createClass({
 						fieldDOM = (
 							<Fields.File
 								{...thisField}
-								defaultValue={defaultValue}
+								value={defaultValue}
 								onChange={this.handleFieldChange}
 								onStore={this.handleStoreResource}
 								key={fieldID}
