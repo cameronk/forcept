@@ -38,19 +38,34 @@ Fields.Select = React.createClass({
 	/*
 	 *
 	 */
+	setValue: function(props, cb) {
+		this.setState({
+			value: props.value !== null
+				? props.value
+				: (
+					props.multiple
+					? []
+					: "__default__"
+				)
+		}, cb);
+	},
+
+	/*
+	 *
+	 */
 	handleUpdate: function( props ) {
 
-		var options,
-			optionsKeys,
+		var options, optionsKeys,
 			optionsValues = [""]; // Empty string is a valid value (otherwise, it'll display the custom data text box)
 
 		console.group("  Fields.Select: handleUpdate '%s'", props.name);
-		console.log("Props: %O", props);
+			console.log("Props: %O", props);
 
+		// Set component value based on props
 		this.setValue(props, function() {
 
+			// If this is not a multiselect input...
 			if(props.multiple !== true) {
-
 				if(props.settings.hasOwnProperty('options')) {
 					options = props.settings.options;
 					optionsKeys = Object.keys(options);
@@ -83,22 +98,9 @@ Fields.Select = React.createClass({
 			}
 
 		}.bind(this));
-		console.groupEnd(); // end: "Fields.Select: handleUpdate"
-	},
 
-	/*
-	 *
-	 */
-	setValue: function(props, cb) {
-		this.setState({
-			value: props.value !== null
-				? props.value
-				: (
-					props.multiple
-					? []
-					: "__default__"
-				)
-		}, cb);
+		console.groupEnd(); // end: "Fields.Select: handleUpdate"
+
 	},
 
 	/*
@@ -120,6 +122,8 @@ Fields.Select = React.createClass({
 				}
 			}
 
+			// Bubble event up to handler passed from Visit
+			// (pass field ID and event)
 			props.onChange(props.id, values);
 
 		} else {
@@ -149,6 +153,8 @@ Fields.Select = React.createClass({
 	 * Handle a change to data in the custom data text input
 	 */
 	onCustomDataInputChange: function(event) {
+		// Bubble event up to handler passed from Visit
+		// (pass field ID and event)
 		this.props.onChange(this.props.id, event.target.value);
 	},
 

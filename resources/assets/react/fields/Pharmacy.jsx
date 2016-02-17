@@ -6,6 +6,7 @@
  * - settings:
  *   - TODO fix this
  */
+
  Fields.Pharmacy = React.createClass({
 
     /*
@@ -268,6 +269,7 @@
 	onDrugAmountChange: function(drugKey) {
 		return function(event) {
 			var selected = this.state.selected;
+            
 			if(selected.hasOwnProperty(drugKey)) {
 				selected[drugKey].amount = event.target.value;
 			}
@@ -288,10 +290,13 @@
 			renderDOM;
 
 		console.group("  Fields.Pharmacy: render '%s'", props.name);
-		console.log("Props: %O", props);
-		console.log("State: %O", state);
+		    console.log("Props: %O", props);
+		    console.log("State: %O", state);
 
-
+        /*
+         * Determine render pattern
+         * based on current component "status"
+         */
 		switch(state.status) {
 			case "init":
 				renderDOM = (

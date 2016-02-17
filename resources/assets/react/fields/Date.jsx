@@ -34,7 +34,8 @@ Fields.Date = React.createClass({
     },
 
     /*
-     *
+     * Apply inherited value from props to component state.
+	 * @return void
      */
     setValue: function(props) {
         this.setState({
@@ -43,7 +44,8 @@ Fields.Date = React.createClass({
     },
 
     /*
-     *
+     * Handle change event for broad month selectors.
+	 * @return void
      */
 	onBroadMonthSelectorChange: function(amount) {
 		return function(evt) {
@@ -53,35 +55,36 @@ Fields.Date = React.createClass({
 	},
 
     /*
-     *
+     * Handle HTML Date input change event.
+	 * @return void
      */
 	onDateInputChange: function(event) {
 		// Bubble event up to handler passed from Visit
 		// (pass field ID and event)
-		this.props.onChange(this.props.id, event.target.value);
+		this.props.onChange(this.props.id, this.dashesToSlashes(event.target.value));
+	},
+
+	/*
+	 * Convert date from HTML standard format to Forcept slash format
+	 * @return String
+	 */
+	dashesToSlashes: function(date) {
+		date = date.split("-");
+		return [date[1], date[2], date[0]].join("/");
+	},
+
+	/*
+	 * Convert Forcept slash formatted date back to native HTML dash format
+	 * @return String
+	 */
+	slashesToDashes: function(date) {
+		date = date.split("/");
+		return [date[2], date[0], date[1]].join("-");
 	},
 
     /*
-     *
-     * @return String
-     */
-    getMonth: function(modifier) {
-
-        // set up javascript date and switch month
-        var now = new Date();
-            now.setMonth(now.getMonth() + modifier);
-
-		return [
-			(now.getMonth()) < 9
-				? "0" + (now.getMonth() + 1)
-				: (now.getMonth() + 1),
-			now.getDate(),
-			now.getFullYear()
-		].join("/");
-    },
-
-    /*
-     *
+     * Render date field.
+	 * @return JSX DOM object
      */
 	render: function() {
 		var dateDOM,
@@ -142,16 +145,16 @@ Fields.Date = React.createClass({
 					autoComplete="off"
 					maxLength="255"
 
-					id={this.props.id}
-					placeholder={this.props.name + " goes here"}
-					value={state.value}
+					id={props.id}
+					placeholder={props.name + " goes here"}
+					value={this.slashesToDashes(state.value)}
 					onChange={this.onDateInputChange} />
 			);
 		}
 
 		return (
 			<div className="form-group row">
-				<Fields.FieldLabel {...this.props} />
+				<Fields.FieldLabel {...props} />
 				<div className={Fields.inputColumnClasses}>
 					{dateDOM}
 				</div>

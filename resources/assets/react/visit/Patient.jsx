@@ -29,6 +29,7 @@ Visit.Patient = React.createClass({
 	 */
 	render: function() {
 
+		// Instantiate ALL the things!
 		var props = this.props,
 			state = this.state,
 			fields = props.fields,
@@ -40,6 +41,7 @@ Visit.Patient = React.createClass({
 			name = (props.patient.full_name !== null) ? props.patient.full_name : "Unnamed patient",
 			summary;
 
+		// console.log ALL the things!
 		console.groupCollapsed("Visit.Patient: render"); // keep this collapsed
 			console.log("Stage type: %s", props.stageType);
 			console.log("Iterable field count: %i", countFields);
@@ -49,6 +51,7 @@ Visit.Patient = React.createClass({
 		// Build summary DOM
 		if(summaryFields !== null && typeof summaryFields === "object" && countSummaryFields > 0) {
 
+			// TODO this sucks, figure out a better way
 			var leftColumnFields = {},
 				rightColumnFields = {},
 				patientsObjectSpoof = {};
@@ -113,6 +116,11 @@ Visit.Patient = React.createClass({
 
 			console.groupEnd();
 		} else {
+
+			/*
+			 * Map fieldKeys to fieldsDOM variable for
+			 * future rendering
+			 */
 			fieldsDOM = fieldKeys.map(function(fieldID, index) {
 
 				var fieldDOM,
@@ -125,7 +133,12 @@ Visit.Patient = React.createClass({
 					console.log("Default value: %s", defaultValue);
 					console.log("thisPatient has fieldID property: %s", thisPatient.hasOwnProperty(fieldID));
 
-				// Mutate data as necessary per field type
+				/*
+				 * DATA MUTATION
+				 *
+				 * Modify field value based on field type
+				 * (convert JSON data types => JS objects)
+				 */
 				switch(thisField.type) {
 					// Fields stored as JSON arrays
 					case "multiselect":
@@ -141,7 +154,11 @@ Visit.Patient = React.createClass({
 						break;
 				}
 
-				// Figure out which type of field we should render
+				/*
+				 * DATA RENDERING
+				 *
+				 * Render field value based on type.
+				 */
 				switch(thisField.type) {
 
 					/*
@@ -203,7 +220,7 @@ Visit.Patient = React.createClass({
 							<Fields.Select
 								{...thisField}
 								multiple={true}
-								defaultValue={defaultValue}
+								value={defaultValue}
 								onChange={this.handleFieldChange}
 								key={fieldID}
 								id={fieldID} />

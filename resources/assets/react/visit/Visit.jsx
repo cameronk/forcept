@@ -32,7 +32,14 @@ var Visit = React.createClass({
 	getInitialState: function() {
 		return {
 
+			/*
+			 * Display states:
+			 *
+			 * "default" => show patients or messages as necessary
+			 * "loading" => display loading gif somewhere
+			 */
 			displayState: "default",
+			isValid: false,
 			// isSubmitting: false,
 
 			progress: 0,
@@ -53,13 +60,31 @@ var Visit = React.createClass({
 		var props = this.props;
 
 		console.group("Visit: mount");
-			console.log("Visit properties: %O", props);
+			console.log("Props: %O", props);
 
+		/*
+		 * Check if patients have already been loaded.
+		 * (i.e. are we handling a visit or making a new one?)
+		 */
 		if(props.hasOwnProperty("patients") && props.patients !== null) {
 			console.log("Pre-existing patients detected, loading into state.");
 
-			var patients = {};
+			var patients = {},
+				firstPatient = null;
+
+			/*
+			 * Apply generated fields for each patient
+			 * and push to above object.
+			 */
 			for(var patientID in props.patients) {
+
+				/*
+				 * Save first patient ID for default tab selection.
+				 */
+				if(firstPatient === null) {
+					firstPatient = patientID;
+				}
+
 				console.log("Setting up patient %i", patientID);
 				patients[patientID] = Utilities.applyGeneratedFields(props.patients[patientID]);
 			}
@@ -67,11 +92,9 @@ var Visit = React.createClass({
 			console.log("Done setting up patients: %O", patients);
 
 			this.setState({
-				patients: patients
-			}, function() {
-				console.log("Done mounting %i patients.", Object.keys(patients).length);
-				__debug(this.state.patients);
-			}.bind(this));
+				patients: patients,
+				visiblePatient: firstPatient
+			}, this.validate); // Validate after updating patients
 		}
 
 		console.groupEnd();
@@ -110,20 +133,24 @@ var Visit = React.createClass({
 				destination: destination
 			},
 			xhr: function() {
+
+				// Grab window xhr object
 				var xhr = new window.XMLHttpRequest();
 
+				/*
+				 * Handle upload progress listener
+				 */
 				xhr.upload.addEventListener("progress", function(evt) {
-		            if (evt.lengthComputable) {
-		                var percentComplete = evt.loaded / evt.total;
-
-		                //Do something with upload progress here
+		            if(evt.lengthComputable) {
 		                this.setState({
-		                	progress: percentComplete * 100
+		                	progress: (evt.loaded / evt.total) * 100
 		                });
 		            }
 		       }.bind(this), false);
 
+				// Spit it back
 				return xhr;
+
 			}.bind(this),
 			success: function(resp) {
 				this.setState(this.getInitialState());
@@ -158,7 +185,7 @@ var Visit = React.createClass({
 				confirmFinishVisitResponse: null,
 				patients: patients,
 				visiblePatient: patient.id
-			});
+			}, this.validate); // Validate after updating patients
 		}
 	},
 
@@ -177,10 +204,17 @@ var Visit = React.createClass({
 	 */
 	handlePatientAddfromScratch: function(patientData) {
 		return function(event) {
+
+			/*
+			 * Data array initially contains token
+			 */
 			var data = {
 				"_token": document.querySelector("meta[name='csrf-token']").getAttribute('value')
 			};
 
+			/*
+			 * If patientData was defined (passed from import), add to data object
+			 */
 			if(arguments.length > 0 && patientData !== null && typeof patientData === "object") {
 				data["importedFieldData"] = patientData;
 			}
@@ -193,7 +227,6 @@ var Visit = React.createClass({
 				url: "/patients/create",
 				data: data,
 				success: function(resp) {
-					console.log("success");
 					if(resp.status == "success") {
 						this.handlePatientAdd(resp.patient);
 					}
@@ -211,7 +244,7 @@ var Visit = React.createClass({
 	},
 
 	/*
-	 * Aggregate data
+	 *
 	 */
 	handleFinishVisit: function( isDoneLoading ) {
 		$("#visit-finish-modal")
@@ -223,12 +256,13 @@ var Visit = React.createClass({
 	 */
 	switchVisiblePatient: function( patientID ) {
 		return function(event) {
-			this.setState({
-				visiblePatient: patientID
-			});
+			if(this.state.visiblePatient !== patientID) {
+				this.setState({
+					visiblePatient: patientID
+				});
+			}
 		}.bind(this);
 	},
-
 
 	/*
 	 *
@@ -240,8 +274,8 @@ var Visit = React.createClass({
 		if(this.state.patients.hasOwnProperty(patientID)) {
 
 			var patients = this.state.patients; // Grab patients from state
-				patient = patients[patientID], // Grab patient object
-				patient[fieldID] = value; // Find our patient and set fieldID = passed value
+				patient = patients[patientID], 	// Grab patient object
+				patient[fieldID] = value; 		// Find our patient and set fieldID = passed value
 
 			// Apply generated fields to patient object
 			patient = Utilities.applyGeneratedFields(patient);
@@ -251,7 +285,7 @@ var Visit = React.createClass({
 			// Push patients back to state
 			this.setState({
 				patients: patients
-			});
+			}, this.validate); // Validate after updating patients
 
 		} else {
 			console.error("[Visit]->topLevelPatientStateChange(): Missing patient ID " + patientID + " in Visit patients state");
@@ -273,9 +307,19 @@ var Visit = React.createClass({
 	},
 
 	/*
+	 * Check the validity of the visit.
+	 */
+	validate: function() {
+		this.setState({
+			isValid: Object.keys(this.state.patients).length > 0
+		});
+	},
+
+	/*
 	 * Render Visit container
 	 */
 	render: function() {
+
 		var props = this.props,
 			state = this.state,
 			patientKeys = Object.keys(state.patients),
@@ -283,11 +327,12 @@ var Visit = React.createClass({
 			createPatientControl,
 			importPatientControl,
 			loadingItem,
-			controlsDisabled = state.displayState !== "default";
+			controlsDisabled = (state.displayState !== "default")
+			submitDisabled 	 = (controlsDisabled || !state.isValid);
 
-		console.log("typeof first: %s, typeof visible: %s", typeof patientKeys[0], typeof state.visiblePatient.toString());
-		console.log("%s patient keys, %s is visible, located: %s", patientKeys.length, state.visiblePatient, patientKeys.indexOf(state.visiblePatient.toString()));
-
+		/*
+		 * Check if there are any patients in this visit
+		 */
 		if(patientKeys.length === 0 || state.visiblePatient === 0) {
 			patientRow = (
 				<div className="row p-t" id="page-header-message-block">
@@ -352,12 +397,15 @@ var Visit = React.createClass({
 			}
 		}
 
+		/*
+		 * If this is a new visit, show create/import controls.
+		 */
 		if(props.controlsType === 'new-visit') {
 			createPatientControl = (
 				<li className="nav-item pull-right">
 					<a className={"nav-link nav-button" + (controlsDisabled ? " disabled" : "")} disabled={controlsDisabled} onClick={this.handlePatientAddfromScratch(false)}>
 						<span className="fa fa-plus"></span>
-						<span className="hidden-md-down">&nbsp; Create new</span>
+						<span className="hidden-lg-down">&nbsp; New patient</span>
 					</a>
 				</li>
 			);
@@ -365,12 +413,15 @@ var Visit = React.createClass({
 				<li className="nav-item pull-right">
 					<a className={"nav-link nav-button" + (controlsDisabled ? " disabled" : "")} disabled={controlsDisabled}>
 						<span className="fa fa-download"></span>
-						<span className="hidden-md-down">&nbsp; Import</span>
+						<span className="hidden-lg-down">&nbsp; Import patient</span>
 					</a>
 				</li>
 			);
 		}
 
+		/*
+		 * Render additional components based on current "displayState".
+		 */
 		switch(state.displayState) {
 			case "loading":
 				loadingItem = (
@@ -381,8 +432,13 @@ var Visit = React.createClass({
 				break;
 		}
 
+		/*
+		 *
+		 */
 		return (
 			<div className="container-fluid">
+
+				{/** Move visit modal **/}
 				<Visit.FinishModal
 					stages={props.stages}
 					onConfirmFinishVisit={this.handleConfirmFinishVisit} />
@@ -398,26 +454,38 @@ var Visit = React.createClass({
 				<div className="row" id="page-header-secondary">
 					<div className="col-xs-12">
 						<ul className="nav nav-pills" role="tablist">
-							{patientKeys.map(function(patientID, index) {
-								return (
-									<li className="nav-item" key={"patient-tab-" + patientID}>
-										<a  onClick={this.switchVisiblePatient(patientID)}
-											className={"nav-link" + (patientID == state.visiblePatient ? " active" : "")}>
-											<span className="label label-default">{patientID}</span>
-											&nbsp; {state.patients[patientID].abbr_name}
-										</a>
-									</li>
-								);
-							}.bind(this))}
-							{loadingItem}
-							{importPatientControl}
-							{createPatientControl}
+
+							{/* Left-aligned controls */}
+								{patientKeys.map(function(patientID, index) {
+									return (
+										<li className="nav-item" key={"patient-tab-" + patientID}>
+											<a  onClick={this.switchVisiblePatient(patientID)}
+												className={"nav-link" + (patientID == state.visiblePatient ? " active" : "")}>
+												<span className="label label-default">{patientID}</span>
+												&nbsp; {state.patients[patientID].abbr_name}
+											</a>
+										</li>
+									);
+								}.bind(this))}
+								{loadingItem}
+
+							{/* Right-aligned controls */}
+								{importPatientControl}
+								{createPatientControl}
+								<li className="nav-item pull-right">
+									<a className={"nav-link nav-button text-success" + (submitDisabled ? " disabled" : "")} disabled={submitDisabled} onClick={this.handleFinishVisit}>
+										<span className="fa fa-level-up"></span>
+										<span className="hidden-md-down">&nbsp; Move visit</span>
+									</a>
+								</li>
+
 						</ul>
 					</div>
 				</div>
 
 				{/** Visible patient **/}
 				{patientRow}
+
 			</div>
 		);
 	}

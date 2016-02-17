@@ -148,7 +148,7 @@ Visit.Overview = React.createClass({
 								isGeneratedField = Visit.generatedFields.hasOwnProperty(field),
 								value = "No data", icon;
 
-							console.group("Iterable field #%i: %s", index + 1, thisIterableField.name);
+							console.group("#%s '%s' %O", index + 1, thisIterableField.name, thisIterableField);
 
 							//-- Begin patient field checking --\\
 	                    	if(
@@ -179,19 +179,47 @@ Visit.Overview = React.createClass({
 										 * Date input
 										 */
 										case "date":
-											// if(thisIterableField.hasOwnProperty('settings') && thisIterableField.settings.hasOwnProperty('useBroadMonthSelector') && isTrue(thisIterableField.settings.useBroadMonthSelector)) {
-											// 	var date = new Date(),
-											// 		split = thisPatientField.toString().split("/"); // mm/dd/yyyy
-											//
-											// 		date.setMonth(parseInt(split[0]) - 1, split[1]);
-											// 		date.setFullYear(split[2]);
-											//
-											// 	value = Utilities.timeAgo(
-											// 		date
-											// 	);
-											// } else {
+											if(thisIterableField.hasOwnProperty('settings')
+											&& thisIterableField.settings.hasOwnProperty('useBroadMonthSelector')
+											&& isTrue(thisIterableField.settings.useBroadMonthSelector)) {
+
+												var modifier = parseInt(thisPatientField, 10); 	// 10 = decimal-based radix
+
+												if(!isNaN(modifier)) {
+
+													var date = new Date(), // instantiate a new date object
+														absModifier = Math.abs(modifier);
+														humanReadableDateString = "This month";	// assume modifer = 0 => "This month"
+
+													// Change date object's month based on modifier
+													date.setMonth(date.getMonth() + modifier);
+
+													// If the modifier is for another month...
+													if(modifier !== 0) {
+														humanReadableDateString = [
+															absModifier,
+															(modifier > 0
+																? (absModifier > 1 ? "months from now" : "month from now")
+																: (absModifier > 1 ? "months ago" : "month ago")
+															)
+														].join(" ");
+													}
+
+													value = (
+														<p>
+															{humanReadableDateString} ({[(parseInt(date.getMonth(), 10) + 1), date.getFullYear()].join("/")})
+														</p>
+													);
+
+												} else {
+													// Not sure what we're working with, just display the string representation
+													value = thisPatientField.toString();
+												}
+
+											} else {
+												// Not sure what we're working with, just display the string representation
 												value = thisPatientField.toString();
-											// }
+											}
 											break;
 
 	                    				/**

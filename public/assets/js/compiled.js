@@ -384,7 +384,8 @@ Fields.Date = React.createClass({displayName: "Date",
     },
 
     /*
-     *
+     * Apply inherited value from props to component state.
+	 * @return void
      */
     setValue: function(props) {
         this.setState({
@@ -393,7 +394,8 @@ Fields.Date = React.createClass({displayName: "Date",
     },
 
     /*
-     *
+     * Handle change event for broad month selectors.
+	 * @return void
      */
 	onBroadMonthSelectorChange: function(amount) {
 		return function(evt) {
@@ -403,35 +405,36 @@ Fields.Date = React.createClass({displayName: "Date",
 	},
 
     /*
-     *
+     * Handle HTML Date input change event.
+	 * @return void
      */
 	onDateInputChange: function(event) {
 		// Bubble event up to handler passed from Visit
 		// (pass field ID and event)
-		this.props.onChange(this.props.id, event.target.value);
+		this.props.onChange(this.props.id, this.dashesToSlashes(event.target.value));
+	},
+
+	/*
+	 * Convert date from HTML standard format to Forcept slash format
+	 * @return String
+	 */
+	dashesToSlashes: function(date) {
+		date = date.split("-");
+		return [date[1], date[2], date[0]].join("/");
+	},
+
+	/*
+	 * Convert Forcept slash formatted date back to native HTML dash format
+	 * @return String
+	 */
+	slashesToDashes: function(date) {
+		date = date.split("/");
+		return [date[2], date[0], date[1]].join("-");
 	},
 
     /*
-     *
-     * @return String
-     */
-    getMonth: function(modifier) {
-
-        // set up javascript date and switch month
-        var now = new Date();
-            now.setMonth(now.getMonth() + modifier);
-
-		return [
-			(now.getMonth()) < 9
-				? "0" + (now.getMonth() + 1)
-				: (now.getMonth() + 1),
-			now.getDate(),
-			now.getFullYear()
-		].join("/");
-    },
-
-    /*
-     *
+     * Render date field.
+	 * @return JSX DOM object
      */
 	render: function() {
 		var dateDOM,
@@ -492,16 +495,16 @@ Fields.Date = React.createClass({displayName: "Date",
 					autoComplete: "off", 
 					maxLength: "255", 
 
-					id: this.props.id, 
-					placeholder: this.props.name + " goes here", 
-					value: state.value, 
+					id: props.id, 
+					placeholder: props.name + " goes here", 
+					value: this.slashesToDashes(state.value), 
 					onChange: this.onDateInputChange})
 			);
 		}
 
 		return (
 			React.createElement("div", {className: "form-group row"}, 
-				React.createElement(Fields.FieldLabel, React.__spread({},  this.props)), 
+				React.createElement(Fields.FieldLabel, React.__spread({},  props)), 
 				React.createElement("div", {className: Fields.inputColumnClasses}, 
 					dateDOM
 				)
@@ -1039,6 +1042,7 @@ Fields.Number = React.createClass({displayName: "Number",
  * - settings:
  *   - TODO fix this
  */
+
  Fields.Pharmacy = React.createClass({displayName: "Pharmacy",
 
     /*
@@ -1301,6 +1305,7 @@ Fields.Number = React.createClass({displayName: "Number",
 	onDrugAmountChange: function(drugKey) {
 		return function(event) {
 			var selected = this.state.selected;
+            
 			if(selected.hasOwnProperty(drugKey)) {
 				selected[drugKey].amount = event.target.value;
 			}
@@ -1321,10 +1326,13 @@ Fields.Number = React.createClass({displayName: "Number",
 			renderDOM;
 
 		console.group("  Fields.Pharmacy: render '%s'", props.name);
-		console.log("Props: %O", props);
-		console.log("State: %O", state);
+		    console.log("Props: %O", props);
+		    console.log("State: %O", state);
 
-
+        /*
+         * Determine render pattern
+         * based on current component "status"
+         */
 		switch(state.status) {
 			case "init":
 				renderDOM = (
@@ -1701,19 +1709,34 @@ Fields.Select = React.createClass({displayName: "Select",
 	/*
 	 *
 	 */
+	setValue: function(props, cb) {
+		this.setState({
+			value: props.value !== null
+				? props.value
+				: (
+					props.multiple
+					? []
+					: "__default__"
+				)
+		}, cb);
+	},
+
+	/*
+	 *
+	 */
 	handleUpdate: function( props ) {
 
-		var options,
-			optionsKeys,
+		var options, optionsKeys,
 			optionsValues = [""]; // Empty string is a valid value (otherwise, it'll display the custom data text box)
 
 		console.group("  Fields.Select: handleUpdate '%s'", props.name);
-		console.log("Props: %O", props);
+			console.log("Props: %O", props);
 
+		// Set component value based on props
 		this.setValue(props, function() {
 
+			// If this is not a multiselect input...
 			if(props.multiple !== true) {
-
 				if(props.settings.hasOwnProperty('options')) {
 					options = props.settings.options;
 					optionsKeys = Object.keys(options);
@@ -1746,22 +1769,9 @@ Fields.Select = React.createClass({displayName: "Select",
 			}
 
 		}.bind(this));
-		console.groupEnd(); // end: "Fields.Select: handleUpdate"
-	},
 
-	/*
-	 *
-	 */
-	setValue: function(props, cb) {
-		this.setState({
-			value: props.value !== null
-				? props.value
-				: (
-					props.multiple
-					? []
-					: "__default__"
-				)
-		}, cb);
+		console.groupEnd(); // end: "Fields.Select: handleUpdate"
+
 	},
 
 	/*
@@ -1783,6 +1793,8 @@ Fields.Select = React.createClass({displayName: "Select",
 				}
 			}
 
+			// Bubble event up to handler passed from Visit
+			// (pass field ID and event)
 			props.onChange(props.id, values);
 
 		} else {
@@ -1812,6 +1824,8 @@ Fields.Select = React.createClass({displayName: "Select",
 	 * Handle a change to data in the custom data text input
 	 */
 	onCustomDataInputChange: function(event) {
+		// Bubble event up to handler passed from Visit
+		// (pass field ID and event)
 		this.props.onChange(this.props.id, event.target.value);
 	},
 
@@ -4058,7 +4072,14 @@ var Visit = React.createClass({displayName: "Visit",
 	getInitialState: function() {
 		return {
 
+			/*
+			 * Display states:
+			 *
+			 * "default" => show patients or messages as necessary
+			 * "loading" => display loading gif somewhere
+			 */
 			displayState: "default",
+			isValid: false,
 			// isSubmitting: false,
 
 			progress: 0,
@@ -4079,13 +4100,31 @@ var Visit = React.createClass({displayName: "Visit",
 		var props = this.props;
 
 		console.group("Visit: mount");
-			console.log("Visit properties: %O", props);
+			console.log("Props: %O", props);
 
+		/*
+		 * Check if patients have already been loaded.
+		 * (i.e. are we handling a visit or making a new one?)
+		 */
 		if(props.hasOwnProperty("patients") && props.patients !== null) {
 			console.log("Pre-existing patients detected, loading into state.");
 
-			var patients = {};
+			var patients = {},
+				firstPatient = null;
+
+			/*
+			 * Apply generated fields for each patient
+			 * and push to above object.
+			 */
 			for(var patientID in props.patients) {
+
+				/*
+				 * Save first patient ID for default tab selection.
+				 */
+				if(firstPatient === null) {
+					firstPatient = patientID;
+				}
+
 				console.log("Setting up patient %i", patientID);
 				patients[patientID] = Utilities.applyGeneratedFields(props.patients[patientID]);
 			}
@@ -4093,11 +4132,9 @@ var Visit = React.createClass({displayName: "Visit",
 			console.log("Done setting up patients: %O", patients);
 
 			this.setState({
-				patients: patients
-			}, function() {
-				console.log("Done mounting %i patients.", Object.keys(patients).length);
-				__debug(this.state.patients);
-			}.bind(this));
+				patients: patients,
+				visiblePatient: firstPatient
+			}, this.validate); // Validate after updating patients
 		}
 
 		console.groupEnd();
@@ -4136,20 +4173,24 @@ var Visit = React.createClass({displayName: "Visit",
 				destination: destination
 			},
 			xhr: function() {
+
+				// Grab window xhr object
 				var xhr = new window.XMLHttpRequest();
 
+				/*
+				 * Handle upload progress listener
+				 */
 				xhr.upload.addEventListener("progress", function(evt) {
-		            if (evt.lengthComputable) {
-		                var percentComplete = evt.loaded / evt.total;
-
-		                //Do something with upload progress here
+		            if(evt.lengthComputable) {
 		                this.setState({
-		                	progress: percentComplete * 100
+		                	progress: (evt.loaded / evt.total) * 100
 		                });
 		            }
 		       }.bind(this), false);
 
+				// Spit it back
 				return xhr;
+
 			}.bind(this),
 			success: function(resp) {
 				this.setState(this.getInitialState());
@@ -4184,7 +4225,7 @@ var Visit = React.createClass({displayName: "Visit",
 				confirmFinishVisitResponse: null,
 				patients: patients,
 				visiblePatient: patient.id
-			});
+			}, this.validate); // Validate after updating patients
 		}
 	},
 
@@ -4203,10 +4244,17 @@ var Visit = React.createClass({displayName: "Visit",
 	 */
 	handlePatientAddfromScratch: function(patientData) {
 		return function(event) {
+
+			/*
+			 * Data array initially contains token
+			 */
 			var data = {
 				"_token": document.querySelector("meta[name='csrf-token']").getAttribute('value')
 			};
 
+			/*
+			 * If patientData was defined (passed from import), add to data object
+			 */
 			if(arguments.length > 0 && patientData !== null && typeof patientData === "object") {
 				data["importedFieldData"] = patientData;
 			}
@@ -4219,7 +4267,6 @@ var Visit = React.createClass({displayName: "Visit",
 				url: "/patients/create",
 				data: data,
 				success: function(resp) {
-					console.log("success");
 					if(resp.status == "success") {
 						this.handlePatientAdd(resp.patient);
 					}
@@ -4237,7 +4284,7 @@ var Visit = React.createClass({displayName: "Visit",
 	},
 
 	/*
-	 * Aggregate data
+	 *
 	 */
 	handleFinishVisit: function( isDoneLoading ) {
 		$("#visit-finish-modal")
@@ -4249,12 +4296,13 @@ var Visit = React.createClass({displayName: "Visit",
 	 */
 	switchVisiblePatient: function( patientID ) {
 		return function(event) {
-			this.setState({
-				visiblePatient: patientID
-			});
+			if(this.state.visiblePatient !== patientID) {
+				this.setState({
+					visiblePatient: patientID
+				});
+			}
 		}.bind(this);
 	},
-
 
 	/*
 	 *
@@ -4266,8 +4314,8 @@ var Visit = React.createClass({displayName: "Visit",
 		if(this.state.patients.hasOwnProperty(patientID)) {
 
 			var patients = this.state.patients; // Grab patients from state
-				patient = patients[patientID], // Grab patient object
-				patient[fieldID] = value; // Find our patient and set fieldID = passed value
+				patient = patients[patientID], 	// Grab patient object
+				patient[fieldID] = value; 		// Find our patient and set fieldID = passed value
 
 			// Apply generated fields to patient object
 			patient = Utilities.applyGeneratedFields(patient);
@@ -4277,7 +4325,7 @@ var Visit = React.createClass({displayName: "Visit",
 			// Push patients back to state
 			this.setState({
 				patients: patients
-			});
+			}, this.validate); // Validate after updating patients
 
 		} else {
 			console.error("[Visit]->topLevelPatientStateChange(): Missing patient ID " + patientID + " in Visit patients state");
@@ -4299,9 +4347,19 @@ var Visit = React.createClass({displayName: "Visit",
 	},
 
 	/*
+	 * Check the validity of the visit.
+	 */
+	validate: function() {
+		this.setState({
+			isValid: Object.keys(this.state.patients).length > 0
+		});
+	},
+
+	/*
 	 * Render Visit container
 	 */
 	render: function() {
+
 		var props = this.props,
 			state = this.state,
 			patientKeys = Object.keys(state.patients),
@@ -4309,11 +4367,12 @@ var Visit = React.createClass({displayName: "Visit",
 			createPatientControl,
 			importPatientControl,
 			loadingItem,
-			controlsDisabled = state.displayState !== "default";
+			controlsDisabled = (state.displayState !== "default")
+			submitDisabled 	 = (controlsDisabled || !state.isValid);
 
-		console.log("typeof first: %s, typeof visible: %s", typeof patientKeys[0], typeof state.visiblePatient.toString());
-		console.log("%s patient keys, %s is visible, located: %s", patientKeys.length, state.visiblePatient, patientKeys.indexOf(state.visiblePatient.toString()));
-
+		/*
+		 * Check if there are any patients in this visit
+		 */
 		if(patientKeys.length === 0 || state.visiblePatient === 0) {
 			patientRow = (
 				React.createElement("div", {className: "row p-t", id: "page-header-message-block"}, 
@@ -4378,12 +4437,15 @@ var Visit = React.createClass({displayName: "Visit",
 			}
 		}
 
+		/*
+		 * If this is a new visit, show create/import controls.
+		 */
 		if(props.controlsType === 'new-visit') {
 			createPatientControl = (
 				React.createElement("li", {className: "nav-item pull-right"}, 
 					React.createElement("a", {className: "nav-link nav-button" + (controlsDisabled ? " disabled" : ""), disabled: controlsDisabled, onClick: this.handlePatientAddfromScratch(false)}, 
 						React.createElement("span", {className: "fa fa-plus"}), 
-						React.createElement("span", {className: "hidden-md-down"}, "  Create new")
+						React.createElement("span", {className: "hidden-lg-down"}, "  New patient")
 					)
 				)
 			);
@@ -4391,12 +4453,15 @@ var Visit = React.createClass({displayName: "Visit",
 				React.createElement("li", {className: "nav-item pull-right"}, 
 					React.createElement("a", {className: "nav-link nav-button" + (controlsDisabled ? " disabled" : ""), disabled: controlsDisabled}, 
 						React.createElement("span", {className: "fa fa-download"}), 
-						React.createElement("span", {className: "hidden-md-down"}, "  Import")
+						React.createElement("span", {className: "hidden-lg-down"}, "  Import patient")
 					)
 				)
 			);
 		}
 
+		/*
+		 * Render additional components based on current "displayState".
+		 */
 		switch(state.displayState) {
 			case "loading":
 				loadingItem = (
@@ -4407,8 +4472,13 @@ var Visit = React.createClass({displayName: "Visit",
 				break;
 		}
 
+		/*
+		 *
+		 */
 		return (
 			React.createElement("div", {className: "container-fluid"}, 
+
+				/** Move visit modal **/
 				React.createElement(Visit.FinishModal, {
 					stages: props.stages, 
 					onConfirmFinishVisit: this.handleConfirmFinishVisit}), 
@@ -4424,26 +4494,38 @@ var Visit = React.createClass({displayName: "Visit",
 				React.createElement("div", {className: "row", id: "page-header-secondary"}, 
 					React.createElement("div", {className: "col-xs-12"}, 
 						React.createElement("ul", {className: "nav nav-pills", role: "tablist"}, 
-							patientKeys.map(function(patientID, index) {
-								return (
-									React.createElement("li", {className: "nav-item", key: "patient-tab-" + patientID}, 
-										React.createElement("a", {onClick: this.switchVisiblePatient(patientID), 
-											className: "nav-link" + (patientID == state.visiblePatient ? " active" : "")}, 
-											React.createElement("span", {className: "label label-default"}, patientID), 
-											"  ", state.patients[patientID].abbr_name
+
+							/* Left-aligned controls */
+								patientKeys.map(function(patientID, index) {
+									return (
+										React.createElement("li", {className: "nav-item", key: "patient-tab-" + patientID}, 
+											React.createElement("a", {onClick: this.switchVisiblePatient(patientID), 
+												className: "nav-link" + (patientID == state.visiblePatient ? " active" : "")}, 
+												React.createElement("span", {className: "label label-default"}, patientID), 
+												"  ", state.patients[patientID].abbr_name
+											)
 										)
+									);
+								}.bind(this)), 
+								loadingItem, 
+
+							/* Right-aligned controls */
+								importPatientControl, 
+								createPatientControl, 
+								React.createElement("li", {className: "nav-item pull-right"}, 
+									React.createElement("a", {className: "nav-link nav-button text-success" + (submitDisabled ? " disabled" : ""), disabled: submitDisabled, onClick: this.handleFinishVisit}, 
+										React.createElement("span", {className: "fa fa-level-up"}), 
+										React.createElement("span", {className: "hidden-md-down"}, "  Move visit")
 									)
-								);
-							}.bind(this)), 
-							loadingItem, 
-							importPatientControl, 
-							createPatientControl
+								)
+
 						)
 					)
 				), 
 
 				/** Visible patient **/
 				patientRow
+
 			)
 		);
 	}
@@ -5307,7 +5389,7 @@ Visit.Overview = React.createClass({displayName: "Overview",
 								isGeneratedField = Visit.generatedFields.hasOwnProperty(field),
 								value = "No data", icon;
 
-							console.group("Iterable field #%i: %s", index + 1, thisIterableField.name);
+							console.group("#%s '%s' %O", index + 1, thisIterableField.name, thisIterableField);
 
 							//-- Begin patient field checking --\\
 	                    	if(
@@ -5338,19 +5420,47 @@ Visit.Overview = React.createClass({displayName: "Overview",
 										 * Date input
 										 */
 										case "date":
-											// if(thisIterableField.hasOwnProperty('settings') && thisIterableField.settings.hasOwnProperty('useBroadMonthSelector') && isTrue(thisIterableField.settings.useBroadMonthSelector)) {
-											// 	var date = new Date(),
-											// 		split = thisPatientField.toString().split("/"); // mm/dd/yyyy
-											//
-											// 		date.setMonth(parseInt(split[0]) - 1, split[1]);
-											// 		date.setFullYear(split[2]);
-											//
-											// 	value = Utilities.timeAgo(
-											// 		date
-											// 	);
-											// } else {
+											if(thisIterableField.hasOwnProperty('settings')
+											&& thisIterableField.settings.hasOwnProperty('useBroadMonthSelector')
+											&& isTrue(thisIterableField.settings.useBroadMonthSelector)) {
+
+												var modifier = parseInt(thisPatientField, 10); 	// 10 = decimal-based radix
+
+												if(!isNaN(modifier)) {
+
+													var date = new Date(), // instantiate a new date object
+														absModifier = Math.abs(modifier);
+														humanReadableDateString = "This month";	// assume modifer = 0 => "This month"
+
+													// Change date object's month based on modifier
+													date.setMonth(date.getMonth() + modifier);
+
+													// If the modifier is for another month...
+													if(modifier !== 0) {
+														humanReadableDateString = [
+															absModifier,
+															(modifier > 0
+																? (absModifier > 1 ? "months from now" : "month from now")
+																: (absModifier > 1 ? "months ago" : "month ago")
+															)
+														].join(" ");
+													}
+
+													value = (
+														React.createElement("p", null, 
+															humanReadableDateString, " (", [(parseInt(date.getMonth(), 10) + 1), date.getFullYear()].join("/"), ")"
+														)
+													);
+
+												} else {
+													// Not sure what we're working with, just display the string representation
+													value = thisPatientField.toString();
+												}
+
+											} else {
+												// Not sure what we're working with, just display the string representation
 												value = thisPatientField.toString();
-											// }
+											}
 											break;
 
 	                    				/**
@@ -5562,6 +5672,7 @@ Visit.Patient = React.createClass({displayName: "Patient",
 	 */
 	render: function() {
 
+		// Instantiate ALL the things!
 		var props = this.props,
 			state = this.state,
 			fields = props.fields,
@@ -5573,6 +5684,7 @@ Visit.Patient = React.createClass({displayName: "Patient",
 			name = (props.patient.full_name !== null) ? props.patient.full_name : "Unnamed patient",
 			summary;
 
+		// console.log ALL the things!
 		console.groupCollapsed("Visit.Patient: render"); // keep this collapsed
 			console.log("Stage type: %s", props.stageType);
 			console.log("Iterable field count: %i", countFields);
@@ -5582,6 +5694,7 @@ Visit.Patient = React.createClass({displayName: "Patient",
 		// Build summary DOM
 		if(summaryFields !== null && typeof summaryFields === "object" && countSummaryFields > 0) {
 
+			// TODO this sucks, figure out a better way
 			var leftColumnFields = {},
 				rightColumnFields = {},
 				patientsObjectSpoof = {};
@@ -5646,6 +5759,11 @@ Visit.Patient = React.createClass({displayName: "Patient",
 
 			console.groupEnd();
 		} else {
+
+			/*
+			 * Map fieldKeys to fieldsDOM variable for
+			 * future rendering
+			 */
 			fieldsDOM = fieldKeys.map(function(fieldID, index) {
 
 				var fieldDOM,
@@ -5658,7 +5776,12 @@ Visit.Patient = React.createClass({displayName: "Patient",
 					console.log("Default value: %s", defaultValue);
 					console.log("thisPatient has fieldID property: %s", thisPatient.hasOwnProperty(fieldID));
 
-				// Mutate data as necessary per field type
+				/*
+				 * DATA MUTATION
+				 *
+				 * Modify field value based on field type
+				 * (convert JSON data types => JS objects)
+				 */
 				switch(thisField.type) {
 					// Fields stored as JSON arrays
 					case "multiselect":
@@ -5674,7 +5797,11 @@ Visit.Patient = React.createClass({displayName: "Patient",
 						break;
 				}
 
-				// Figure out which type of field we should render
+				/*
+				 * DATA RENDERING
+				 *
+				 * Render field value based on type.
+				 */
 				switch(thisField.type) {
 
 					/*
@@ -5736,7 +5863,7 @@ Visit.Patient = React.createClass({displayName: "Patient",
 							React.createElement(Fields.Select, React.__spread({}, 
 								thisField, 
 								{multiple: true, 
-								defaultValue: defaultValue, 
+								value: defaultValue, 
 								onChange: this.handleFieldChange, 
 								key: fieldID, 
 								id: fieldID}))
