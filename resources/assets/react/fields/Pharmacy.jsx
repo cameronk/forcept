@@ -50,7 +50,7 @@
             /*
              *
              */
-            undoable: [],
+            undoable: {},
 		};
 	},
 
@@ -68,7 +68,7 @@
      *
      */
     componentWillReceiveProps: function(newProps) {
-		console.group("  Fields.Pharmacy: mount");
+		console.group("  Fields.Pharmacy: receiveProps");
     		console.log("Props: %O", newProps);
             this.setValue(newProps);
 		console.groupEnd();
@@ -78,13 +78,35 @@
      *
      */
     setValue: function(props) {
+
         // Check if we have a prescription table ID
-		if(props.hasOwnProperty('value') && props.value !== null) {
+		if(props.hasOwnProperty('value')
+            && props.value !== null
+            && props.value.toString().length > 0) {
+
+            /*
+             * Push setID to state and view selected drugs.
+             */
 			console.log("Found set ID in props: %s", props.value);
 			this.setState({
-				setID: props.value
+				setID: props.value.toString(),
+                status: "view",
+                justSaved: false,
 			});
-		}
+
+		} else {
+
+            /*
+             * Switch back to init button with empty setID.
+             */
+            this.setState({
+                setID: null,
+                status: "init",
+                justSaved: false,
+            });
+
+        }
+
     },
 
     /*
@@ -184,7 +206,14 @@
                             state.selected[state.setID] = {};
                         }
 
-        				this.setState(state);
+        				this.setState(state, function() {
+
+    						/*
+                             * Bump the PrescriptionSet ID up to top level
+                             */
+    						this.props.onChange(this.props.id, parseInt(resp.id));
+
+                        });
 
         			}.bind(this)
         		});
@@ -306,18 +335,24 @@
 
 			var state = this.state,
                 selected = state.selected,
+                undoable = state.undoable,
                 selectedThisSet = selected[state.setID],
-                undoable = state.undoable;
+                undoableThisSet = (undoable.hasOwnProperty(state.setID) ? undoable[state.setID] : []);
 
-			if(selected.hasOwnProperty(drugKey)) {
+			if(selectedThisSet.hasOwnProperty(drugKey)) {
 				console.log("Signing off %s", drugKey);
 				selectedThisSet[drugKey].done = true;
-                undoable.push(drugKey);
+                undoableThisSet.push(drugKey);
 			}
 
 			console.log("Signed off: %O", selected);
-            
+
+            /*
+             * Push this setID's objects/arrays back to
+             * parent state object.
+             */
             selected[state.setID] = selectedThisSet;
+            undoable[state.setID] = undoableThisSet;
 
 			this.setState({
 				selected: selected,
@@ -332,28 +367,39 @@
      */
 	onUndoSignOff: function(drugKey) {
 		return function(event) {
-			var selected = this.state.selected,
-                undoable = this.state.undoable;
+
+			var state = this.state,
+                selected = state.selected,
+                undoable = state.undoable,
+                selectedThisSet = selected[state.setID],
+                undoableThisSet = undoable[state.setID];
 
             /*
              * if this drug key is actually in
              * selected state Object
              */
-			if(selected.hasOwnProperty(drugKey)) {
+			if(selectedThisSet.hasOwnProperty(drugKey)) {
 				console.log("Unsigning %s", drugKey);
-				selected[drugKey].done = false;
+				selectedThisSet[drugKey].done = false;
 
                 /*
                  * We should remove this key from the
                  * undoable array stored in state.
                  */
-                var undoIndex = undoable.indexOf(drugKey)
+                var undoIndex = undoableThisSet.indexOf(drugKey);
                 if(undoIndex !== -1) {
-                    delete undoable[undoIndex];
+                    delete undoableThisSet[undoIndex];
                 }
 			}
 
 			console.log("Undid sign off: %O", selected);
+
+            /*
+             * Push this setID's objects/arrays back to
+             * parent state object.
+             */
+            selected[state.setID] = selectedThisSet;
+            undoable[state.setID] = undoableThisSet;
 
 			this.setState({
 				selected: selected,
@@ -514,8 +560,7 @@
 							var thisDrug = state.drugs[drugKey],
 								thisSelection = thisSetSelectedObject[drugKey],
 								signedOff = isTrue(thisSelection.done),
-								preSignOffDOM,
-                                undoLink;
+								preSignOffDOM, undoLink;
 
 							if(!signedOff) {
 								preSignOffDOM = (
@@ -546,7 +591,9 @@
                              * If this drug key is listed as undoable (it was added this stage)
                              * show the undo link
                              */
-                            if(state.undoable.indexOf(drugKey) !== -1) {
+                            if(state.undoable.hasOwnProperty(state.setID)
+                            && Array.isArray(state.undoable[state.setID])
+                            && state.undoable[state.setID].indexOf(drugKey) !== -1) {
                                 undoLink = (
                                     <a className="btn-link" onClick={this.onUndoSignOff(drugKey)}>
                                         (undo)
