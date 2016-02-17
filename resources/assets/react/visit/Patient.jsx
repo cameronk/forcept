@@ -2,6 +2,7 @@
  * Display specified fields relative to this patient
  *
  * Properties:
+ *  - value: prescription set ID
  */
 
 Visit.Patient = React.createClass({
@@ -265,7 +266,7 @@ Visit.Patient = React.createClass({
 								{...thisField}
 								patientID={props.id}
 								visitID={props.visitID}
-
+								value={defaultValue}
 								onChange={this.handleFieldChange}
 								key={fieldID}
 								id={fieldID} />

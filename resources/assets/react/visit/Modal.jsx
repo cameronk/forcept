@@ -1,4 +1,7 @@
 /*
+ * fields/Modal.jsx
+ * @author Cameron Kelley
+ *
  * Modal that appears upon clicking "Finish visit"
  *
  * Properties
@@ -6,6 +9,7 @@
  *   - currentStage: current stage id
  *   - onConfirmFinishVisit: handler function for logic after moving patients
  */
+
 Visit.FinishModal = React.createClass({
 
 	/*
@@ -16,7 +20,8 @@ Visit.FinishModal = React.createClass({
 	},
 
 	/*
-	 * Handle destination change
+	 * Handle destination change.
+	 * @return void
 	 */
 	handleDestinationChange: function(destination) {
 		return function(event) {

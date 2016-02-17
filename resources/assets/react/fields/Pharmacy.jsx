@@ -10,18 +10,46 @@
  Fields.Pharmacy = React.createClass({
 
     /*
-     *
+     * Get initial component state.
+     * @return Object
      */
 	getInitialState: function() {
 		return {
+
+            /*
+             *
+             */
 			status: "init",
+
+            /*
+             *
+             */
 			justSaved: false,
+
+            /*
+             *
+             */
 			setID: null,
 
+            /*
+             *
+             */
 			data: {},
+
+            /*
+             *
+             */
 			drugs: {},
 
+            /*
+             * "Selected" contains selected drug
+             * amounts FOR EACH LOADED setID.
+             */
 			selected: {},
+
+            /*
+             *
+             */
             undoable: [],
 		};
 	},
@@ -30,29 +58,34 @@
 	 *
 	 */
 	componentWillMount: function() {
-
-		console.group("  | Fields.Pharmacy: mount");
-			console.log("Props: %O", this.props);
-
-		// Check if we have a prescription table ID
-		if(this.props.hasOwnProperty('defaultValue') && this.props.defaultValue !== null) {
-			console.log("Found default value: %s", this.props.defaultValue);
-			this.setState({
-				setID: this.props.defaultValue
-			});
-			this.loadPrescriptionSet(this.props.defaultValue);
-		}
-		this.loadPrescriptionSet();
-
+		console.group("  Fields.Pharmacy: mount");
+    		console.log("Props: %O", this.props);
+            this.setValue(this.props);
 		console.groupEnd();
 	},
 
     /*
      *
      */
-	loadPrescriptionSet: function() {
-		this.setState({ status: "loading" });
-	},
+    componentWillReceiveProps: function(newProps) {
+		console.group("  Fields.Pharmacy: mount");
+    		console.log("Props: %O", newProps);
+            this.setValue(newProps);
+		console.groupEnd();
+    },
+
+    /*
+     *
+     */
+    setValue: function(props) {
+        // Check if we have a prescription table ID
+		if(props.hasOwnProperty('value') && props.value !== null) {
+			console.log("Found set ID in props: %s", props.value);
+			this.setState({
+				setID: props.value
+			});
+		}
+    },
 
     /*
      *
@@ -71,7 +104,6 @@
 					prescriptions: this.state.selected
 				},
 				success: function(resp) {
-					console.log(resp);
 					if(resp.hasOwnProperty("id")) {
 
 						// Bump the PrescriptionSet ID up to top level
@@ -100,37 +132,79 @@
      *
      */
 	managePrescriptionSet: function() {
-		this.setState({ status: "loading" });
 
-		$.ajax({
-			type: "POST",
-			url: "/data/prescription-sets/manage",
-			data: {
-				_token: document.querySelector("meta[name='csrf-token']").getAttribute('value'),
-				patientID: this.props.patientID,
-				visitID: this.props.visitID
-			},
-			success: function(resp) {
-				console.log(resp);
-				var state = {
-					status: "view",
-					setID: resp.id
-				};
-				if(resp.hasOwnProperty("prescriptions") && resp.prescriptions !== null) {
-					state.selected = resp.prescriptions;
-				}
-				this.setState(state);
-			}.bind(this)
-		});
+        /*
+         * Display loading gif while we process
+         */
+        this.setState({
+            status: "loading"
+        }, function() {
+
+            /*
+             * Update drug list
+             */
+            this.updateList(function() {
+
+                /*
+                 * Send POST request for prescription set data
+                 */
+        		$.ajax({
+        			type: "POST",
+        			url: "/data/prescription-sets/manage",
+        			data: {
+        				_token: document.querySelector("meta[name='csrf-token']").getAttribute('value'),
+        				patientID: this.props.patientID,
+        				visitID: this.props.visitID
+        			},
+
+                    /**
+                     * AJAX success
+                     */
+        			success: function(resp) {
+        				console.log(resp);
+
+                        /*
+                         * Start a new object with which
+                         * to update state if prescriptions
+                         * are found.
+                         */
+        				var state = {
+        					status: "view",
+        					setID: resp.id,
+                            selected: this.state.selected
+        				};
+
+                        /*
+                         * Push selected prescriptions to
+                         * state.selected[setID] if found.
+                         */
+        				if(resp.hasOwnProperty("prescriptions") && resp.prescriptions !== null) {
+        					state.selected[state.setID] = resp.prescriptions;
+        				} else {
+                            state.selected[state.setID] = {};
+                        }
+
+        				this.setState(state);
+
+        			}.bind(this)
+        		});
+
+            });
+
+        });
 	},
 
 	/*
 	 * Grab list of drugs from /data/
 	 */
-	updateList: function() {
+	updateList: function(cb) {
 		$.ajax({
 			type: "GET",
 			url: "/data/pharmacy/drugs",
+
+            /**
+             * AJAX success
+             */
 			success: function(resp) {
 				if(resp.status == "success") {
 					var drugs = {};
@@ -145,62 +219,83 @@
 					this.setState({
 						data: resp.data,
 						drugs: drugs
-					});
+					}, cb);
 				}
 			}.bind(this),
-			error: function() {
 
-			},
-			complete: function() {
+            /**
+             * AJAX error
+             */
+			error: function(resp) {
+                console.log(resp);
 
-			}
+                /*
+                 * Set component status to "error".
+                 * DON'T execute cb() as it could
+                 * potentially change the component's state.
+                 */
+                this.setState({
+                    status: "error",
+                    message: resp.responseJSON.message
+                });
+			}.bind(this)
 		});
-	},
-
-	/*
-	 * When the component mounts, update the pharmacy list
-	 */
-	componentWillMount: function() {
-		this.updateList();
 	},
 
     /*
      *
      */
 	onSelectedDrugsChange: function(event) {
-		console.log("Selected drugs change:");
-		var options = event.target.options,
-			values = this.state.selected,
-			alreadySelected = Object.keys(values);
 
-		console.log("Already selected: %O", values);
+		var state = this.state;
 
-		// Loop through all target options
-		for(var i = 0; i < options.length; i++) {
-			var thisOption = options[i],
-				thisValue = thisOption.value;
+        if(state.setID !== null) {
 
-			// If the option is selected in the <select> input and NOT in our "selected" object
-			if(thisOption.selected && alreadySelected.indexOf(thisValue) === -1) {
-				values[thisValue] = {
-					amount: 1,
-					done: false
-				};
-			} else {
-				// Delete an option IF:
-				// - it's found in the alreadySelected object
-				// - the option is not selected
-				// - the option is not marked as done
-				if(alreadySelected.indexOf(thisValue) !== -1
-					&& !thisOption.selected
-					&& !isTrue(values[thisValue].done)) {
-					delete values[thisValue];
-				}
-			}
-		}
-		this.setState({
-			selected: values
-		});
+            var options = event.target.options,
+                selected = state.selected,
+    			selectedThisSet = selected[state.setID],
+    			alreadySelected = Object.keys(selectedThisSet);
+
+    		console.log("Already selected: %O", selectedThisSet);
+
+    		/*
+             * Loop through all target options
+             */
+    		for(var i = 0; i < options.length; i++) {
+
+    			var thisOption = options[i],
+    				thisValue = thisOption.value;
+
+    			/*
+                 * If the option is selected in the <select> input and NOT in our "selected" object
+                 */
+    			if(thisOption.selected && alreadySelected.indexOf(thisValue) === -1) {
+    				selectedThisSet[thisValue] = {
+    					amount: 1,
+    					done: false
+    				};
+    			} else {
+
+    				/*
+                     * Delete an option IF:
+    				 * - it's found in the alreadySelected object
+    				 * - the option is not selected
+    				 * - the option is not marked as done
+                     */
+    				if(alreadySelected.indexOf(thisValue) !== -1
+    					&& !thisOption.selected
+    					&& !isTrue(selectedThisSet[thisValue].done)) {
+    					delete selectedThisSet[thisValue];
+    				}
+    			}
+    		}
+
+            selected[state.setID] = selectedThisSet;
+
+    		this.setState({
+    			selected: selected
+    		});
+        }
 	},
 
 	/*
@@ -208,16 +303,21 @@
 	 */
 	onSignOff: function(drugKey) {
 		return function(event) {
-			var selected = this.state.selected,
-                undoable = this.state.undoable;
+
+			var state = this.state,
+                selected = state.selected,
+                selectedThisSet = selected[state.setID],
+                undoable = state.undoable;
 
 			if(selected.hasOwnProperty(drugKey)) {
 				console.log("Signing off %s", drugKey);
-				selected[drugKey].done = true;
+				selectedThisSet[drugKey].done = true;
                 undoable.push(drugKey);
 			}
 
 			console.log("Signed off: %O", selected);
+            
+            selected[state.setID] = selectedThisSet;
 
 			this.setState({
 				selected: selected,
@@ -269,7 +369,7 @@
 	onDrugAmountChange: function(drugKey) {
 		return function(event) {
 			var selected = this.state.selected;
-            
+
 			if(selected.hasOwnProperty(drugKey)) {
 				selected[drugKey].amount = event.target.value;
 			}
@@ -285,8 +385,7 @@
 
 		var props = this.props,
 			state = this.state,
-			dataKeys = Object.keys(this.state.data),
-			selectedKeys = Object.keys(state.selected),
+			dataKeys = Object.keys(state.data),
 			renderDOM;
 
 		console.group("  Fields.Pharmacy: render '%s'", props.name);
@@ -298,6 +397,11 @@
          * based on current component "status"
          */
 		switch(state.status) {
+
+            /**
+             * Component was mounted but hasn't been used.
+             * Display button to initiate loading of set.
+             */
 			case "init":
 				renderDOM = (
 					<div className="btn btn-block btn-primary" onClick={this.managePrescriptionSet}>
@@ -305,12 +409,31 @@
 					</div>
 				);
 				break;
+
+            /**
+             * Display the loading gif
+             */
 			case "loading":
 				renderDOM = (
 					<img src="/assets/img/loading.gif" />
 				);
 				break;
 
+            /**
+             * Display an error message
+             */
+            case "error":
+                renderDOM = (
+                    <div className="alert alert-danger">
+                        <strong>An error occurred.</strong>
+                        <p>{state.hasOwnProperty("message") ? state.message : "Please refresh and try again."}</p>
+                    </div>
+                );
+                break;
+
+            /**
+             * Display the prescription set.
+             */
 			case "saving":
 			case "view":
 
@@ -320,9 +443,9 @@
 					</div>
 				);
 
-				var selectedDrugs,
-                    selectedDrugsHeader,
-					saveButton;
+				var selectedDrugs, selectedDrugsHeader, saveButton,
+                    thisSetSelectedObject = state.selected[state.setID],
+        			selectedKeys = Object.keys(thisSetSelectedObject);
 
 				if(dataKeys.length > 0) {
 
@@ -389,7 +512,7 @@
 							console.log("...this drug's object: %O", state.drugs[drugKey]);
 
 							var thisDrug = state.drugs[drugKey],
-								thisSelection = state.selected[drugKey],
+								thisSelection = thisSetSelectedObject[drugKey],
 								signedOff = isTrue(thisSelection.done),
 								preSignOffDOM,
                                 undoLink;
@@ -406,7 +529,7 @@
 												min="1"
 												className="form-control"
 												placeholder="Enter amount here"
-												defaultValue={state.selected[drugKey].amount}
+												defaultValue={thisSelection.amount}
 												onChange={this.onDrugAmountChange(drugKey)}
                                                 disabled={state.status === "saving"} />
 											<span className="input-group-btn">

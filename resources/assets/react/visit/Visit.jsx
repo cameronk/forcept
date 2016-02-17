@@ -1,5 +1,8 @@
+/* ========================================= */
+
 /**
- * visit.jsx
+ * visit/Visit.jsx
+ * @author Cameron Kelley
  */
 
 /*
@@ -8,7 +11,7 @@
  * The visit container acts as a state bridge between the
  * PatientsOverview and PatientsContainer module.
  *
- * Accepted properties:
+ * Properties:
  *  - _token: Laravel CSRF token
  *  - containerTitle: Title for the PatientContainer block
  *  - controlsType: Denote which set of controls should appear ["new-visit", "stage-visit"]
@@ -24,6 +27,7 @@
  *  - patientFields: PREEXISTING Fields which should have their data displayed in the PatientOverview block.
  *  - summaryFields: PREEXISTING Fields which should have their data displayed in the PatientOverview block.
  */
+
 var Visit = React.createClass({
 
 	/*
@@ -44,7 +48,14 @@ var Visit = React.createClass({
 
 			progress: 0,
 			confirmFinishVisitResponse: null,
-			visiblePatient: 0,
+
+			/*
+			 * Visible item values:
+			 *  -1 	=> Import block
+			 *   0  => Nothing ("no patients in this visit")
+			 * > 0 	=> Patient
+			 */
+			visibleItem: 0,
 
 			patients: {},
 			resources: {},
@@ -93,7 +104,7 @@ var Visit = React.createClass({
 
 			this.setState({
 				patients: patients,
-				visiblePatient: firstPatient
+				visibleItem: firstPatient
 			}, this.validate); // Validate after updating patients
 		}
 
@@ -184,7 +195,7 @@ var Visit = React.createClass({
 			this.setState({
 				confirmFinishVisitResponse: null,
 				patients: patients,
-				visiblePatient: patient.id
+				visibleItem: patient.id
 			}, this.validate); // Validate after updating patients
 		}
 	},
@@ -198,6 +209,25 @@ var Visit = React.createClass({
 		});
 	},
 
+
+	/*
+	 * Handle importing of a patient object.
+	 * @return void
+	 */
+	handleImportPatient: function(patient) {
+
+		/*
+		 * If the patient was pulled from field data table,
+		 * we need to "add it from scratch" to create the
+		 * respective Patient record.
+		 */
+		if(patient.hasOwnProperty('field_number') && patient.field_number !== null) {
+			this.handlePatientAddfromScratch(patient);
+		} else {
+			this.handlePatientAdd(patient);
+		}
+
+	},
 
 	/*
 	 * Add a bare patient record
@@ -254,14 +284,24 @@ var Visit = React.createClass({
 	/*
 	 *
 	 */
-	switchVisiblePatient: function( patientID ) {
+	switchVisibleItem: function( patientID ) {
 		return function(event) {
-			if(this.state.visiblePatient !== patientID) {
+			if(this.state.visibleItem !== patientID) {
 				this.setState({
-					visiblePatient: patientID
+					displayState: "default", // in case we were importing...
+					visibleItem: patientID
 				});
 			}
 		}.bind(this);
+	},
+
+	/*
+	 * Check the validity of the visit.
+	 */
+	validate: function() {
+		this.setState({
+			isValid: Object.keys(this.state.patients).length > 0
+		});
 	},
 
 	/*
@@ -307,94 +347,127 @@ var Visit = React.createClass({
 	},
 
 	/*
-	 * Check the validity of the visit.
-	 */
-	validate: function() {
-		this.setState({
-			isValid: Object.keys(this.state.patients).length > 0
-		});
-	},
-
-	/*
-	 * Render Visit container
+	 * Render Visit container.
+	 * @return JSX element
 	 */
 	render: function() {
 
+		// Instantiate ALL the things
 		var props = this.props,
 			state = this.state,
 			patientKeys = Object.keys(state.patients),
 			patientRow,
 			createPatientControl,
 			importPatientControl,
-			loadingItem,
+			loadingItem, importingItem,
 			controlsDisabled = (state.displayState !== "default")
 			submitDisabled 	 = (controlsDisabled || !state.isValid);
 
 		/*
-		 * Check if there are any patients in this visit
+		 * Determine what to render based on state.visibleItem
 		 */
-		if(patientKeys.length === 0 || state.visiblePatient === 0) {
-			patientRow = (
-				<div className="row p-t" id="page-header-message-block">
-					<div className="col-xs-2 text-xs-right hidden-sm-down">
-						<h1 className="display-3"><span className="fa fa-user-times"></span></h1>
-					</div>
-					<div className="col-xs-10 p-t">
-						<h2><span className="fa fa-user-times hidden-md-up"></span> No patients in this visit</h2>
-						<p>Try adding some &mdash; click the <span className="fa fa-plus"></span> icon above.</p>
-					</div>
-				</div>
-			);
-		} else {
-			if(patientKeys.indexOf(state.visiblePatient.toString()) !== -1) {
-				patientRow = (
-					<div className={"row" + (controlsDisabled ? " disabled" : "")}>
-						<Visit.Overview
-							fields={props.patientFields}
-							patient={state.patients[state.visiblePatient]}
-							mini={false}
-							resources={state.resources} />
+		switch(state.visibleItem) {
 
-						<Visit.Patient
-							/*
-							 * Stage type
-							 */
-							stageType={props.currentStageType}
-
-							/*
-							 * Visit
-							 */
-							visitID={props.visitID}
-
-							/*
-							 * Patient record
-							 */
-							patient={state.patients[state.visiblePatient]}
-							id={state.visiblePatient}
-							index={0}
-
-							/*
-							 * All available fields
-							 */
-							fields={props.mutableFields}
-
-							/*
-							 * Fields to summarize at the top of each patient
-							 */
-							summaryFields={props.summaryFields}
-
-							/*
-							 * Event handlers
-							 */
-						    onPatientDataChange={this.topLevelPatientStateChange}
-						    onStoreResource={this.topLevelStoreResource} />
-					</div>
+			/**
+			 * Show the import block.
+			 */
+			case -1:
+				importingItem = (
+					<li className="nav-item">
+						<a className="nav-link active">
+							<span className="fa fa-download"></span>
+							&nbsp; Import
+						</a>
+					</li>
 				);
-			} else {
 				patientRow = (
-					<div>test</div>
+					<Visit.ImportBlock
+						_token={props._token}
+
+						onPatientAdd={this.handleImportPatient}
+						onClose={this.switchVisibleItem(0)} />
 				);
-			}
+				break;
+
+			/**
+			 * Show the no-patients message
+			 */
+			case 0:
+				if(patientKeys.length === 0) {
+					patientRow = (
+						<div className="row p-t" id="page-header-message-block">
+							<div className="col-xs-2 text-xs-right hidden-sm-down">
+								<h1 className="display-3"><span className="fa fa-user-times"></span></h1>
+							</div>
+							<div className="col-xs-10 p-t">
+								<h2><span className="fa fa-user-times hidden-md-up"></span> No patients in this visit</h2>
+								<p>Try adding some &mdash; click the <span className="fa fa-plus"></span> icon above.</p>
+							</div>
+						</div>
+					);
+				} else {
+					patientRow = (
+						<div>There are patients in this visit.</div>
+					);
+				}
+				break;
+
+			/**
+			 * Show the patient provided by visibleItem.
+			 */
+			default:
+				if(patientKeys.indexOf(state.visibleItem.toString()) !== -1) {
+					patientRow = (
+						<div className={"row" + (controlsDisabled ? " disabled" : "")}>
+							<Visit.Overview
+								fields={props.patientFields}
+								patient={state.patients[state.visibleItem]}
+								mini={false}
+								resources={state.resources} />
+
+							<Visit.Patient
+								/*
+								 * Stage type
+								 */
+								stageType={props.currentStageType}
+
+								/*
+								 * Visit
+								 */
+								visitID={props.visitID}
+
+								/*
+								 * Patient record
+								 */
+								patient={state.patients[state.visibleItem]}
+								id={state.visibleItem}
+								index={0}
+
+								/*
+								 * All available fields
+								 */
+								fields={props.mutableFields}
+
+								/*
+								 * Fields to summarize at the top of each patient
+								 */
+								summaryFields={props.summaryFields}
+
+								/*
+								 * Event handlers
+								 */
+								onPatientDataChange={this.topLevelPatientStateChange}
+								onStoreResource={this.topLevelStoreResource} />
+						</div>
+					);
+				} else {
+					patientRow = (
+						<div>test</div>
+					);
+				}
+				break;
+
+
 		}
 
 		/*
@@ -411,7 +484,7 @@ var Visit = React.createClass({
 			);
 			importPatientControl = (
 				<li className="nav-item pull-right">
-					<a className={"nav-link nav-button" + (controlsDisabled ? " disabled" : "")} disabled={controlsDisabled}>
+					<a className={"nav-link nav-button" + (controlsDisabled ? " disabled" : "")} disabled={controlsDisabled} onClick={this.switchVisibleItem(-1)}>
 						<span className="fa fa-download"></span>
 						<span className="hidden-lg-down">&nbsp; Import patient</span>
 					</a>
@@ -459,14 +532,15 @@ var Visit = React.createClass({
 								{patientKeys.map(function(patientID, index) {
 									return (
 										<li className="nav-item" key={"patient-tab-" + patientID}>
-											<a  onClick={this.switchVisiblePatient(patientID)}
-												className={"nav-link" + (patientID == state.visiblePatient ? " active" : "")}>
+											<a  onClick={this.switchVisibleItem(patientID)}
+												className={"nav-link" + (patientID == state.visibleItem ? " active" : "")}>
 												<span className="label label-default">{patientID}</span>
 												&nbsp; {state.patients[patientID].abbr_name}
 											</a>
 										</li>
 									);
 								}.bind(this))}
+								{importingItem}
 								{loadingItem}
 
 							{/* Right-aligned controls */}

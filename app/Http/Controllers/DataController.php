@@ -203,11 +203,20 @@ class DataController extends Controller
             case "drugs":
                 $pharmacy = Stage::where('type', 'pharmacy');
                 if($pharmacy->count() > 0) {
-                    return response()->json(["status" => "success", "data" => $pharmacy->first()->fields]);
-                } else return response()->json(["status" => "failure", "message" => "Pharmacy not configured."]);
+                    return response()->json([
+                        "status" => "success",
+                        "data" => $pharmacy->first()->fields
+                    ]);
+                } else return response()->json([
+                    "status" => "failure",
+                    "message" => "Pharmacy stage has not been configured."
+                ], 501);
                 break;
             default:
-                return response()->json(["status" => "failure", "message" => "Unknown method"]);
+                return response()->json([
+                    "status" => "failure",
+                    "message" => "Unknown method"
+                ], 404);
                 break;
         }
     }
@@ -259,7 +268,7 @@ class DataController extends Controller
                 if($request->has('id')) {
                     $resource = Resource::where('id', $request->id);
                     if($resource->count() > 0) {
-                        $resource = $resource->first(["id", "type", "base64"]);
+                        $resource = $resource->first(["id", "type", "data"]);
                         return response()->json([
                             "status" => "success",
                             "type" => $resource->type,
@@ -284,19 +293,32 @@ class DataController extends Controller
                     $check = PrescriptionSet::where('visit_id', $request->visitID)->where('patient_id', $request->patientID);
                     if($check->count() > 0) {
                         $set = $check->first();
-                        return response()->json(["status" => "success", "id" => $set->id, "prescriptions" => json_decode($set->prescriptions)]);
+                        return response()->json([
+                            "status" => "success",
+                            "id" => $set->id,
+                            "prescriptions" => json_decode($set->prescriptions)
+                        ]);
                     } else {
                         $set = new PrescriptionSet;
                             $set->patient_id = $request->patientID;
                             $set->visit_id = $request->visitID;
                             if($set->save()) {
-                                return response()->json(["status" => "success", "id" => $set->id]);
+                                return response()->json([
+                                    "status" => "success",
+                                    "id" => $set->id
+                                ]);
                             } else {
-                                return response()->json(["status" => "failure", "message" => "Failed to save Set record"]);
+                                return response()->json([
+                                    "status" => "failure",
+                                    "message" => "Failed to save Set record"
+                                ], 500);
                             }
                     }
                 } else {
-                    return response()->json(["status" => "failure", "message" => "Missing patientID or visitID"]);
+                    return response()->json([
+                        "status" => "failure",
+                        "message" => "Missing patientID or visitID"
+                    ], 400);
                 }
                 break;
             case "save":
@@ -321,7 +343,10 @@ class DataController extends Controller
                 }
                 break;
             default:
-                return response()->json(["status" => "failure", "message" => "Unknown method"], 422);
+                return response()->json([
+                    "status" => "failure",
+                    "message" => "Unknown method"
+                ], 422);
                 break;
         }
     }
