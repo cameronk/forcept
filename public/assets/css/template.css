@@ -1,6 +1,7 @@
 @charset "UTF-8";
 /**
  * template.scss
+ * @author Cameron Kelley
  */
 /**
  * Forcept
@@ -4640,8 +4641,7 @@ img.loading {
     font-size: 62.5%; }
 
 select.form-control option[disabled] {
-  text-decoration: line-through;
-  opacity: 0.625; }
+  color: #5cb85c; }
 
 .forcept-field-select-drugs optgroup {
   margin-bottom: 15px; }

@@ -19,10 +19,13 @@
 }
 
 .forcept-patient-summary {
+
     font-size: 16px;
+
 	.card-title {
 		line-height: 27px;
 	}
+
     .list-group-item {
         p {
             margin: 0;
@@ -38,6 +41,7 @@
             }
         }
     }
+
     .list-group-item.forcept-patient-overview-header-item {
         background: $gray-lightest;
     }
@@ -92,8 +96,8 @@ img.loading {
 
 select.form-control {
     option[disabled] {
-        text-decoration: line-through;
-        opacity: 0.625;
+        // opacity: 0.625;
+        color: $brand-success;
     }
 }
 

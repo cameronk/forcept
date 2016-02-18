@@ -6,8 +6,8 @@
  */
 
 var Fields = {
-	labelColumnClasses: "col-lg-4 col-sm-5 col-xs-12",
-	inputColumnClasses: "col-lg-8 col-sm-7 col-xs-12"
+	labelColumnClasses: "col-lg-2 col-sm-4 col-xs-12",
+	inputColumnClasses: "col-lg-4 col-sm-8 col-xs-12"
 };
 
 Fields.FieldLabel = React.createClass({

@@ -79,7 +79,8 @@
      */
     setValue: function(props) {
 
-        // Check if we have a prescription table ID
+        var state = this.state;
+
 		if(props.hasOwnProperty('value')
             && props.value !== null
             && props.value.toString().length > 0) {
@@ -88,11 +89,29 @@
              * Push setID to state and view selected drugs.
              */
 			console.log("Found set ID in props: %s", props.value);
-			this.setState({
-				setID: props.value.toString(),
-                status: "view",
-                justSaved: false,
-			});
+
+            var selected = state.selected
+                value = props.value.toString();
+
+            /*
+             * If a "selected" object hasn't yet been
+             * created, run managePrescriptionSet.
+             */
+            if(!selected.hasOwnProperty(value)) {
+                this.managePrescriptionSet();
+            } else {
+
+                /*
+                 * We've already stored this set's data
+                 * (probably from a separate tab), so
+                 * let's just load that instead!
+                 */
+    			this.setState({
+    				setID: props.value.toString(),
+                    status: "view",
+                    justSaved: false,
+    			});
+            }
 
 		} else {
 
@@ -113,22 +132,45 @@
      *
      */
 	savePrescriptionSet: function() {
-		if(this.state.setID !== null) {
+
+        var state = this.state;
+
+        /*
+         * We can't save the set if no ID is set!
+         */
+		if(state.setID !== null) {
+
+            /*
+             * Update component status.
+             */
 			this.setState({
 				status: "saving"
 			});
+
+            /*
+             * Send save request
+             */
 			$.ajax({
 				type: "POST",
 				url: "/data/prescription-sets/save",
 				data: {
 					_token: document.querySelector("meta[name='csrf-token']").getAttribute('value'),
 					id: this.state.setID,
-					prescriptions: this.state.selected
+					prescriptions: this.state.selected[state.setID]
 				},
+                /**
+                 * AJAX success
+                 */
 				success: function(resp) {
+
+                    /*
+                     * If an ID was included in the response...
+                     */
 					if(resp.hasOwnProperty("id")) {
 
-						// Bump the PrescriptionSet ID up to top level
+						/*
+                         * Bump the PrescriptionSet ID up to top level
+                         */
 						this.props.onChange(this.props.id, parseInt(resp.id));
 
 						this.setState({
@@ -296,7 +338,8 @@
     				thisValue = thisOption.value;
 
     			/*
-                 * If the option is selected in the <select> input and NOT in our "selected" object
+                 * If the option is selected in the <select> input
+                 * and NOT in our "selected" object, add it.
                  */
     			if(thisOption.selected && alreadySelected.indexOf(thisValue) === -1) {
     				selectedThisSet[thisValue] = {
@@ -312,7 +355,7 @@
     				 * - the option is not marked as done
                      */
     				if(alreadySelected.indexOf(thisValue) !== -1
-    					&& !thisOption.selected
+    					&& thisOption.selected === false
     					&& !isTrue(selectedThisSet[thisValue].done)) {
     					delete selectedThisSet[thisValue];
     				}
@@ -414,13 +457,20 @@
 	 */
 	onDrugAmountChange: function(drugKey) {
 		return function(event) {
-			var selected = this.state.selected;
 
-			if(selected.hasOwnProperty(drugKey)) {
-				selected[drugKey].amount = event.target.value;
+			var state = this.state,
+                selected = state.selected,
+                selectedThisSet = selected[state.setID];
+
+			if(selectedThisSet.hasOwnProperty(drugKey)) {
+				selectedThisSet[drugKey].amount = event.target.value;
 			}
 
-			this.setState({ selected: selected });
+            selected[state.setID] = selectedThisSet
+
+			this.setState({
+                selected: selected
+            });
 		}.bind(this);
 	},
 
@@ -491,17 +541,26 @@
 
 				var selectedDrugs, selectedDrugsHeader, saveButton,
                     thisSetSelectedObject = state.selected[state.setID],
-        			selectedKeys = Object.keys(thisSetSelectedObject);
+        			selectedKeys = Object.keys(thisSetSelectedObject),
+                    incompleteKeys = [];
+
+                selectedKeys.map(function(key) {
+                    if(!isTrue(thisSetSelectedObject[key].done)) {
+                        incompleteKeys.push(key);
+                    }
+                })
 
 				if(dataKeys.length > 0) {
-
+                    //value={selectedKeys}
 					drugPicker = (
 						<select
 							className="form-control forcept-field-select-drugs"
 							multiple={true}
 							size={10}
 							onChange={this.onSelectedDrugsChange}
-                            disabled={state.status === "saving"}>
+                            disabled={state.status === "saving"}
+                            value={incompleteKeys}
+                            autoFocus={true}>
 
 							{dataKeys.map(function(categoryKey, index) {
 								var thisCategory = state.data[categoryKey];
@@ -518,12 +577,14 @@
 
 												var thisOption = thisCategory.settings.options[optionKey],
 													disabled = (thisOption.available === "false"),
+                                                    signedOff = (selectedKeys.indexOf(optionKey) !== -1 && isTrue(thisSetSelectedObject[optionKey].done))
 													displayName = thisOption.value + (parseInt(thisOption.count) > 0 && thisOption.available ? "\u2014 " + thisOption.count : "")
 
 												if(!disabled) {
 													return (
-														<option value={optionKey} key={optionIndex}>
-															{displayName}
+														<option value={optionKey} key={optionIndex} disabled={signedOff}>
+															{signedOff ? "\u2713 " : ""}
+                                                            {displayName}
 														</option>
 													);
 												}
@@ -566,9 +627,7 @@
 								preSignOffDOM = (
 									<div className="col-xs-12">
 										<div className="input-group input-group-sm">
-											<span className="input-group-addon">
-												Amount
-											</span>
+											<span className="input-group-addon">Amount</span>
 											<input
 												type="number"
 												min="1"

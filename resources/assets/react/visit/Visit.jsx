@@ -310,22 +310,29 @@ var Visit = React.createClass({
 	topLevelPatientStateChange: function(patientID, fieldID, value) {
 		console.log("[Visit]->topLevelPatientStateChange(): patientID=" + patientID + ", fieldID=" + fieldID + ", value=" + value);
 
-		// Check if patient is in our patients array
+		/*
+		 * Check if patient is in our patients array
+		 */
 		if(this.state.patients.hasOwnProperty(patientID)) {
 
 			var patients = this.state.patients; // Grab patients from state
 				patient = patients[patientID], 	// Grab patient object
 				patient[fieldID] = value; 		// Find our patient and set fieldID = passed value
 
-			// Apply generated fields to patient object
+			/*
+			 * Apply generated fields to patient object
+			 */
 			patient = Utilities.applyGeneratedFields(patient);
 
 			__debug(patients);
 
-			// Push patients back to state
+			/*
+			 * Push patients back to state,
+			 * validating the form afterwards.
+			 */
 			this.setState({
 				patients: patients
-			}, this.validate); // Validate after updating patients
+			}, this.validate);
 
 		} else {
 			console.error("[Visit]->topLevelPatientStateChange(): Missing patient ID " + patientID + " in Visit patients state");
@@ -352,7 +359,9 @@ var Visit = React.createClass({
 	 */
 	render: function() {
 
-		// Instantiate ALL the things
+		/*
+		 * Instantiate ALL the things
+		 */
 		var props = this.props,
 			state = this.state,
 			patientKeys = Object.keys(state.patients),

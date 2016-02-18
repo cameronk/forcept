@@ -101,7 +101,7 @@ Visit.Patient = React.createClass({
 								{...thisField}
 								patientID={props.id}
 								visitID={props.visitID}
-								defaultValue={defaultValue}
+								value={defaultValue}
 								onChange={this.handleFieldChange}
 								key={fieldID}
 								id={fieldID} />
@@ -299,7 +299,7 @@ Visit.Patient = React.createClass({
 
 
 		var patientBlock = (
-			<blockquote className="blockquote">
+			<div className="col-xs-12 col-sm-12 col-md-8 col-lg-8 col-xl-9">
 				<h3>
 					<span className="label label-info">#{props.hasOwnProperty('index') ? props.index + 1 : "?"}</span>
 		            <span className="label label-default">{props.hasOwnProperty('id') ? props.id : "?"}</span> &nbsp;
@@ -309,7 +309,7 @@ Visit.Patient = React.createClass({
 		        {summary}
 		        <hr/>
 		        {fieldsDOM}
-			</blockquote>
+			</div>
 		);
 
 		console.groupEnd(); // End "Visit.Patient: render"

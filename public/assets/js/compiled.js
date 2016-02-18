@@ -323,8 +323,8 @@ DataDisplays.PatientAggregate = React.createClass({displayName: "PatientAggregat
  */
 
 var Fields = {
-	labelColumnClasses: "col-lg-4 col-sm-5 col-xs-12",
-	inputColumnClasses: "col-lg-8 col-sm-7 col-xs-12"
+	labelColumnClasses: "col-lg-2 col-sm-4 col-xs-12",
+	inputColumnClasses: "col-lg-4 col-sm-8 col-xs-12"
 };
 
 Fields.FieldLabel = React.createClass({displayName: "FieldLabel",
@@ -429,7 +429,8 @@ Fields.Date = React.createClass({displayName: "Date",
 	 */
 	slashesToDashes: function(date) {
 		date = date.split("/");
-		return [date[2], date[0], date[1]].join("-");
+		var dashes = [date[2], date[0], date[1]].join("-");
+		return dashes === "--" ? "" : dashes;
 	},
 
     /*
@@ -1115,7 +1116,8 @@ Fields.Number = React.createClass({displayName: "Number",
      */
     setValue: function(props) {
 
-        // Check if we have a prescription table ID
+        var state = this.state;
+
 		if(props.hasOwnProperty('value')
             && props.value !== null
             && props.value.toString().length > 0) {
@@ -1124,11 +1126,29 @@ Fields.Number = React.createClass({displayName: "Number",
              * Push setID to state and view selected drugs.
              */
 			console.log("Found set ID in props: %s", props.value);
-			this.setState({
-				setID: props.value.toString(),
-                status: "view",
-                justSaved: false,
-			});
+
+            var selected = state.selected
+                value = props.value.toString();
+
+            /*
+             * If a "selected" object hasn't yet been
+             * created, run managePrescriptionSet.
+             */
+            if(!selected.hasOwnProperty(value)) {
+                this.managePrescriptionSet();
+            } else {
+
+                /*
+                 * We've already stored this set's data
+                 * (probably from a separate tab), so
+                 * let's just load that instead!
+                 */
+    			this.setState({
+    				setID: props.value.toString(),
+                    status: "view",
+                    justSaved: false,
+    			});
+            }
 
 		} else {
 
@@ -1149,22 +1169,45 @@ Fields.Number = React.createClass({displayName: "Number",
      *
      */
 	savePrescriptionSet: function() {
-		if(this.state.setID !== null) {
+
+        var state = this.state;
+
+        /*
+         * We can't save the set if no ID is set!
+         */
+		if(state.setID !== null) {
+
+            /*
+             * Update component status.
+             */
 			this.setState({
 				status: "saving"
 			});
+
+            /*
+             * Send save request
+             */
 			$.ajax({
 				type: "POST",
 				url: "/data/prescription-sets/save",
 				data: {
 					_token: document.querySelector("meta[name='csrf-token']").getAttribute('value'),
 					id: this.state.setID,
-					prescriptions: this.state.selected
+					prescriptions: this.state.selected[state.setID]
 				},
+                /**
+                 * AJAX success
+                 */
 				success: function(resp) {
+
+                    /*
+                     * If an ID was included in the response...
+                     */
 					if(resp.hasOwnProperty("id")) {
 
-						// Bump the PrescriptionSet ID up to top level
+						/*
+                         * Bump the PrescriptionSet ID up to top level
+                         */
 						this.props.onChange(this.props.id, parseInt(resp.id));
 
 						this.setState({
@@ -1332,7 +1375,8 @@ Fields.Number = React.createClass({displayName: "Number",
     				thisValue = thisOption.value;
 
     			/*
-                 * If the option is selected in the <select> input and NOT in our "selected" object
+                 * If the option is selected in the <select> input
+                 * and NOT in our "selected" object, add it.
                  */
     			if(thisOption.selected && alreadySelected.indexOf(thisValue) === -1) {
     				selectedThisSet[thisValue] = {
@@ -1348,7 +1392,7 @@ Fields.Number = React.createClass({displayName: "Number",
     				 * - the option is not marked as done
                      */
     				if(alreadySelected.indexOf(thisValue) !== -1
-    					&& !thisOption.selected
+    					&& thisOption.selected === false
     					&& !isTrue(selectedThisSet[thisValue].done)) {
     					delete selectedThisSet[thisValue];
     				}
@@ -1450,13 +1494,20 @@ Fields.Number = React.createClass({displayName: "Number",
 	 */
 	onDrugAmountChange: function(drugKey) {
 		return function(event) {
-			var selected = this.state.selected;
 
-			if(selected.hasOwnProperty(drugKey)) {
-				selected[drugKey].amount = event.target.value;
+			var state = this.state,
+                selected = state.selected,
+                selectedThisSet = selected[state.setID];
+
+			if(selectedThisSet.hasOwnProperty(drugKey)) {
+				selectedThisSet[drugKey].amount = event.target.value;
 			}
 
-			this.setState({ selected: selected });
+            selected[state.setID] = selectedThisSet
+
+			this.setState({
+                selected: selected
+            });
 		}.bind(this);
 	},
 
@@ -1527,17 +1578,26 @@ Fields.Number = React.createClass({displayName: "Number",
 
 				var selectedDrugs, selectedDrugsHeader, saveButton,
                     thisSetSelectedObject = state.selected[state.setID],
-        			selectedKeys = Object.keys(thisSetSelectedObject);
+        			selectedKeys = Object.keys(thisSetSelectedObject),
+                    incompleteKeys = [];
+
+                selectedKeys.map(function(key) {
+                    if(!isTrue(thisSetSelectedObject[key].done)) {
+                        incompleteKeys.push(key);
+                    }
+                })
 
 				if(dataKeys.length > 0) {
-
+                    //value={selectedKeys}
 					drugPicker = (
 						React.createElement("select", {
 							className: "form-control forcept-field-select-drugs", 
 							multiple: true, 
 							size: 10, 
 							onChange: this.onSelectedDrugsChange, 
-                            disabled: state.status === "saving"}, 
+                            disabled: state.status === "saving", 
+                            value: incompleteKeys, 
+                            autoFocus: true}, 
 
 							dataKeys.map(function(categoryKey, index) {
 								var thisCategory = state.data[categoryKey];
@@ -1554,12 +1614,14 @@ Fields.Number = React.createClass({displayName: "Number",
 
 												var thisOption = thisCategory.settings.options[optionKey],
 													disabled = (thisOption.available === "false"),
+                                                    signedOff = (selectedKeys.indexOf(optionKey) !== -1 && isTrue(thisSetSelectedObject[optionKey].done))
 													displayName = thisOption.value + (parseInt(thisOption.count) > 0 && thisOption.available ? "\u2014 " + thisOption.count : "")
 
 												if(!disabled) {
 													return (
-														React.createElement("option", {value: optionKey, key: optionIndex}, 
-															displayName
+														React.createElement("option", {value: optionKey, key: optionIndex, disabled: signedOff}, 
+															signedOff ? "\u2713 " : "", 
+                                                            displayName
 														)
 													);
 												}
@@ -1602,9 +1664,7 @@ Fields.Number = React.createClass({displayName: "Number",
 								preSignOffDOM = (
 									React.createElement("div", {className: "col-xs-12"}, 
 										React.createElement("div", {className: "input-group input-group-sm"}, 
-											React.createElement("span", {className: "input-group-addon"}, 
-												"Amount"
-											), 
+											React.createElement("span", {className: "input-group-addon"}, "Amount"), 
 											React.createElement("input", {
 												type: "number", 
 												min: "1", 
@@ -4520,22 +4580,29 @@ var Visit = React.createClass({displayName: "Visit",
 	topLevelPatientStateChange: function(patientID, fieldID, value) {
 		console.log("[Visit]->topLevelPatientStateChange(): patientID=" + patientID + ", fieldID=" + fieldID + ", value=" + value);
 
-		// Check if patient is in our patients array
+		/*
+		 * Check if patient is in our patients array
+		 */
 		if(this.state.patients.hasOwnProperty(patientID)) {
 
 			var patients = this.state.patients; // Grab patients from state
 				patient = patients[patientID], 	// Grab patient object
 				patient[fieldID] = value; 		// Find our patient and set fieldID = passed value
 
-			// Apply generated fields to patient object
+			/*
+			 * Apply generated fields to patient object
+			 */
 			patient = Utilities.applyGeneratedFields(patient);
 
 			__debug(patients);
 
-			// Push patients back to state
+			/*
+			 * Push patients back to state,
+			 * validating the form afterwards.
+			 */
 			this.setState({
 				patients: patients
-			}, this.validate); // Validate after updating patients
+			}, this.validate);
 
 		} else {
 			console.error("[Visit]->topLevelPatientStateChange(): Missing patient ID " + patientID + " in Visit patients state");
@@ -4562,7 +4629,9 @@ var Visit = React.createClass({displayName: "Visit",
 	 */
 	render: function() {
 
-		// Instantiate ALL the things
+		/*
+		 * Instantiate ALL the things
+		 */
 		var props = this.props,
 			state = this.state,
 			patientKeys = Object.keys(state.patients),
@@ -5881,7 +5950,7 @@ Visit.Overview = React.createClass({displayName: "Overview",
 			);
 		} else {
 			return (
-		        React.createElement("div", {className: "col-xs-12 col-sm-12 col-md-4 col-xl-3"}, 
+		        React.createElement("div", {className: "col-xs-12 col-sm-12 col-md-4 col-lg-4 col-xl-3"}, 
 		           patientOverview
 		        )
 		    );
@@ -5993,7 +6062,7 @@ Visit.Patient = React.createClass({displayName: "Patient",
 								thisField, 
 								{patientID: props.id, 
 								visitID: props.visitID, 
-								defaultValue: defaultValue, 
+								value: defaultValue, 
 								onChange: this.handleFieldChange, 
 								key: fieldID, 
 								id: fieldID}))
@@ -6191,7 +6260,7 @@ Visit.Patient = React.createClass({displayName: "Patient",
 
 
 		var patientBlock = (
-			React.createElement("blockquote", {className: "blockquote"}, 
+			React.createElement("div", {className: "col-xs-12 col-sm-12 col-md-8 col-lg-8 col-xl-9"}, 
 				React.createElement("h3", null, 
 					React.createElement("span", {className: "label label-info"}, "#", props.hasOwnProperty('index') ? props.index + 1 : "?"), 
 		            React.createElement("span", {className: "label label-default"}, props.hasOwnProperty('id') ? props.id : "?"), "  ", 
