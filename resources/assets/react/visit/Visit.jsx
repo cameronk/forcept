@@ -3,9 +3,7 @@
 /**
  * visit/Visit.jsx
  * @author Cameron Kelley
- */
-
-/*
+ *
  * Visit container
  *
  * The visit container acts as a state bridge between the
@@ -432,7 +430,12 @@ var Visit = React.createClass({
 								fields={props.patientFields}
 								patient={state.patients[state.visibleItem]}
 								mini={false}
-								resources={state.resources} />
+								resources={state.resources}
+
+								/*
+								 * Fields to summarize at the top of each patient
+								 */
+								summaryFields={props.summaryFields} />
 
 							<Visit.Patient
 								/*
@@ -456,11 +459,6 @@ var Visit = React.createClass({
 								 * All available fields
 								 */
 								fields={props.mutableFields}
-
-								/*
-								 * Fields to summarize at the top of each patient
-								 */
-								summaryFields={props.summaryFields}
 
 								/*
 								 * Event handlers

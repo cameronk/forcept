@@ -4273,9 +4273,7 @@ var Utilities = {
 /**
  * visit/Visit.jsx
  * @author Cameron Kelley
- */
-
-/*
+ *
  * Visit container
  *
  * The visit container acts as a state bridge between the
@@ -4702,7 +4700,12 @@ var Visit = React.createClass({displayName: "Visit",
 								fields: props.patientFields, 
 								patient: state.patients[state.visibleItem], 
 								mini: false, 
-								resources: state.resources}), 
+								resources: state.resources, 
+
+								/*
+								 * Fields to summarize at the top of each patient
+								 */
+								summaryFields: props.summaryFields}), 
 
 							React.createElement(Visit.Patient, {
 								/*
@@ -4726,11 +4729,6 @@ var Visit = React.createClass({displayName: "Visit",
 								 * All available fields
 								 */
 								fields: props.mutableFields, 
-
-								/*
-								 * Fields to summarize at the top of each patient
-								 */
-								summaryFields: props.summaryFields, 
 
 								/*
 								 * Event handlers
@@ -5569,37 +5567,312 @@ Visit.FinishModal = React.createClass({displayName: "FinishModal",
 Visit.Overview = React.createClass({displayName: "Overview",
 
 	/*
+	 * Build a summary list from patient data and iterable fields.
+	 */
+	buildSummary: function(iterableFields, thisPatient) {
+		var props = this.props,
+			state = this.state;
+		return Object.keys(iterableFields).map(function(field, index) {
+
+			var thisIterableField = iterableFields[field],
+				foundData = false,
+				isGeneratedField = Visit.generatedFields.hasOwnProperty(field),
+				value = "No data", icon;
+
+			console.group("#%s '%s' %O", index + 1, thisIterableField.name, thisIterableField);
+
+			//-- Begin patient field checking --\\
+			if(
+				thisPatient.hasOwnProperty(field) 	// If this field exists in the patient data
+				&& thisPatient[field] !== null	 	// If the data for this field is null, show "No data"
+				&& thisPatient[field].toString().length > 0	// If string length == 0 or array length == 0, show "No data"
+			) {
+
+				// Cache this field
+				var thisPatientField = thisPatient[field];
+
+				console.info("Patient data: %O", thisPatientField);
+
+				if(!(props.mini == true && isGeneratedField)) // Don't show generated fields in Mini mode
+				{
+					// We found data!
+					foundData = true;
+
+					// Grab field types
+					var fieldType = thisIterableField.type;
+
+					console.log("Type: %s", fieldType);
+
+					// We might need to mutate the data
+					switch(fieldType) {
+
+						/**
+						 * Date input
+						 */
+						case "date":
+							if(thisIterableField.hasOwnProperty('settings')
+							&& thisIterableField.settings.hasOwnProperty('useBroadMonthSelector')
+							&& isTrue(thisIterableField.settings.useBroadMonthSelector)) {
+
+								var modifier = parseInt(thisPatientField, 10); 	// 10 = decimal-based radix
+
+								if(!isNaN(modifier)) {
+
+									var date = new Date(), // instantiate a new date object
+										absModifier = Math.abs(modifier);
+										humanReadableDateString = "This month";	// assume modifer = 0 => "This month"
+
+									// Change date object's month based on modifier
+									date.setMonth(date.getMonth() + modifier);
+
+									// If the modifier is for another month...
+									if(modifier !== 0) {
+										humanReadableDateString = [
+											absModifier,
+											(modifier > 0
+												? (absModifier > 1 ? "months from now" : "month from now")
+												: (absModifier > 1 ? "months ago" : "month ago")
+											)
+										].join(" ");
+									}
+
+									value = (
+										React.createElement("p", null, 
+											humanReadableDateString, " (", [(parseInt(date.getMonth(), 10) + 1), date.getFullYear()].join("/"), ")"
+										)
+									);
+
+								} else {
+									// Not sure what we're working with, just display the string representation
+									value = thisPatientField.toString();
+								}
+
+							} else {
+								// Not sure what we're working with, just display the string representation
+								value = thisPatientField.toString();
+							}
+							break;
+
+						/**
+						 * Things with multiple lines
+						 */
+						case "textarea":
+							value = (
+								React.createElement("p", {dangerouslySetInnerHTML: { __html: thisPatientField.replace(/\n/g, "<br/>")}})
+							);
+							break;
+
+						/**
+						 * Things stored as arrays
+						 */
+						case "multiselect":
+						case "file":
+							// Convert from JSON array to nice string
+							var arr;
+
+							/*
+							 * The data should be an array already.
+							 * If so, just pass it back.
+							 * Otherwise, try to convert.
+							 */
+							if(Array.isArray(thisPatientField)) {
+								arr = thisPatientField;
+							} else {
+								try {
+									arr = JSON.parse(thisPatientField);
+								} catch(e) {
+									arr = [];
+								}
+							}
+
+
+							/*
+							 * Return a value as long as we
+							 * have more than one array value.
+							 */
+							if(Array.isArray(arr) && arr.length > 0) {
+
+								/*
+								 * Run the switch loop again
+								 */
+								switch(fieldType) {
+									case "multiselect":
+										value = (
+											React.createElement("ul", {className: "list-unstyled"}, 
+												arr.map(function(optionValue, optionIndex) {
+													return (
+														React.createElement("li", {key: [optionValue, optionIndex].join("-")}, 
+															'\u26ac', " ", optionValue
+														)
+													);
+												})
+											)
+										);
+										break;
+									case "file":
+										value = arr.map(function(resourceID, index) {
+											return (
+												React.createElement(Fields.Resource, {
+													id: resourceID})
+											);
+										});
+										break;
+								}
+
+							}
+
+							break;
+
+
+						/**
+						 * Pharmacy field
+						 *
+						 * Displays a small label with the
+						 * prescription set ID
+						 */
+						case "pharmacy":
+							value = (
+								React.createElement("span", {className: "label label-default"}, 
+									"Set ID: ", thisPatientField.toString()
+								)
+							);
+							break;
+
+						/**
+						 * Everything else (single-value data points)
+						 */
+						default:
+							value = thisPatientField.toString();
+							break;
+					}
+				}
+			} else {
+				console.log("No data.");
+			}
+			//-- End patient field checking --\\
+
+
+			// Choose which icon to display
+			if(!isGeneratedField) {
+				if(foundData) {
+					icon = (
+						React.createElement("span", {className: "text-success"}, 
+							"\u2713"
+						)
+					);
+				} else {
+					icon = (
+						React.createElement("span", {className: "text-danger"}, 
+							"\u2717"
+						)
+					);
+				}
+			} else {
+				icon = "\u27a0";
+			}
+
+			console.groupEnd(); // End: "Field %i..."
+
+			// Render the list item
+			if(thisIterableField.type == "header") {
+				if(props.mini == false) {
+					return (
+						React.createElement("div", {className: "list-group-item forcept-patient-overview-header-item", key: field + "-" + index}, 
+							React.createElement("h5", {className: "text-center m-a-0"}, 
+								thisIterableField.name
+							)
+						)
+					);
+				}
+			} else {
+				if((props.mini == true && foundData) || props.mini == false) {
+					return (
+						React.createElement("div", {className: "list-group-item", key: field + "-" + index}, 
+							React.createElement("dl", null, 
+								React.createElement("dt", null, icon, "   ", thisIterableField.name), 
+								React.createElement("dd", null, foundData ? value : "")
+							)
+						)
+					);
+				}
+			}
+
+		}.bind(this));
+	},
+
+	/*
 	 * Render patient overview blocks
 	 */
 	render: function() {
 
-		var patientOverviews, iterableFields,
-			props = this.props;
+		var patientOverview,
+			patientSummary,
+			iterableFields,
+			props = this.props,
+			thisPatient = props.patient,
+			masterColumnSize = "col-xs-12 col-sm-12 col-md-4 col-lg-4 col-xl-3",
+			innerColumnSize  = "col-xs-12";
 
 		console.groupCollapsed("Visit.PatientsOverview: render (mini=%s)", props.mini); // keep this collapsed
 			console.log("Properties: %O", props);
 
-		// Copy the local patient fields property to a new variable
-		// and remove first/last name, so they don't appear in the list
-		if(props.mini == true) {
-			iterableFields = jQuery.extend({}, props.fields);
-		} else {
+		/*
+		 * Copy the local patient fields property to a new variable
+		 */
+		// if(props.mini == true) {
+			// iterableFields = jQuery.extend({}, props.fields);
+		// } else {
 			iterableFields = jQuery.extend(jQuery.extend({}, props.fields), Visit.generatedFields);
-		}
+		// }
 
-		// Remove fields that have custom display settings
+		/*
+		 * Remove fields that have custom display settings
+		 */
 		delete iterableFields["first_name"];
 		delete iterableFields["last_name"];
 		delete iterableFields["photo"];
 
+		patientSummary = (function() {
+
+			/*
+			 * Test for available summaryFields.
+			 */
+			if(props.hasOwnProperty("summaryFields")
+				&& typeof props.summaryFields === "object"
+				&& props.summaryFields !== null
+				&& Object.keys(props.summaryFields).length > 0) {
+
+					/*
+					 * Update column sizing since we're summarizing patients.
+					 */
+					masterColumnSize = "col-xs-12 col-sm-12 col-md-6 col-lg-6 col-xl-6";
+					innerColumnSize  = "col-xs-12 col-sm-6";
+
+					/*
+					 * Build patient summary card with generated list.
+					 */
+					return (
+						React.createElement("div", {className: innerColumnSize}, 
+							React.createElement("div", {className: "card forcept-patient-summary"}, 
+								React.createElement("div", {className: "card-header"}, 
+									React.createElement("span", {className: "label label-default"}, "Summary")
+								), 
+				            	React.createElement("div", {className: "list-group list-group-flush"}, 
+									this.buildSummary(props.summaryFields, thisPatient)
+				                )
+							)
+						)
+					);
+
+				} else return;
+		}.bind(this))();
+
 		//-- Build patientOverview card --\\
 		patientOverview = (function() {
 
-			var cardHeader, photo,
-				patientID = props.patient.id,
-				thisPatient = props.patient;
+			var cardHeader, photo;
 
-			console.group("Patient ID #%s: %O", patientID, thisPatient);
+			// console.group("Patient ID #%s: %O", patientID, thisPatient);
 
 			//-- Begin search for patient photo --\\
 			if(thisPatient.hasOwnProperty('photo') && thisPatient.photo !== null) {
@@ -5683,260 +5956,39 @@ Visit.Overview = React.createClass({displayName: "Overview",
 						</strong>
 					</h4>
 				</div>*/
-			// Show header if we're not in Mini mode
-			if(props.mini === false) {
-				cardHeader = (
-					React.createElement("span", null, 
-		               	React.createElement("div", {className: "card-header"}, 
-		                    React.createElement("span", {className: "label label-default"}, patientID)
-		                ), 
-		                photo
-		            )
-		        );
-			}
+
+			/*
+			 * Show header if we're not in Mini mode
+			 */
+			// if(props.mini === false) {
+				// cardHeader = (
+		        // );
+			// }
 
 			//-- Begin render patient card --\\
 			var patientCardDOM = (
-				React.createElement("div", {className: "card forcept-patient-summary", key: patientID}, 
-					cardHeader, 
-	              	React.createElement("div", {className: "list-group list-group-flush"}, 
-	                    Object.keys(iterableFields).map(function(field, index) {
+				React.createElement("div", {className: innerColumnSize}, 
+					React.createElement("div", {className: "card forcept-patient-summary"}, 
 
-	                    	var thisIterableField = iterableFields[field],
-								foundData = false,
-								isGeneratedField = Visit.generatedFields.hasOwnProperty(field),
-								value = "No data", icon;
+						React.createElement("div", {className: "card-header"}, 
+							React.createElement("span", {className: "label label-default"}, "Patient record")
+						), 
+						photo, 
 
-							console.group("#%s '%s' %O", index + 1, thisIterableField.name, thisIterableField);
-
-							//-- Begin patient field checking --\\
-	                    	if(
-	                    		thisPatient.hasOwnProperty(field) 	// If this field exists in the patient data
-	                    		&& thisPatient[field] !== null	 	// If the data for this field is null, show "No data"
-	                    		&& thisPatient[field].toString().length > 0	// If string length == 0 or array length == 0, show "No data"
-	                    	) {
-
-								// Cache this field
-								var thisPatientField = thisPatient[field];
-
-								console.info("Patient data: %O", thisPatientField);
-
-	                    		if(!(props.mini == true && isGeneratedField)) // Don't show generated fields in Mini mode
-	                    		{
-	                    			// We found data!
-	                    			foundData = true;
-
-									// Grab field types
-									var fieldType = thisIterableField.type;
-
-									console.log("Type: %s", fieldType);
-
-	                    			// We might need to mutate the data
-	                    			switch(fieldType) {
-
-										/**
-										 * Date input
-										 */
-										case "date":
-											if(thisIterableField.hasOwnProperty('settings')
-											&& thisIterableField.settings.hasOwnProperty('useBroadMonthSelector')
-											&& isTrue(thisIterableField.settings.useBroadMonthSelector)) {
-
-												var modifier = parseInt(thisPatientField, 10); 	// 10 = decimal-based radix
-
-												if(!isNaN(modifier)) {
-
-													var date = new Date(), // instantiate a new date object
-														absModifier = Math.abs(modifier);
-														humanReadableDateString = "This month";	// assume modifer = 0 => "This month"
-
-													// Change date object's month based on modifier
-													date.setMonth(date.getMonth() + modifier);
-
-													// If the modifier is for another month...
-													if(modifier !== 0) {
-														humanReadableDateString = [
-															absModifier,
-															(modifier > 0
-																? (absModifier > 1 ? "months from now" : "month from now")
-																: (absModifier > 1 ? "months ago" : "month ago")
-															)
-														].join(" ");
-													}
-
-													value = (
-														React.createElement("p", null, 
-															humanReadableDateString, " (", [(parseInt(date.getMonth(), 10) + 1), date.getFullYear()].join("/"), ")"
-														)
-													);
-
-												} else {
-													// Not sure what we're working with, just display the string representation
-													value = thisPatientField.toString();
-												}
-
-											} else {
-												// Not sure what we're working with, just display the string representation
-												value = thisPatientField.toString();
-											}
-											break;
-
-	                    				/**
-	                    				 * Things with multiple lines
-	                    				 */
-	                    				case "textarea":
-	                    					value = (
-	                    						React.createElement("p", {dangerouslySetInnerHTML: { __html: thisPatientField.replace(/\n/g, "<br/>")}})
-	                    					);
-	                    					break;
-
-	                    				/**
-	                    				 * Things stored as arrays
-	                    				 */
-	                    				case "multiselect":
-										case "file":
-	                    					// Convert from JSON array to nice string
-											var arr;
-
-											/*
-											 * The data should be an array already.
-											 * If so, just pass it back.
-											 * Otherwise, try to convert.
-											 */
-											if(Array.isArray(thisPatientField)) {
-												arr = thisPatientField;
-											} else {
-		                    					try {
-													arr = JSON.parse(thisPatientField);
-												} catch(e) {
-													arr = [];
-												}
-											}
-
-
-											/*
-											 * Return a value as long as we
-											 * have more than one array value.
-											 */
-	                    					if(Array.isArray(arr) && arr.length > 0) {
-
-												/*
-												 * Run the switch loop again
-												 */
-												switch(fieldType) {
-													case "multiselect":
-														value = (
-															React.createElement("ul", {className: "list-unstyled"}, 
-																arr.map(function(optionValue, optionIndex) {
-																	return (
-																		React.createElement("li", {key: [optionValue, optionIndex].join("-")}, 
-																			'\u26ac', " ", optionValue
-																		)
-																	);
-																})
-															)
-														);
-														break;
-													case "file":
-														value = arr.map(function(resourceID, index) {
-															return (
-																React.createElement(Fields.Resource, {
-																	id: resourceID})
-															);
-														});
-														break;
-												}
-
-	                    					}
-
-	                    					break;
-
-
-										/**
-										 * Pharmacy field
-										 *
-										 * Displays a small label with the
-										 * prescription set ID
-										 */
-										case "pharmacy":
-											value = (
-												React.createElement("span", {className: "label label-default"}, 
-													"Set ID: ", thisPatientField.toString()
-												)
-											);
-											break;
-
-	                    				/**
-	                    				 * Everything else (single-value data points)
-	                    				 */
-	                    				default:
-	                    					value = thisPatientField.toString();
-	                    					break;
-	                    			}
-		                    	}
-	                    	} else {
-								console.log("No data.");
-							}
-							//-- End patient field checking --\\
-
-
-	                    	// Choose which icon to display
-	                    	if(!isGeneratedField) {
-	                    		if(foundData) {
-	                    			icon = (
-	                    				React.createElement("span", {className: "text-success"}, 
-	                    					"\u2713"
-	                    				)
-	                    			);
-	                    		} else {
-	                    			icon = (
-	                    				React.createElement("span", {className: "text-danger"}, 
-	                    					"\u2717"
-	                    				)
-	                    			);
-	                    		}
-	                    	} else {
-	                    		icon = "\u27a0";
-	                    	}
-
-							console.groupEnd(); // End: "Field %i..."
-
-	                    	// Render the list item
-	                    	if(thisIterableField.type == "header") {
-	                    		if(props.mini == false) {
-		                    		return (
-		                    			React.createElement("div", {className: "list-group-item forcept-patient-overview-header-item", key: field + "-" + index}, 
-		                    				React.createElement("h5", {className: "text-center m-a-0"}, 
-		                    					thisIterableField.name
-		                    				)
-		                    			)
-		                    		);
-		                    	}
-	                    	} else {
-								if((props.mini == true && foundData) || props.mini == false) {
-									return (
-										React.createElement("div", {className: "list-group-item", key: field + "-" + index}, 
-											React.createElement("dl", null, 
-												React.createElement("dt", null, icon, "   ", thisIterableField.name), 
-												React.createElement("dd", null, foundData ? value : "")
-											)
-										)
-									);
-								}
-	                    	}
-
-                    	}.bind(this))
-	                )
+		            	React.createElement("div", {className: "list-group list-group-flush"}, 
+							this.buildSummary(iterableFields, thisPatient)
+		                )
+					)
 				)
 			);
 			//-- End build patient card DOM --\\
 
-			console.groupEnd(); // End "Patient %i"
+			// console.groupEnd(); // End "Patient %i"
 
 			// Return the patient card DOM
 			return patientCardDOM;
 
-		})();
+		}.bind(this))();
 
 		console.log("Done with PatientOverview group...");
 		console.groupEnd(); // End: "PatientsOverview"
@@ -5950,8 +6002,11 @@ Visit.Overview = React.createClass({displayName: "Overview",
 			);
 		} else {
 			return (
-		        React.createElement("div", {className: "col-xs-12 col-sm-12 col-md-4 col-lg-4 col-xl-3"}, 
-		           patientOverview
+		        React.createElement("div", {className: masterColumnSize}, 
+		        	React.createElement("div", {className: "row"}, 
+						patientOverview, 
+						patientSummary
+					)
 		        )
 		    );
 		}
@@ -5959,7 +6014,10 @@ Visit.Overview = React.createClass({displayName: "Overview",
 
 });
 
-/*
+/**
+ * visit/Patient.jsx
+ * @author Cameron Kelley
+ *
  * Display specified fields relative to this patient
  *
  * Properties:
@@ -5997,21 +6055,21 @@ Visit.Patient = React.createClass({displayName: "Patient",
 			fields = props.fields,
 			fieldKeys = Object.keys(fields),
 			countFields = fieldKeys.length,
-			summaryFields = props.summaryFields,
+			/*summaryFields = props.summaryFields,
 			summaryFieldsKeys = Object.keys(summaryFields),
-			countSummaryFields = summaryFieldsKeys.length,
-			name = (props.patient.full_name !== null) ? props.patient.full_name : "Unnamed patient",
-			summary;
+			countSummaryFields = summaryFieldsKeys.length,*/
+			name = (props.patient.full_name !== null) ? props.patient.full_name : "Unnamed patient";
+			/*summary*/
 
 		// console.log ALL the things!
 		console.groupCollapsed("Visit.Patient: render"); // keep this collapsed
 			console.log("Stage type: %s", props.stageType);
 			console.log("Iterable field count: %i", countFields);
 			console.log("Iterable field keys: %O", fieldKeys);
-			console.log("Summary field count : %i", countSummaryFields);
+			// console.log("Summary field count : %i", countSummaryFields);
 
 		// Build summary DOM
-		if(summaryFields !== null && typeof summaryFields === "object" && countSummaryFields > 0) {
+		/*if(summaryFields !== null && typeof summaryFields === "object" && countSummaryFields > 0) {
 
 			// TODO this sucks, figure out a better way
 			var leftColumnFields = {},
@@ -6032,10 +6090,10 @@ Visit.Patient = React.createClass({displayName: "Patient",
 			console.log("Right column: %O", rightColumnFields);
 
 			summary = (
-				React.createElement("div", {className: "row"}
-				)
+				<div className="row">
+				</div>
 			);
-		}
+		}*/
 
 		var fieldsDOM;
 
@@ -6267,7 +6325,6 @@ Visit.Patient = React.createClass({displayName: "Patient",
 		            React.createElement("span", {className: "hidden-xs-down"}, name), 
 		            React.createElement("div", {className: "hidden-sm-up p-t"}, name)
 		        ), 
-		        summary, 
 		        React.createElement("hr", null), 
 		        fieldsDOM
 			)

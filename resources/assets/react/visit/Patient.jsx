@@ -1,4 +1,7 @@
-/*
+/**
+ * visit/Patient.jsx
+ * @author Cameron Kelley
+ *
  * Display specified fields relative to this patient
  *
  * Properties:
@@ -36,21 +39,21 @@ Visit.Patient = React.createClass({
 			fields = props.fields,
 			fieldKeys = Object.keys(fields),
 			countFields = fieldKeys.length,
-			summaryFields = props.summaryFields,
+			/*summaryFields = props.summaryFields,
 			summaryFieldsKeys = Object.keys(summaryFields),
-			countSummaryFields = summaryFieldsKeys.length,
-			name = (props.patient.full_name !== null) ? props.patient.full_name : "Unnamed patient",
-			summary;
+			countSummaryFields = summaryFieldsKeys.length,*/
+			name = (props.patient.full_name !== null) ? props.patient.full_name : "Unnamed patient";
+			/*summary*/
 
 		// console.log ALL the things!
 		console.groupCollapsed("Visit.Patient: render"); // keep this collapsed
 			console.log("Stage type: %s", props.stageType);
 			console.log("Iterable field count: %i", countFields);
 			console.log("Iterable field keys: %O", fieldKeys);
-			console.log("Summary field count : %i", countSummaryFields);
+			// console.log("Summary field count : %i", countSummaryFields);
 
 		// Build summary DOM
-		if(summaryFields !== null && typeof summaryFields === "object" && countSummaryFields > 0) {
+		/*if(summaryFields !== null && typeof summaryFields === "object" && countSummaryFields > 0) {
 
 			// TODO this sucks, figure out a better way
 			var leftColumnFields = {},
@@ -74,7 +77,7 @@ Visit.Patient = React.createClass({
 				<div className="row">
 				</div>
 			);
-		}
+		}*/
 
 		var fieldsDOM;
 
@@ -306,7 +309,6 @@ Visit.Patient = React.createClass({
 		            <span className="hidden-xs-down">{name}</span>
 		            <div className="hidden-sm-up p-t">{name}</div>
 		        </h3>
-		        {summary}
 		        <hr/>
 		        {fieldsDOM}
 			</div>
