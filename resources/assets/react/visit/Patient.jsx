@@ -39,9 +39,10 @@ Visit.Patient = React.createClass({
 			fields = props.fields,
 			fieldKeys = Object.keys(fields),
 			countFields = fieldKeys.length,
-			/*summaryFields = props.summaryFields,
+			summaryFields = props.summaryFields,
 			summaryFieldsKeys = Object.keys(summaryFields),
-			countSummaryFields = summaryFieldsKeys.length,*/
+			countSummaryFields = summaryFieldsKeys.length,
+			patientColumnSize,
 			name = (props.patient.full_name !== null) ? props.patient.full_name : "Unnamed patient";
 			/*summary*/
 
@@ -81,6 +82,9 @@ Visit.Patient = React.createClass({
 
 		var fieldsDOM;
 
+		/*
+		 * Render only pharmacy input on pharmacy stage.
+		 */
 		if(props.stageType === "pharmacy") {
 			console.group("Running pharmacy loop.");
 
@@ -288,9 +292,11 @@ Visit.Patient = React.createClass({
 						break;
 				}
 
-				console.groupEnd(); // "FIeld #..."
+				console.groupEnd(); // "Field #..."
 
-				// Return fieldDOM back to map function
+				/*
+				 * Return fieldDOM back to map function
+				 */
 				return fieldDOM;
 
 			}.bind(this));
@@ -300,9 +306,20 @@ Visit.Patient = React.createClass({
 
 		console.groupEnd(); // End "Iterable field..."
 
+		/*
+		 * Test for available summaryFields.
+		 */
+		if(props.hasOwnProperty("summaryFields")
+			&& typeof props.summaryFields === "object"
+			&& props.summaryFields !== null
+			&& Object.keys(props.summaryFields).length > 0) {
+			patientColumnSize = "col-xs-12 col-sm-12 col-md-12 col-lg-6 col-xl-6";
+		} else {
+			patientColumnSize = "col-xs-12 col-sm-12 col-md-8 col-lg-8 col-xl-6";
+		}
 
 		var patientBlock = (
-			<div className="col-xs-12 col-sm-12 col-md-8 col-lg-8 col-xl-9">
+			<div className={patientColumnSize}>
 				<h3>
 					<span className="label label-info">#{props.hasOwnProperty('index') ? props.index + 1 : "?"}</span>
 		            <span className="label label-default">{props.hasOwnProperty('id') ? props.id : "?"}</span> &nbsp;

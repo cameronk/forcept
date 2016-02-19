@@ -22,22 +22,53 @@
 
     font-size: 16px;
 
-	.card-title {
-		line-height: 27px;
-	}
+    .card-header {
+
+        &:hover {
+            cursor: pointer;
+        }
+
+
+        @include media-breakpoint-down(lg) {
+            h5 {
+                font-size: $font-size-base;
+            }
+        }
+
+        @include media-breakpoint-down(md) {
+            h5 {
+                font-size: $font-size-sm;
+            }
+        }
+
+        @include media-breakpoint-down(xs) {
+            h5 {
+                font-size: $font-size-xs;
+            }
+        }
+
+    }
 
     .list-group-item {
+
         p {
             margin: 0;
             width: 100%;
             word-break: break-all;
             word-wrap: break-word;
         }
+
         dl {
             margin-bottom: 0;
+
             dd {
                 padding-left: 26px;
                 margin-bottom: 0;
+
+                ul {
+                    margin: 0;
+                }
+
             }
         }
     }
@@ -46,9 +77,11 @@
         background: $gray-lightest;
     }
 }
+
 .form-group label.file {
 	font-size: 15px;
 }
+
 div.forcept-patient-photo-contain {
 	max-height: 300px;
 	overflow-y: auto;

@@ -75,13 +75,41 @@
 
 <!--| Footer |-->
 <div class="container-fluid" id="footer">
-    <div class="col-sm-12">
-        <button type="button" class="btn btn-sm btn-success hidden-sm-down" id="forcept-launch-debug">Debug</button>
-        <h4 class="m-0 pull-right">
-            forcept &nbsp;
-            <span class='label label-info hidden-sm-down'>{{ config('app.version') }}</span>
-            <span class="label label-info hidden-sm-down">{{ env('APP_ENV') }}</span>
-        </h4>
+    <div class="row">
+        <div class="col-sm-2">
+            <button type="button" class="btn btn-sm btn-success hidden-sm-down" id="forcept-launch-debug">Debug</button>
+        </div>
+        <div class="col-sm-6">
+            <ul class="list-inline sizing">
+                <li>
+                    <span class="label label-default hidden-xs-only">XS</span>
+                    <span class="label label-success hidden-sm-up">XS</span>
+                </li>
+                <li>
+                    <span class="label label-default hidden-sm-only">SM</span>
+                    <span class="label label-success hidden-md-up">SM</span>
+                </li>
+                <li>
+                    <span class="label label-default hidden-md-only">MD</span>
+                    <span class="label label-success hidden-lg-up">MD</span>
+                </li>
+                <li>
+                    <span class="label label-default hidden-lg-only">LG</span>
+                    <span class="label label-success hidden-xl-up">LG</span>
+                </li>
+                <li>
+                    <span class="label label-default hidden-xl-only">XL</span>
+                    <span class="label label-success">XL</span>
+                </li>
+            </ul>
+        </div>
+        <div class="col-sm-4">
+            <h4 class="m-0 pull-right">
+                forcept &nbsp;
+                <span class='label label-info hidden-sm-down'>{{ config('app.version') }}</span>
+                <span class="label label-info hidden-sm-down">{{ env('APP_ENV') }}</span>
+            </h4>
+        </div>
     </div>
 </div>
 

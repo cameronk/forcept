@@ -426,6 +426,14 @@ var Visit = React.createClass({
 				if(patientKeys.indexOf(state.visibleItem.toString()) !== -1) {
 					patientRow = (
 						<div className={"row" + (controlsDisabled ? " disabled" : "")}>
+
+							{/*
+							  * Column sizing:
+							  *
+							  * Overview:
+							  * - stages WITHOUT summary: offset 1 on both sides (total area: 10)
+							  */}
+
 							<Visit.Overview
 								fields={props.patientFields}
 								patient={state.patients[state.visibleItem]}
@@ -459,6 +467,11 @@ var Visit = React.createClass({
 								 * All available fields
 								 */
 								fields={props.mutableFields}
+
+								/*
+								 * Fields to summarize at the top of each patient
+								 */
+								summaryFields={props.summaryFields}
 
 								/*
 								 * Event handlers

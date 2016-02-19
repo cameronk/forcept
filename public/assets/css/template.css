@@ -4504,6 +4504,14 @@ a.bg-danger:focus, a.bg-danger:hover {
   padding: 2rem;
   margin-top: 2rem; }
 
+#footer ul.sizing {
+  font-size: 0px; }
+  #footer ul.sizing li {
+    margin: 0; }
+    #footer ul.sizing li span {
+      margin: 0;
+      font-size: 15px; }
+
 /**
  * _content.scss
  */
@@ -4586,8 +4594,17 @@ a.bg-danger:focus, a.bg-danger:hover {
 
 .forcept-patient-summary {
   font-size: 16px; }
-  .forcept-patient-summary .card-title {
-    line-height: 27px; }
+  .forcept-patient-summary .card-header:hover {
+    cursor: pointer; }
+  @media (max-width: 74.9em) {
+    .forcept-patient-summary .card-header h5 {
+      font-size: 1rem; } }
+  @media (max-width: 61.9em) {
+    .forcept-patient-summary .card-header h5 {
+      font-size: 0.85rem; } }
+  @media (max-width: 33.9em) {
+    .forcept-patient-summary .card-header h5 {
+      font-size: 0.75rem; } }
   .forcept-patient-summary .list-group-item p {
     margin: 0;
     width: 100%;
@@ -4598,6 +4615,8 @@ a.bg-danger:focus, a.bg-danger:hover {
     .forcept-patient-summary .list-group-item dl dd {
       padding-left: 26px;
       margin-bottom: 0; }
+      .forcept-patient-summary .list-group-item dl dd ul {
+        margin: 0; }
   .forcept-patient-summary .list-group-item.forcept-patient-overview-header-item {
     background: #f7f7f9; }
 

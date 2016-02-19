@@ -4,11 +4,11 @@
 
 
 #navbar-mobile, #navbar-desktop {
-    
+
     .nav-link {
         color: $component-active-color;
     }
-    
+
     .nav-link.active {
         color: $component-active-bg;
         background-color: $gray-lightest;
@@ -16,22 +16,22 @@
 }
 
 #navbar-desktop {
-    
+
     height: $forcept-navbar-height;
-    
+
     .nav {
-        
+
         .nav-item {
-            
+
             position: relative;
             height: $forcept-navbar-height;
-            
+
             .nav-link {
                 padding: 0 $spacer-x;
-                height: $forcept-navbar-height;  
+                height: $forcept-navbar-height;
                 line-height: $forcept-navbar-height;
             }
-            
+
         }
     }
 
@@ -48,3 +48,15 @@
     padding: $spacer * 2;
     margin-top: $spacer-y * 2;
 }
+    #footer ul.sizing {
+        font-size: 0px;
+
+        li {
+            margin: 0;
+
+            span {
+                margin: 0;
+                font-size: 15px;
+            }
+        }
+    }
