@@ -451,7 +451,12 @@ var Visit = React.createClass({
 								resources={state.resources}
 
 								/*
-								 * Fields to summarize at the top of each patient
+								 * Event handlers
+								 */
+								onStoreResource={this.topLevelStoreResource}
+
+								/*
+								 * Fields to summarize in summary card
 								 */
 								summaryFields={props.summaryFields} />
 

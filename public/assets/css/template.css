@@ -4514,6 +4514,7 @@ a.bg-danger:focus, a.bg-danger:hover {
 
 /**
  * _content.scss
+ * @author Cameron Kelley
  */
 #page-content {
   margin-top: 4rem;
@@ -4540,6 +4541,9 @@ a.bg-danger:focus, a.bg-danger:hover {
         opacity: 0.7;
         color: #55595c; }
       #page-content #page-header-secondary ul.nav li.nav-item a {
+        user-select: none;
+        -moz-user-select: none;
+        -webkit-user-select: none;
         border-top: 3px solid transparent;
         padding: 6px 14px 7px 14px; }
         #page-content #page-header-secondary ul.nav li.nav-item a.nav-button {

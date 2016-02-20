@@ -1,10 +1,12 @@
 /*
+ * visit/Overview.jsx
+ * @author Cameron Kelley
+ *
  * Patient overview
  *
  * Accepted properties:
  * - fields: Object of ALL fields for ALL stages up to THIS CURRENT STAGE for displaying patient metadata
  * - patient: Patient object w/ data as pulled from database
- * - mini: should this display as a card instead of a column
  */
 
 Visit.Overview = React.createClass({
@@ -47,12 +49,16 @@ Visit.Overview = React.createClass({
 	/*
 	 * Build a summary list from patient data and iterable fields.
 	 */
-	buildSummary: function(iterableFields, thisPatient, displayEmptyFields) {
+	buildList: function(iterableFields, thisPatient, displayEmptyFields) {
 
 		var props = this.props,
-			state = this.state;
+			state = this.state,
+			fieldsWithData = 0;
 
-		return Object.keys(iterableFields).map(function(field, index) {
+		/*
+		 * Loop through fields.
+		 */
+		var list = Object.keys(iterableFields).map(function(field, index) {
 
 			var thisIterableField = iterableFields[field],
 				foundData = false,
@@ -68,20 +74,29 @@ Visit.Overview = React.createClass({
 				&& thisPatient[field].toString().length > 0	// If string length == 0 or array length == 0, show "No data"
 			) {
 
-				// Cache this field
+				/*
+				 * Cache the current field
+				 */
 				var thisPatientField = thisPatient[field];
 
 				console.info("Patient data: %O", thisPatientField);
 
-				// We found data!
+				/*
+				 * We found data!
+				 */
 				foundData = true;
+				fieldsWithData++;
 
-				// Grab field types
+				/*
+				 * Grab field types
+				 */
 				var fieldType = thisIterableField.type;
 
 				console.log("Type: %s", fieldType);
 
-				// We might need to mutate the data
+				/*
+				 * Mutate data based on field type.
+				 */
 				switch(fieldType) {
 
 					/**
@@ -225,20 +240,42 @@ Visit.Overview = React.createClass({
 				}
 			} else {
 				console.log("No data.");
-				if(!displayEmptyFields) return;
+
+				/*
+				 * If we shouldn't display empty fields,
+				 * jump to next iteration before rendering
+				 * the list item element.
+				 */
+				if(!displayEmptyFields) {
+					console.groupEnd(); // End: "Field %i..."
+					return;
+				}
 			}
+
+			console.groupEnd(); // End: "Field %i..."
+
 			//-- End patient field checking --\\
 
 
-			// Choose which icon to display
+			/*
+			 * Choose which icon to display
+			 */
 			if(!isGeneratedField) {
 				if(foundData) {
+
+					/*
+					 * check mark icon
+					 */
 					icon = (
 						<span className="text-success">
 							{"\u2713"}
 						</span>
 					);
 				} else {
+
+					/*
+					 * x icon
+					 */
 					icon = (
 						<span className="text-danger">
 							{"\u2717"}
@@ -246,13 +283,17 @@ Visit.Overview = React.createClass({
 					);
 				}
 			} else {
+
+				/*
+				 * right arrow icon
+				 */
 				icon = "\u27a0";
 			}
 
-			console.groupEnd(); // End: "Field %i..."
-
-			// Render the list item
-			if(thisIterableField.type == "header") {
+			/*
+			 * Return this list item.
+			 */
+			if(thisIterableField.type === "header") {
 				return (
 					<div className="list-group-item forcept-patient-overview-header-item" key={field + "-" + index}>
 						<h6 className="text-center m-a-0">
@@ -272,6 +313,19 @@ Visit.Overview = React.createClass({
 			}
 
 		}.bind(this));
+
+		/*
+		 * If at least one field had data,
+		 * display the list. Otherwise, display a message.
+		 */
+		if(fieldsWithData === 0) {
+			return (
+				<div className="list-group-item">
+					<strong>No data found.</strong>
+				</div>
+			);
+		} else return list;
+
 	},
 
 	/*
@@ -286,7 +340,7 @@ Visit.Overview = React.createClass({
 			state = this.state,
 			thisPatient = props.patient;
 
-		console.groupCollapsed("Visit.PatientsOverview: render (mini=%s)", props.mini); // keep this collapsed
+		console.groupCollapsed("Visit.PatientsOverview: render"); // keep this collapsed
 			console.log("Properties: %O", props);
 
 		/*
@@ -317,19 +371,23 @@ Visit.Overview = React.createClass({
 			innerColumnSize  = "col-xs-12"; // Size of overview list within container. default assumes no summary fields
 
 		if(foundSummaryFields) {
+
 			/*
 			 * Expand master column size, divide each card into half the area
 			 */
 			masterColumnSize = "col-xs-12 col-sm-12 col-md-12 col-lg-6 col-xl-6";
 			innerColumnSize  = "col-xs-12 col-sm-6";
+
 		}
 
-		if(!state.recordVisible && !state.summaryVisible) {
+		if(!state.recordVisible || !state.summaryVisible) {
+
 			/*
-			 * If both are hidden, combine back into one column
+			 * If either are hidden, combine back into one column
 			 */
 			masterColumnSize = "col-xs-12 col-sm-12 col-md-4 col-lg-4 col-xl-3";
 			innerColumnSize  = "col-xs-12";
+
 		}
 
 		/*
@@ -341,13 +399,36 @@ Visit.Overview = React.createClass({
 			 * Test for available summaryFields.
 			 */
 			 if(foundSummaryFields) {
+
 				var summaryList;
+
+				/*
+				 * If the summary is marked as visible...
+				 */
 				if(state.summaryVisible) {
+
+					/*
+					 * Build summary list
+					 */
 					summaryList = (
 						<div className="list-group list-group-flush">
-							{this.buildSummary(props.summaryFields, thisPatient, state.summaryRenderEmpty)}
+							{this.buildList(props.summaryFields, thisPatient, state.summaryRenderEmpty)}
 						</div>
 					);
+				} else {
+
+					/*
+					 * Show a message reminding the user
+					 * that the list is hidden.
+					 */
+					summaryList = (
+		            	<div className="list-group list-group-flush">
+							<div className="list-group-item text-muted">
+								<small>Hidden - use the <span className="fa fa-chevron-up"></span> button to expand.</small>
+							</div>
+		                </div>
+					);
+
 				}
 
 				/*
@@ -357,18 +438,16 @@ Visit.Overview = React.createClass({
 					<div className={innerColumnSize}>
 						<div className="forcept-patient-summary card">
 							<div className="card-header" onClick={this.toggleCardState("summaryVisible")}>
-								<h5 className="m-b-0">
+								<h6 className="m-b-0">
 									<span className="fa fa-user-md"></span>
 									&nbsp; Visit Summary
 									<span className={["pull-right fa", state.summaryVisible ? "fa-chevron-down" : "fa-chevron-up"].join(" ")}></span>
-								</h5>
+								</h6>
 							</div>
 							{summaryList}
 							<div className="card-footer">
 								<div className="dropdown">
-									<button type="button" className="btn btn-secondary btn-sm" data-toggle="dropdown">
-										<span className="fa fa-cog"></span>
-									</button>
+									<span className="fa fa-cog" data-toggle="dropdown"></span>
 									<div className="dropdown-menu dropdown-menu-top">
 										<h6 className="dropdown-header">Card settings</h6>
 										<a className="dropdown-item" onClick={this.toggleCardState("summaryRenderEmpty")}>
@@ -382,12 +461,15 @@ Visit.Overview = React.createClass({
 				);
 
 			} else return;
+
 		}.bind(this))();
 
 		//-- Build patientOverview card --\\
 		patientOverview = (function() {
 
-			var cardHeader, photo, recordList;
+			var cardHeader,
+				photo,
+				recordList;
 
 			/*
 			 * If the patient record is open...
@@ -399,7 +481,7 @@ Visit.Overview = React.createClass({
 				 */
 				recordList = (
 	            	<div className="list-group list-group-flush">
-						{this.buildSummary(iterableFields, thisPatient, state.recordRenderEmpty)}
+						{this.buildList(iterableFields, thisPatient, state.recordRenderEmpty)}
 	                </div>
 				);
 
@@ -457,7 +539,8 @@ Visit.Overview = React.createClass({
 							photo = (
 								<Fields.Resource
 									id={photoKey}
-									resource={{ type: "image/jpeg", data: photoData.data}} />
+									resource={{ type: "image/jpeg", data: photoData.data}}
+									handleStoreResource={props.onStoreResource} />
 							);
 
 						} else {
@@ -466,7 +549,8 @@ Visit.Overview = React.createClass({
 							photo = (
 								<Fields.Resource
 									id={photoKey}
-									resource={{ type: "image/jpeg" }} />
+									resource={{ type: "image/jpeg" }}
+									handleStoreResource={props.onStoreResource} />
 							);
 						}
 					}
@@ -475,6 +559,21 @@ Visit.Overview = React.createClass({
 
 				}
 				//-- End photo search --\\
+
+			} else {
+
+				/*
+				 * Show a message reminding the user
+				 * that the list is hidden.
+				 */
+				recordList = (
+	            	<div className="list-group list-group-flush">
+						<div className="list-group-item text-muted">
+							<small>Hidden - use the <span className="fa fa-chevron-up"></span> button to expand.</small>
+						</div>
+	                </div>
+				);
+
 			}
 
 
@@ -493,9 +592,7 @@ Visit.Overview = React.createClass({
 						{recordList}
 						<div className="card-footer">
 							<div className="dropdown">
-								<span data-toggle="dropdown">
-									<span className="fa fa-cog"></span>
-								</span>
+								<span className="fa fa-cog" data-toggle="dropdown"></span>
 								<div className="dropdown-menu dropdown-menu-top">
 									<h6 className="dropdown-header">Card settings</h6>
 									<a className="dropdown-item" onClick={this.toggleCardState("recordRenderEmpty")}>

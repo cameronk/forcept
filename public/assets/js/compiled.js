@@ -1782,29 +1782,42 @@ Fields.Resource = React.createClass({displayName: "Resource",
 	 *
 	 */
 	setValue: function(props) {
-		// To display a resource object,
-		// we must have received the object as a property
-		// (and it can't be null)
+
 		console.log("Caught setValue for resource");
 		console.log("props: %O", props);
+
+		/*
+		 * To display a resource object,
+		 * we must have received the object as a property
+		 * (and it can't be null)
+		 */
 		if(props.hasOwnProperty('resource')
 			&& props.resource !== null
 			&& typeof props.resource === "object") {
 
-			// Push resource object to state.
+			/*
+			 * Push resource object to state.
+			 */
 			this.setState({
 				resource: props.resource
 			}, function() {
-				// Load data for resource if none found in resource object
+
+				/*
+				 * Load data for resource if none found in resource object
+				 */
 				if(!props.resource.hasOwnProperty('data') || props.resource.data.length === 0) {
 					console.log("HEADS UP: data not found for resource!");
 					console.log(props);
 					this.fetchData();
 				}
+
 			}.bind(this));
 
 		} else {
-			// Otherwise, reset state back to no resources
+
+			/*
+			 * Otherwise, reset state back to no resources
+			 */
 			this.setState({
 				resource: {}
 			});
@@ -1820,6 +1833,7 @@ Fields.Resource = React.createClass({displayName: "Resource",
 			state = this.state;
 
 		console.log("[Fields.Resource][" + props.id + "]: fetching data");
+
 		this.setState({
 			isFetching: true,
 		});
@@ -1828,14 +1842,20 @@ Fields.Resource = React.createClass({displayName: "Resource",
 			method: "GET",
 			url: "/data/resources/fetch?id=" + props.id,
 			success: function(resp) {
+
 				var resource = state.resource;
 					resource['type'] = resp.type;
 					resource['data'] = resp.data;
+
+				if(props.hasOwnProperty("handleStoreResource")) {
+					props.handleStoreResource(props.id, resource);
+				}
 
 				this.setState({
 					isFetching: false,
 					resource: resource
 				});
+
 			}.bind(this),
 			error: function(resp) {
 
@@ -1849,11 +1869,17 @@ Fields.Resource = React.createClass({displayName: "Resource",
 	render: function() {
 
 		var props = this.props,
-			state = this.state;
+			state = this.state,
 			resource = state.resource,
 			renderResource = "Loading",
 			loading = function() {
-				renderResource = "Loading";
+				renderResource = (
+					React.createElement("progress", {className: "progress progress-striped progress-animated m-x-0 m-y-0", value: "100", max: "100"}, 
+						React.createElement("div", {className: "progress"}, 
+							React.createElement("span", {className: "progress-bar", style: { "width": "100%"}}, "Loading...")
+						)
+					)
+				);
 			};
 
 		console.log("[Fields.Resource][" + props.id + "]->render() with state:");
@@ -1861,11 +1887,19 @@ Fields.Resource = React.createClass({displayName: "Resource",
 
 		if(resource !== null && typeof resource === "object") {
 
+			/*
+			 * Are we currently fetching?
+			 */
 			if(state.isFetching) {
 				loading();
 			} else {
 				if(resource.hasOwnProperty('type')) {
+
 					var type = resource.type;
+
+					/*
+					 * Check if this resource is an image.
+					 */
 					if(type.match("image/*")) {
 						console.log("[Fields.Resource][" + props.id + "]: type matches image");
 
@@ -4721,7 +4755,12 @@ var Visit = React.createClass({displayName: "Visit",
 								resources: state.resources, 
 
 								/*
-								 * Fields to summarize at the top of each patient
+								 * Event handlers
+								 */
+								onStoreResource: this.topLevelStoreResource, 
+
+								/*
+								 * Fields to summarize in summary card
 								 */
 								summaryFields: props.summaryFields}), 
 
@@ -5579,12 +5618,14 @@ Visit.FinishModal = React.createClass({displayName: "FinishModal",
 });
 
 /*
+ * visit/Overview.jsx
+ * @author Cameron Kelley
+ *
  * Patient overview
  *
  * Accepted properties:
  * - fields: Object of ALL fields for ALL stages up to THIS CURRENT STAGE for displaying patient metadata
  * - patient: Patient object w/ data as pulled from database
- * - mini: should this display as a card instead of a column
  */
 
 Visit.Overview = React.createClass({displayName: "Overview",
@@ -5627,12 +5668,16 @@ Visit.Overview = React.createClass({displayName: "Overview",
 	/*
 	 * Build a summary list from patient data and iterable fields.
 	 */
-	buildSummary: function(iterableFields, thisPatient, displayEmptyFields) {
+	buildList: function(iterableFields, thisPatient, displayEmptyFields) {
 
 		var props = this.props,
-			state = this.state;
+			state = this.state,
+			fieldsWithData = 0;
 
-		return Object.keys(iterableFields).map(function(field, index) {
+		/*
+		 * Loop through fields.
+		 */
+		var list = Object.keys(iterableFields).map(function(field, index) {
 
 			var thisIterableField = iterableFields[field],
 				foundData = false,
@@ -5648,20 +5693,29 @@ Visit.Overview = React.createClass({displayName: "Overview",
 				&& thisPatient[field].toString().length > 0	// If string length == 0 or array length == 0, show "No data"
 			) {
 
-				// Cache this field
+				/*
+				 * Cache the current field
+				 */
 				var thisPatientField = thisPatient[field];
 
 				console.info("Patient data: %O", thisPatientField);
 
-				// We found data!
+				/*
+				 * We found data!
+				 */
 				foundData = true;
+				fieldsWithData++;
 
-				// Grab field types
+				/*
+				 * Grab field types
+				 */
 				var fieldType = thisIterableField.type;
 
 				console.log("Type: %s", fieldType);
 
-				// We might need to mutate the data
+				/*
+				 * Mutate data based on field type.
+				 */
 				switch(fieldType) {
 
 					/**
@@ -5805,20 +5859,42 @@ Visit.Overview = React.createClass({displayName: "Overview",
 				}
 			} else {
 				console.log("No data.");
-				if(!displayEmptyFields) return;
+
+				/*
+				 * If we shouldn't display empty fields,
+				 * jump to next iteration before rendering
+				 * the list item element.
+				 */
+				if(!displayEmptyFields) {
+					console.groupEnd(); // End: "Field %i..."
+					return;
+				}
 			}
+
+			console.groupEnd(); // End: "Field %i..."
+
 			//-- End patient field checking --\\
 
 
-			// Choose which icon to display
+			/*
+			 * Choose which icon to display
+			 */
 			if(!isGeneratedField) {
 				if(foundData) {
+
+					/*
+					 * check mark icon
+					 */
 					icon = (
 						React.createElement("span", {className: "text-success"}, 
 							"\u2713"
 						)
 					);
 				} else {
+
+					/*
+					 * x icon
+					 */
 					icon = (
 						React.createElement("span", {className: "text-danger"}, 
 							"\u2717"
@@ -5826,13 +5902,17 @@ Visit.Overview = React.createClass({displayName: "Overview",
 					);
 				}
 			} else {
+
+				/*
+				 * right arrow icon
+				 */
 				icon = "\u27a0";
 			}
 
-			console.groupEnd(); // End: "Field %i..."
-
-			// Render the list item
-			if(thisIterableField.type == "header") {
+			/*
+			 * Return this list item.
+			 */
+			if(thisIterableField.type === "header") {
 				return (
 					React.createElement("div", {className: "list-group-item forcept-patient-overview-header-item", key: field + "-" + index}, 
 						React.createElement("h6", {className: "text-center m-a-0"}, 
@@ -5852,6 +5932,19 @@ Visit.Overview = React.createClass({displayName: "Overview",
 			}
 
 		}.bind(this));
+
+		/*
+		 * If at least one field had data,
+		 * display the list. Otherwise, display a message.
+		 */
+		if(fieldsWithData === 0) {
+			return (
+				React.createElement("div", {className: "list-group-item"}, 
+					React.createElement("strong", null, "No data found.")
+				)
+			);
+		} else return list;
+
 	},
 
 	/*
@@ -5866,7 +5959,7 @@ Visit.Overview = React.createClass({displayName: "Overview",
 			state = this.state,
 			thisPatient = props.patient;
 
-		console.groupCollapsed("Visit.PatientsOverview: render (mini=%s)", props.mini); // keep this collapsed
+		console.groupCollapsed("Visit.PatientsOverview: render"); // keep this collapsed
 			console.log("Properties: %O", props);
 
 		/*
@@ -5897,19 +5990,23 @@ Visit.Overview = React.createClass({displayName: "Overview",
 			innerColumnSize  = "col-xs-12"; // Size of overview list within container. default assumes no summary fields
 
 		if(foundSummaryFields) {
+
 			/*
 			 * Expand master column size, divide each card into half the area
 			 */
 			masterColumnSize = "col-xs-12 col-sm-12 col-md-12 col-lg-6 col-xl-6";
 			innerColumnSize  = "col-xs-12 col-sm-6";
+
 		}
 
-		if(!state.recordVisible && !state.summaryVisible) {
+		if(!state.recordVisible || !state.summaryVisible) {
+
 			/*
-			 * If both are hidden, combine back into one column
+			 * If either are hidden, combine back into one column
 			 */
 			masterColumnSize = "col-xs-12 col-sm-12 col-md-4 col-lg-4 col-xl-3";
 			innerColumnSize  = "col-xs-12";
+
 		}
 
 		/*
@@ -5921,13 +6018,36 @@ Visit.Overview = React.createClass({displayName: "Overview",
 			 * Test for available summaryFields.
 			 */
 			 if(foundSummaryFields) {
+
 				var summaryList;
+
+				/*
+				 * If the summary is marked as visible...
+				 */
 				if(state.summaryVisible) {
+
+					/*
+					 * Build summary list
+					 */
 					summaryList = (
 						React.createElement("div", {className: "list-group list-group-flush"}, 
-							this.buildSummary(props.summaryFields, thisPatient, state.summaryRenderEmpty)
+							this.buildList(props.summaryFields, thisPatient, state.summaryRenderEmpty)
 						)
 					);
+				} else {
+
+					/*
+					 * Show a message reminding the user
+					 * that the list is hidden.
+					 */
+					summaryList = (
+		            	React.createElement("div", {className: "list-group list-group-flush"}, 
+							React.createElement("div", {className: "list-group-item text-muted"}, 
+								React.createElement("small", null, "Hidden - use the ", React.createElement("span", {className: "fa fa-chevron-up"}), " button to expand.")
+							)
+		                )
+					);
+
 				}
 
 				/*
@@ -5937,7 +6057,7 @@ Visit.Overview = React.createClass({displayName: "Overview",
 					React.createElement("div", {className: innerColumnSize}, 
 						React.createElement("div", {className: "forcept-patient-summary card"}, 
 							React.createElement("div", {className: "card-header", onClick: this.toggleCardState("summaryVisible")}, 
-								React.createElement("h5", {className: "m-b-0"}, 
+								React.createElement("h6", {className: "m-b-0"}, 
 									React.createElement("span", {className: "fa fa-user-md"}), 
 									"  Visit Summary", 
 									React.createElement("span", {className: ["pull-right fa", state.summaryVisible ? "fa-chevron-down" : "fa-chevron-up"].join(" ")})
@@ -5946,9 +6066,7 @@ Visit.Overview = React.createClass({displayName: "Overview",
 							summaryList, 
 							React.createElement("div", {className: "card-footer"}, 
 								React.createElement("div", {className: "dropdown"}, 
-									React.createElement("button", {type: "button", className: "btn btn-secondary btn-sm", "data-toggle": "dropdown"}, 
-										React.createElement("span", {className: "fa fa-cog"})
-									), 
+									React.createElement("span", {className: "fa fa-cog", "data-toggle": "dropdown"}), 
 									React.createElement("div", {className: "dropdown-menu dropdown-menu-top"}, 
 										React.createElement("h6", {className: "dropdown-header"}, "Card settings"), 
 										React.createElement("a", {className: "dropdown-item", onClick: this.toggleCardState("summaryRenderEmpty")}, 
@@ -5962,12 +6080,15 @@ Visit.Overview = React.createClass({displayName: "Overview",
 				);
 
 			} else return;
+
 		}.bind(this))();
 
 		//-- Build patientOverview card --\\
 		patientOverview = (function() {
 
-			var cardHeader, photo, recordList;
+			var cardHeader,
+				photo,
+				recordList;
 
 			/*
 			 * If the patient record is open...
@@ -5979,7 +6100,7 @@ Visit.Overview = React.createClass({displayName: "Overview",
 				 */
 				recordList = (
 	            	React.createElement("div", {className: "list-group list-group-flush"}, 
-						this.buildSummary(iterableFields, thisPatient, state.recordRenderEmpty)
+						this.buildList(iterableFields, thisPatient, state.recordRenderEmpty)
 	                )
 				);
 
@@ -6037,7 +6158,8 @@ Visit.Overview = React.createClass({displayName: "Overview",
 							photo = (
 								React.createElement(Fields.Resource, {
 									id: photoKey, 
-									resource: { type: "image/jpeg", data: photoData.data}})
+									resource: { type: "image/jpeg", data: photoData.data}, 
+									handleStoreResource: props.onStoreResource})
 							);
 
 						} else {
@@ -6046,7 +6168,8 @@ Visit.Overview = React.createClass({displayName: "Overview",
 							photo = (
 								React.createElement(Fields.Resource, {
 									id: photoKey, 
-									resource: { type: "image/jpeg"}})
+									resource: { type: "image/jpeg"}, 
+									handleStoreResource: props.onStoreResource})
 							);
 						}
 					}
@@ -6055,6 +6178,21 @@ Visit.Overview = React.createClass({displayName: "Overview",
 
 				}
 				//-- End photo search --\\
+
+			} else {
+
+				/*
+				 * Show a message reminding the user
+				 * that the list is hidden.
+				 */
+				recordList = (
+	            	React.createElement("div", {className: "list-group list-group-flush"}, 
+						React.createElement("div", {className: "list-group-item text-muted"}, 
+							React.createElement("small", null, "Hidden - use the ", React.createElement("span", {className: "fa fa-chevron-up"}), " button to expand.")
+						)
+	                )
+				);
+
 			}
 
 
@@ -6073,9 +6211,7 @@ Visit.Overview = React.createClass({displayName: "Overview",
 						recordList, 
 						React.createElement("div", {className: "card-footer"}, 
 							React.createElement("div", {className: "dropdown"}, 
-								React.createElement("span", {"data-toggle": "dropdown"}, 
-									React.createElement("span", {className: "fa fa-cog"})
-								), 
+								React.createElement("span", {className: "fa fa-cog", "data-toggle": "dropdown"}), 
 								React.createElement("div", {className: "dropdown-menu dropdown-menu-top"}, 
 									React.createElement("h6", {className: "dropdown-header"}, "Card settings"), 
 									React.createElement("a", {className: "dropdown-item", onClick: this.toggleCardState("recordRenderEmpty")}, 

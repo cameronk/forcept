@@ -1,5 +1,6 @@
 /**
  * _content.scss
+ * @author Cameron Kelley
  */
 
 #page-content {
@@ -42,8 +43,10 @@
                 }
 
                 a {
-                    // padding: 7px 22px;
-                    // padding: 8px 14px;
+                    user-select: none;
+                    -moz-user-select: none;
+                    -webkit-user-select: none;
+                    
                     border-top: 3px solid transparent;
                     padding: 6px 14px 7px 14px;
 
