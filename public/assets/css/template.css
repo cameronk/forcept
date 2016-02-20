@@ -4540,22 +4540,26 @@ a.bg-danger:focus, a.bg-danger:hover {
         opacity: 0.7;
         color: #55595c; }
       #page-content #page-header-secondary ul.nav li.nav-item a {
-        padding: 7px 14px; }
-      #page-content #page-header-secondary ul.nav li.nav-item a.nav-button {
-        opacity: 1;
-        padding: 7px 14px; }
-      #page-content #page-header-secondary ul.nav li.nav-item a.active {
-        background: none;
-        font-weight: bolder;
-        color: #55595c;
-        border-bottom: 2px solid gainsboro;
-        padding-bottom: 5px; }
-      #page-content #page-header-secondary ul.nav li.nav-item a:hover {
-        background: gainsboro;
-        border-bottom: 2px solid gainsboro;
-        padding-bottom: 5px; }
-      #page-content #page-header-secondary ul.nav li.nav-item a:hover:not(:disabled):not(.active) {
-        cursor: pointer; }
+        border-top: 3px solid transparent;
+        padding: 6px 14px 7px 14px; }
+        #page-content #page-header-secondary ul.nav li.nav-item a.nav-button {
+          opacity: 1; }
+        #page-content #page-header-secondary ul.nav li.nav-item a.active {
+          background: none;
+          font-weight: bolder;
+          color: #55595c;
+          border-top-color: #5cb3fd;
+          padding-top: 6px;
+          padding-bottom: 7px; }
+        #page-content #page-header-secondary ul.nav li.nav-item a:hover {
+          background: gainsboro;
+          border-top-color: gainsboro;
+          padding-top: 6px;
+          padding-bottom: 7px; }
+        #page-content #page-header-secondary ul.nav li.nav-item a.active:hover {
+          border-top-color: #5cb3fd; }
+        #page-content #page-header-secondary ul.nav li.nav-item a:not(:disabled):not(.active):hover {
+          cursor: pointer; }
 
 /**
  * _signin.scss
@@ -4605,6 +4609,8 @@ a.bg-danger:focus, a.bg-danger:hover {
   @media (max-width: 33.9em) {
     .forcept-patient-summary .card-header h5 {
       font-size: 0.75rem; } }
+  .forcept-patient-summary .list-group-item.forcept-patient-overview-header-item {
+    background: #f7f7f9; }
   .forcept-patient-summary .list-group-item p {
     margin: 0;
     width: 100%;
@@ -4617,8 +4623,9 @@ a.bg-danger:focus, a.bg-danger:hover {
       margin-bottom: 0; }
       .forcept-patient-summary .list-group-item dl dd ul {
         margin: 0; }
-  .forcept-patient-summary .list-group-item.forcept-patient-overview-header-item {
-    background: #f7f7f9; }
+  .forcept-patient-summary .card-footer {
+    padding-top: 0.33333rem;
+    padding-bottom: 0.33333rem; }
 
 .form-group label.file {
   font-size: 15px; }

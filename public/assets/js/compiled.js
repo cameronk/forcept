@@ -4678,13 +4678,23 @@ var Visit = React.createClass({displayName: "Visit",
 							), 
 							React.createElement("div", {className: "col-xs-10 p-t"}, 
 								React.createElement("h2", null, React.createElement("span", {className: "fa fa-user-times hidden-md-up"}), " No patients in this visit"), 
-								React.createElement("p", null, "Try adding some — click the ", React.createElement("span", {className: "fa fa-plus"}), " icon above.")
+								React.createElement("p", null, 
+									"Try adding some — click the ", React.createElement("span", {className: "fa fa-plus"}), " icon above to create a new patient, or the ", React.createElement("span", {className: "fa fa-download"}), " icon to import."
+								)
 							)
 						)
 					);
 				} else {
 					patientRow = (
-						React.createElement("div", null, "There are patients in this visit.")
+						React.createElement("div", {className: "row p-t", id: "page-header-message-block"}, 
+							React.createElement("div", {className: "col-xs-2 text-xs-right hidden-sm-down"}, 
+								React.createElement("h1", {className: "display-3"}, React.createElement("span", {className: "fa fa-user-times"}))
+							), 
+							React.createElement("div", {className: "col-xs-10 p-t"}, 
+								React.createElement("h2", null, React.createElement("span", {className: "fa fa-user-times hidden-md-up"}), " You've added ", patientKeys.length, " patient", patientKeys.length > 1 ? "s" : "", "."), 
+								React.createElement("p", null, "Click a patient tab above to enter data, or click the ", React.createElement("span", {className: "fa fa-plus"}), " icon above to add a new patient.")
+							)
+						)
 					);
 				}
 				break;
@@ -5595,7 +5605,8 @@ Visit.Overview = React.createClass({displayName: "Overview",
 			 * Summary card
 			 */
 			summaryVisible: true,
-			summaryRenderEmpty: false,
+			summaryRenderEmpty: false
+
 		};
 	},
 
@@ -5870,7 +5881,6 @@ Visit.Overview = React.createClass({displayName: "Overview",
 		delete iterableFields["last_name"];
 		delete iterableFields["photo"];
 
-
 		/*
 		 * Check if summary fields were found.
 		 */
@@ -5936,7 +5946,7 @@ Visit.Overview = React.createClass({displayName: "Overview",
 							summaryList, 
 							React.createElement("div", {className: "card-footer"}, 
 								React.createElement("div", {className: "dropdown"}, 
-									React.createElement("button", {type: "button", className: "btn btn-secondary", "data-toggle": "dropdown"}, 
+									React.createElement("button", {type: "button", className: "btn btn-secondary btn-sm", "data-toggle": "dropdown"}, 
 										React.createElement("span", {className: "fa fa-cog"})
 									), 
 									React.createElement("div", {className: "dropdown-menu dropdown-menu-top"}, 
@@ -6053,7 +6063,7 @@ Visit.Overview = React.createClass({displayName: "Overview",
 				React.createElement("div", {className: innerColumnSize}, 
 					React.createElement("div", {className: "card forcept-patient-summary"}, 
 						React.createElement("div", {className: "card-header", onClick: this.toggleCardState("recordVisible")}, 
-							React.createElement("h5", {className: "m-b-0"}, 
+							React.createElement("h6", {className: "m-b-0"}, 
 								React.createElement("span", {className: "fa fa-clipboard"}), 
 								"  Patient record", 
 								React.createElement("span", {className: ["pull-right fa", state.recordVisible ? "fa-chevron-down" : "fa-chevron-up"].join(" ")})
@@ -6063,7 +6073,7 @@ Visit.Overview = React.createClass({displayName: "Overview",
 						recordList, 
 						React.createElement("div", {className: "card-footer"}, 
 							React.createElement("div", {className: "dropdown"}, 
-								React.createElement("button", {type: "button", className: "btn btn-secondary", "data-toggle": "dropdown"}, 
+								React.createElement("span", {"data-toggle": "dropdown"}, 
 									React.createElement("span", {className: "fa fa-cog"})
 								), 
 								React.createElement("div", {className: "dropdown-menu dropdown-menu-top"}, 
@@ -6423,7 +6433,7 @@ Visit.Patient = React.createClass({displayName: "Patient",
 
 		var patientBlock = (
 			React.createElement("div", {className: patientColumnSize}, 
-				React.createElement("h3", null, 
+				React.createElement("h4", {className: "m-t"}, 
 					React.createElement("span", {className: "label label-info"}, "#", props.hasOwnProperty('index') ? props.index + 1 : "?"), 
 		            React.createElement("span", {className: "label label-default"}, props.hasOwnProperty('id') ? props.id : "?"), "  ", 
 		            React.createElement("span", {className: "hidden-xs-down"}, name), 

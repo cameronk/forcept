@@ -51,6 +51,10 @@
 
     .list-group-item {
 
+        &.forcept-patient-overview-header-item {
+            background: $gray-lightest;
+        }
+
         p {
             margin: 0;
             width: 100%;
@@ -73,9 +77,11 @@
         }
     }
 
-    .list-group-item.forcept-patient-overview-header-item {
-        background: $gray-lightest;
+    .card-footer {
+        padding-top: $spacer-y / 3;
+        padding-bottom: $spacer-y / 3;
     }
+
 }
 
 .form-group label.file {

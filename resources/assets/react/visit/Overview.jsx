@@ -25,7 +25,8 @@ Visit.Overview = React.createClass({
 			 * Summary card
 			 */
 			summaryVisible: true,
-			summaryRenderEmpty: false,
+			summaryRenderEmpty: false
+
 		};
 	},
 
@@ -300,7 +301,6 @@ Visit.Overview = React.createClass({
 		delete iterableFields["last_name"];
 		delete iterableFields["photo"];
 
-
 		/*
 		 * Check if summary fields were found.
 		 */
@@ -366,7 +366,7 @@ Visit.Overview = React.createClass({
 							{summaryList}
 							<div className="card-footer">
 								<div className="dropdown">
-									<button type="button" className="btn btn-secondary" data-toggle="dropdown">
+									<button type="button" className="btn btn-secondary btn-sm" data-toggle="dropdown">
 										<span className="fa fa-cog"></span>
 									</button>
 									<div className="dropdown-menu dropdown-menu-top">
@@ -483,19 +483,19 @@ Visit.Overview = React.createClass({
 				<div className={innerColumnSize}>
 					<div className="card forcept-patient-summary">
 						<div className="card-header" onClick={this.toggleCardState("recordVisible")}>
-							<h5 className="m-b-0">
+							<h6 className="m-b-0">
 								<span className="fa fa-clipboard"></span>
 								&nbsp; Patient record
 								<span className={["pull-right fa", state.recordVisible ? "fa-chevron-down" : "fa-chevron-up"].join(" ")}></span>
-							</h5>
+							</h6>
 						</div>
 						{photo}
 						{recordList}
 						<div className="card-footer">
 							<div className="dropdown">
-								<button type="button" className="btn btn-secondary" data-toggle="dropdown">
+								<span data-toggle="dropdown">
 									<span className="fa fa-cog"></span>
-								</button>
+								</span>
 								<div className="dropdown-menu dropdown-menu-top">
 									<h6 className="dropdown-header">Card settings</h6>
 									<a className="dropdown-item" onClick={this.toggleCardState("recordRenderEmpty")}>

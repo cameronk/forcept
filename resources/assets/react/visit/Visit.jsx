@@ -408,13 +408,23 @@ var Visit = React.createClass({
 							</div>
 							<div className="col-xs-10 p-t">
 								<h2><span className="fa fa-user-times hidden-md-up"></span> No patients in this visit</h2>
-								<p>Try adding some &mdash; click the <span className="fa fa-plus"></span> icon above.</p>
+								<p>
+									Try adding some &mdash; click the <span className="fa fa-plus"></span> icon above to create a new patient, or the <span className="fa fa-download"></span> icon to import.
+								</p>
 							</div>
 						</div>
 					);
 				} else {
 					patientRow = (
-						<div>There are patients in this visit.</div>
+						<div className="row p-t" id="page-header-message-block">
+							<div className="col-xs-2 text-xs-right hidden-sm-down">
+								<h1 className="display-3"><span className="fa fa-user-times"></span></h1>
+							</div>
+							<div className="col-xs-10 p-t">
+								<h2><span className="fa fa-user-times hidden-md-up"></span> You've added {patientKeys.length} patient{patientKeys.length > 1 ? "s" : ""}.</h2>
+								<p>Click a patient tab above to enter data, or click the <span className="fa fa-plus"></span> icon above to add a new patient.</p>
+							</div>
+						</div>
 					);
 				}
 				break;

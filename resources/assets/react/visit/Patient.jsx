@@ -320,12 +320,12 @@ Visit.Patient = React.createClass({
 
 		var patientBlock = (
 			<div className={patientColumnSize}>
-				<h3>
+				<h4 className="m-t">
 					<span className="label label-info">#{props.hasOwnProperty('index') ? props.index + 1 : "?"}</span>
 		            <span className="label label-default">{props.hasOwnProperty('id') ? props.id : "?"}</span> &nbsp;
 		            <span className="hidden-xs-down">{name}</span>
 		            <div className="hidden-sm-up p-t">{name}</div>
-		        </h3>
+		        </h4>
 		        <hr/>
 		        {fieldsDOM}
 			</div>
