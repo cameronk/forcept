@@ -16,6 +16,10 @@ var Scripts = [
     './resources/assets/react/utilities/Utilities.jsx',
     './resources/assets/react/utilities/*.jsx',
 
+    // modals
+    './resources/assets/react/modals/Modals.jsx',
+    './resources/assets/react/modals/*.jsx',
+
     // data-displays
     './resources/assets/react/data-displays/DataDisplays.jsx',
     './resources/assets/react/data-displays/*.jsx',

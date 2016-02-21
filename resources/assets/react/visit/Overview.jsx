@@ -16,19 +16,7 @@ Visit.Overview = React.createClass({
 	 */
 	getInitialState: function() {
 		return {
-
-			/*
-			 * Record card
-			 */
-			// recordVisible: true,
-			// recordRenderEmpty: true,
-
-			/*
-			 * Summary card
-			 */
-			// summaryVisible: true,
-			// summaryRenderEmpty: false
-
+			
 		};
 	},
 
@@ -53,20 +41,6 @@ Visit.Overview = React.createClass({
 		if(props.hasOwnProperty("componentStates")) {
 			this.setState(props.componentStates);
 		}
-	},
-
-	/*
-	 * Toggle card state property.
-	 * @return void
-	 */
-	toggleCardState: function(value) {
-		return function(event) {
-			var state = this.state;
-			if(state.hasOwnProperty(value)) {
-				state[value] = !state[value];
-				this.setState(state);
-			}
-		}.bind(this);
 	},
 
 	/*

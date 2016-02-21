@@ -20,7 +20,17 @@ Fields.Resource = React.createClass({
 	getInitialState: function() {
 		return {
 			isFetching: false,
-			resource:{}
+
+			/*
+			 * Cached object full of resources
+			 * we've retrieved!
+			 */
+			cached: {},
+
+			/*
+			 * Current resource object.
+			 */
+			resource: {}
 		};
 	},
 
@@ -28,6 +38,10 @@ Fields.Resource = React.createClass({
 	 *
 	 */
 	componentWillMount: function() {
+		console.group("   Fields.Resource: mount (id=%s)", this.props.id);
+			console.log("Props: %O", this.props);
+			console.log("State: %O", this.state);
+		console.groupEnd();
 		this.setValue(this.props);
 	},
 
@@ -35,6 +49,10 @@ Fields.Resource = React.createClass({
 	 *
 	 */
 	componentWillReceiveProps: function(newProps) {
+		console.group("   Fields.Resource: receiveProps (id=%s)", this.props.id);
+			console.log("Props: %O", newProps);
+			console.log("State: %O", this.state);
+		console.groupEnd();
 		this.setValue(newProps);
 	},
 
@@ -43,8 +61,9 @@ Fields.Resource = React.createClass({
 	 */
 	setValue: function(props) {
 
-		console.log("Caught setValue for resource");
-		console.log("props: %O", props);
+		console.group("  Fields.Resource: setValue (id=%s)", this.props.id);
+			console.log("Props: %O", props);
+			console.log("State: %O", this.state);
 
 		/*
 		 * To display a resource object,
@@ -55,40 +74,70 @@ Fields.Resource = React.createClass({
 			&& props.resource !== null
 			&& typeof props.resource === "object") {
 
+			var state = this.state,
+				cached = state.cached;
+
+			console.log("Cached resources: %O", cached);
+			console.log("Extended resources: %O", jQuery.extend({}, cached));
+			console.log("...keys: %s %s", Object.keys(cached), JSON.stringify(Object.keys(cached)));
+			console.log("Does %s exist in cached? %s", props.id, cached.hasOwnProperty(props.id.toString));
+			console.log("Does %s exist in cached array? %s", props.id, Object.keys(cached).indexOf(props.id));
+
 			/*
-			 * Push resource object to state.
+			 * If we already have the resource cached...
 			 */
-			this.setState({
-				resource: props.resource
-			}, function() {
+			if(cached.hasOwnProperty(props.id)) {
+				this.setState({
+					resource: cached[props.id]
+				});
+			} else {
 
 				/*
-				 * Load data for resource if none found in resource object
+				 * Check for a valid data parameter.
 				 */
-				if(!props.resource.hasOwnProperty('data') || props.resource.data.length === 0) {
-					console.log("HEADS UP: data not found for resource!");
-					console.log(props);
-					console.log(props.resource);
-					console.log("typeof1: %s", typeof props.resource);
-					console.log("hasOwnProperty('data'): %s", props.resource.hasOwnProperty('data'));
-					console.log("typeof2: %s", typeof props.resource.data);
-					console.log("typeof3: %s", typeof props.resource['data']);
-					if(props.resource.hasOwnProperty('data'))
-						console.log("length: %s", props.resource.data.length);
+				if(props.resource.hasOwnProperty('data') && props.resource.data.length > 0) {
+					cached[props.id] = props.resource;
+					this.setState({
+						resource: props.resource,
+						cached: cached
+					});
+				} else {
 					this.fetchData();
 				}
 
-			}.bind(this));
+			}
+
+			// /*
+			//  * Push resource object to state.
+			//  */
+			// this.setState({
+			// 	resource: props.resource
+			// }, function() {
+			//
+			// 	var state = this.state;
+			//
+			// 	/*
+			// 	 * Load data for resource if none found in resource object
+			// 	 */
+			// 	if(!state.resource.hasOwnProperty('data') || state.resource.data.length === 0) {
+			// 		this.fetchData();
+			// 	}
+			//
+			// }.bind(this));
 
 		} else {
 
 			/*
-			 * Otherwise, reset state back to no resources
+			 * Otherwise, reset state back to empty resource
 			 */
 			this.setState({
 				resource: {}
 			});
+
 		}
+
+		console.groupEnd();
+
 	},
 
 	/*
@@ -114,13 +163,17 @@ Fields.Resource = React.createClass({
 					resource['type'] = resp.type;
 					resource['data'] = resp.data;
 
+				var cached = state.cached;
+					cached[props.id] = resource;
+
 				if(props.hasOwnProperty("handleStoreResource")) {
-					props.handleStoreResource(props.id, resource);
+					// props.handleStoreResource(props.id, resource);
 				}
 
 				this.setState({
 					isFetching: false,
-					resource: resource
+					resource: resource,
+					cached: cached,
 				});
 
 			}.bind(this),

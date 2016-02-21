@@ -46,7 +46,7 @@
                     user-select: none;
                     -moz-user-select: none;
                     -webkit-user-select: none;
-                    
+
                     border-top: 3px solid transparent;
                     padding: 6px 14px 7px 14px;
 
@@ -63,7 +63,7 @@
                         padding-bottom: 7px;
                     }
 
-                    &:hover {
+                    &:not([disabled]):hover {
                         background: $forcept-content-header-secondary;
                         border-top-color: $forcept-content-header-secondary;
                         padding-top: 6px;
@@ -74,7 +74,7 @@
                         border-top-color: lighten($brand-primary, 25%);
                     }
 
-                    &:not(:disabled):not(.active):hover {
+                    &:not([disabled]):not(.active):hover {
                         cursor: pointer;
                     }
                 }

@@ -1,5 +1,6 @@
 /**
- * _stage-visits.scss
+ * visit.scss
+ * @author Cameron Kelley
  */
 
 .forcept-patient-nametag {
@@ -92,6 +93,27 @@
     }
 
 }
+
+
+.forcept-visit-submit-overlay {
+
+    position: absolute;
+    width: 100%;
+    z-index: 999;
+    margin-top: $spacer-y;
+
+    & > div {
+        padding: $spacer-x;
+        box-shadow: 0 0 12px 0.5px rgba(0,0,0,0.3);
+        background: rgba(255,255,255,0.9);
+
+        progress {
+            margin-top: $spacer-y;
+            margin-bottom: 0;
+        }
+    }
+}
+
 
 .form-group label.file {
 	font-size: 15px;

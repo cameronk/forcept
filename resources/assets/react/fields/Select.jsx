@@ -74,8 +74,6 @@ Fields.Select = React.createClass({
 					optionsKeys = [];
 				}
 
-				console.log("Options keys: %O", optionsKeys);
-
 				// Push all option values to an array.
 				optionsKeys.map(function(key) {
 					optionsValues.push(options[key].value);

@@ -37,15 +37,16 @@ var Visit = React.createClass({
 			/*
 			 * Display states:
 			 *
-			 * "default" => show patients or messages as necessary
-			 * "loading" => display loading gif somewhere
+			 * "default" 	=> show patients or messages as necessary
+			 * "submitted" 	=> we just finished moving a visit
+			 * "loading" 	=> display loading gif in header bar
+			 * "submitting" => display submitting overlay
 			 */
 			displayState: "default",
 			isValid: false,
-			// isSubmitting: false,
 
 			progress: 0,
-			confirmFinishVisitResponse: null,
+			movedResponse: null,
 
 			/*
 			 * Visible item values:
@@ -75,8 +76,7 @@ var Visit = React.createClass({
 			},
 
 			patients: {},
-			resources: {},
-			prescriptions: {},
+			resources: {}
 		};
 	},
 
@@ -130,6 +130,7 @@ var Visit = React.createClass({
 
 	/*
 	 * Toggle the state of a visit sub-component.
+	 * @return void
 	 */
 	toggleComponentState: function(component, value) {
 		return function(event) {
@@ -152,9 +153,10 @@ var Visit = React.createClass({
 
 		var props = this.props;
 
-		// Update state to submitting
+		/*
+		 * change displayState to submitting.
+		 */
 		this.setState({
-			// isSubmitting: true,
 			displayState: "submitting"
 		});
 
@@ -163,7 +165,7 @@ var Visit = React.createClass({
 			.modal('hide')
 			.on('hidden.bs.modal', function(e) {
 				console.log("Modal hidden");
-				modalObject.setState(modalObject.getInitialState());
+				// modalObject.setState(modalObject.getInitialState());
 				modalObject.resetSelectState();
 			});
 
@@ -179,7 +181,9 @@ var Visit = React.createClass({
 			},
 			xhr: function() {
 
-				// Grab window xhr object
+				/*
+				 * Grab window xhr object
+				 */
 				var xhr = new window.XMLHttpRequest();
 
 				/*
@@ -193,19 +197,35 @@ var Visit = React.createClass({
 		            }
 		       }.bind(this), false);
 
-				// Spit it back
 				return xhr;
 
 			}.bind(this),
 			success: function(resp) {
-				this.setState(this.getInitialState());
+				this.setState({
+					/*
+					 * Reset progress back to 0
+					 */
+					progress: 0,
+
+					/*
+					 * Remove patients since we just submitted them
+					 */
+					patients: {},
+
+					/*
+					 * Display a message
+					 */
+					displayState: "submitted",
+					visibleItem: 0
+				});
 			}.bind(this),
 			error: function(resp) {
 
 			},
 			complete: function(resp) {
+				console.log("Complete: %O", resp);
 				this.setState({
-					confirmFinishVisitResponse: resp.responseJSON
+					movedResponse: resp.responseJSON
 				});
 			}.bind(this)
 		});
@@ -227,7 +247,6 @@ var Visit = React.createClass({
 			console.log(typeof patient.id);
 			patients[patient.id] = Utilities.applyGeneratedFields(patient);
 			this.setState({
-				confirmFinishVisitResponse: null,
 				patients: patients,
 				visibleItem: patient.id
 			}, this.validate); // Validate after updating patients
@@ -242,7 +261,6 @@ var Visit = React.createClass({
 			displayState: state
 		});
 	},
-
 
 	/*
 	 * Handle importing of a patient object.
@@ -302,7 +320,6 @@ var Visit = React.createClass({
 					console.log(resp);
 				},
 				complete: function() {
-					// this.isLoading(false);
 					this.setDisplayState("default");
 				}.bind(this)
 			});
@@ -310,11 +327,14 @@ var Visit = React.createClass({
 	},
 
 	/*
-	 *
+	 * Display the finish modal if the container is valid.
+	 * @return void
 	 */
-	handleFinishVisit: function( isDoneLoading ) {
-		$("#visit-finish-modal")
-			.modal('show');
+	handleFinishVisit: function() {
+		if(this.state.isValid) {
+			$("#visit-finish-modal")
+				.modal('show');
+		}
 	},
 
 	/*
@@ -335,8 +355,11 @@ var Visit = React.createClass({
 	 * Check the validity of the visit.
 	 */
 	validate: function() {
+		var valid = Object.keys(this.state.patients).length > 0;
+		console.group("Visit.Visit: validate (valid=%s)", valid);
+		console.groupEnd();
 		this.setState({
-			isValid: Object.keys(this.state.patients).length > 0
+			isValid: valid
 		});
 	},
 
@@ -398,13 +421,13 @@ var Visit = React.createClass({
 		/*
 		 * Instantiate ALL the things
 		 */
-		var patientRow,
+		var patientRow, submittingOverlay,
 			createPatientControl, importPatientControl,
 			loadingItem, importingItem,
 			props = this.props,
 			state = this.state,
 			patientKeys = Object.keys(state.patients),
-			controlsDisabled = (state.displayState !== "default")
+			controlsDisabled = (["default", "submitted"].indexOf(state.displayState) === -1),
 			submitDisabled 	 = (controlsDisabled || !state.isValid);
 
 		/*
@@ -444,19 +467,42 @@ var Visit = React.createClass({
 				 * Check if we have any patients in this visit.
 				 */
 				if(patientKeys.length === 0) {
-					patientRow = (
-						<div className="row p-t" id="page-header-message-block">
-							<div className="col-xs-2 text-xs-right hidden-sm-down">
-								<h1 className="display-3"><span className="fa fa-user-times"></span></h1>
+
+					/*
+					 * If we just finished submitting,
+					 * display a different message.
+					 */
+					if(state.displayState === "submitted" && state.movedResponse !== null) {
+						patientRow = (
+							<div className="row p-t" id="page-header-message-block">
+								<div className="col-xs-2 text-xs-right hidden-sm-down">
+									<h1 className="display-3"><span className="fa fa-check"></span></h1>
+								</div>
+								<div className="col-xs-10 p-t">
+									<h2><span className="fa fa-check hidden-md-up"></span> Visit was {state.movedResponse.toStage === "__checkout__" ? "checked out" : "moved"}.</h2>
+									<p>
+										{state.movedResponse.toStage !== "__checkout__" ? (
+											<span>You can <a href={"/visits/stage/" + state.movedResponse.toStage + "/handle/" + state.movedResponse.visitID}>follow this visit</a> to the next stage. </span>
+										) : "" }
+									</p>
+								</div>
 							</div>
-							<div className="col-xs-10 p-t">
-								<h2><span className="fa fa-user-times hidden-md-up"></span> No patients in this visit</h2>
-								<p>
-									Try adding some &mdash; click the <span className="fa fa-plus"></span> icon above to create a new patient, or the <span className="fa fa-download"></span> icon to import.
-								</p>
+						);
+					} else {
+						patientRow = (
+							<div className="row p-t" id="page-header-message-block">
+								<div className="col-xs-2 text-xs-right hidden-sm-down">
+									<h1 className="display-3"><span className="fa fa-user-times"></span></h1>
+								</div>
+								<div className="col-xs-10 p-t">
+									<h2><span className="fa fa-user-times hidden-md-up"></span> No patients in this visit</h2>
+									<p>
+										Try adding some &mdash; click the <span className="fa fa-plus"></span> icon above to create a new patient, or the <span className="fa fa-download"></span> icon to import.
+									</p>
+								</div>
 							</div>
-						</div>
-					);
+						);
+					}
 				} else {
 					patientRow = (
 						<div className="row p-t" id="page-header-message-block">
@@ -587,6 +633,20 @@ var Visit = React.createClass({
 		 * Render additional components based on current "displayState".
 		 */
 		switch(state.displayState) {
+			case "submitting":
+				submittingOverlay = (
+					<div className="forcept-visit-submit-overlay row">
+						<div className="col-xs-10 col-xs-offset-1 col-sm-8 col-sm-offset-2 col-md-4 col-md-offset-4 col-xl-2 col-xl-offset-5">
+							<h5>Working... <span className="label label-success label-pill pull-right">{state.progress}%</span></h5>
+							<progress className="progress" value={state.progress} max="100">
+								<div className="progress">
+									<span className="progress-bar" style={{ width: state.progress + "%" }}>{state.progress}%</span>
+								</div>
+							</progress>
+						</div>
+					</div>
+				);
+				break;
 			case "loading":
 				loadingItem = (
 					<li className="nav-item">
@@ -603,7 +663,7 @@ var Visit = React.createClass({
 			<div className="container-fluid">
 
 				{/** Move visit modal **/}
-				<Visit.FinishModal
+				<Modals.FinishVisit
 					stages={props.stages}
 					onConfirmFinishVisit={this.handleConfirmFinishVisit} />
 
@@ -639,8 +699,7 @@ var Visit = React.createClass({
 								{createPatientControl}
 								<li className="nav-item pull-right">
 									<a className={"nav-link nav-button text-success" + (submitDisabled ? " disabled" : "")} disabled={submitDisabled} onClick={this.handleFinishVisit}>
-										<span className="fa fa-level-up"></span>
-										<span className="hidden-md-down">&nbsp; Move visit</span>
+										<span className="fa fa-level-up"></span> &nbsp; Move visit
 									</a>
 								</li>
 
@@ -649,6 +708,7 @@ var Visit = React.createClass({
 				</div>
 
 				{/** Visible patient **/}
+				{submittingOverlay}
 				{patientRow}
 
 			</div>

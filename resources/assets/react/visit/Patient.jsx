@@ -14,6 +14,7 @@ Visit.Patient = React.createClass({
 	 *
 	 */
 	handleFieldChange: function(fieldID, value) {
+		console.log("HANDLEFIELDCHANGE");
 		// Continue bubbling event from Fields.whatever to top-level Visit container
 		// (this element passes along the patient ID to modify)
 		this.props.onPatientDataChange(this.props.id, fieldID, value);
@@ -23,6 +24,7 @@ Visit.Patient = React.createClass({
 	 *
 	 */
 	handleStoreResource: function(resourceID, resource) {
+		console.log("handleStoreResource");
 		// Continue bubbling event from Fields.whatever to top-level Visit container
 		// (this element passes along the patient ID to modify)
 		this.props.onStoreResource(resourceID, resource);
