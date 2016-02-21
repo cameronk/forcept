@@ -14,6 +14,7 @@
         span.title-content {
             padding-right: 5px;
         }
+
     }
 
 }
@@ -65,8 +66,16 @@
         dl {
             margin-bottom: 0;
 
+            dt {
+
+                span.icon {
+                    padding-right: 12px;
+                }
+
+            }
+
             dd {
-                padding-left: 26px;
+                padding-left: 25px;
                 margin-bottom: 0;
 
                 ul {
@@ -86,23 +95,6 @@
 
 .form-group label.file {
 	font-size: 15px;
-}
-
-div.forcept-patient-photo-contain {
-	max-height: 300px;
-	overflow-y: auto;
-	overflow-x: hidden;
-    &.thumbnail {
-        padding: .25rem;
-        line-height: 1.5;
-        background-color: #fff;
-        border: 1px solid #ddd;
-        border-radius: .25rem;
-        margin: 0 auto;
-    }
-	img {
-		width: 100%;
-	}
 }
 
 .forcept-stagevisits-patient-name {

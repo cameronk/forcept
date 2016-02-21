@@ -20,16 +20,39 @@ Visit.Overview = React.createClass({
 			/*
 			 * Record card
 			 */
-			recordVisible: true,
-			recordRenderEmpty: true,
+			// recordVisible: true,
+			// recordRenderEmpty: true,
 
 			/*
 			 * Summary card
 			 */
-			summaryVisible: true,
-			summaryRenderEmpty: false
+			// summaryVisible: true,
+			// summaryRenderEmpty: false
 
 		};
+	},
+
+	/*
+	 *
+	 */
+	componentWillMount: function() {
+		this.setValue(this.props);
+	},
+
+	/*
+	 *
+	 */
+	componentWillReceiveProps: function(newProps) {
+		this.setValue(newProps);
+	},
+
+	/*
+	 *
+	 */
+	setValue: function(props) {
+		if(props.hasOwnProperty("componentStates")) {
+			this.setState(props.componentStates);
+		}
 	},
 
 	/*
@@ -49,7 +72,7 @@ Visit.Overview = React.createClass({
 	/*
 	 * Build a summary list from patient data and iterable fields.
 	 */
-	buildList: function(iterableFields, thisPatient, displayEmptyFields) {
+	buildList: function(iterableFields, thisPatient, compact) {
 
 		var props = this.props,
 			state = this.state,
@@ -246,7 +269,7 @@ Visit.Overview = React.createClass({
 				 * jump to next iteration before rendering
 				 * the list item element.
 				 */
-				if(!displayEmptyFields) {
+				if(compact) {
 					console.groupEnd(); // End: "Field %i..."
 					return;
 				}
@@ -256,39 +279,6 @@ Visit.Overview = React.createClass({
 
 			//-- End patient field checking --\\
 
-
-			/*
-			 * Choose which icon to display
-			 */
-			if(!isGeneratedField) {
-				if(foundData) {
-
-					/*
-					 * check mark icon
-					 */
-					icon = (
-						<span className="text-success">
-							{"\u2713"}
-						</span>
-					);
-				} else {
-
-					/*
-					 * x icon
-					 */
-					icon = (
-						<span className="text-danger">
-							{"\u2717"}
-						</span>
-					);
-				}
-			} else {
-
-				/*
-				 * right arrow icon
-				 */
-				icon = "\u27a0";
-			}
 
 			/*
 			 * Return this list item.
@@ -302,11 +292,63 @@ Visit.Overview = React.createClass({
 					</div>
 				);
 			} else {
+
+				/*
+				 * Only display icons when we're
+				 * displaying ALL fields
+				 */
+				if(!compact) {
+
+					/*
+					 * Choose which icon to display
+					 */
+					if(!isGeneratedField) {
+						if(foundData) {
+
+							/*
+							 * check mark icon
+							 */
+							icon = (
+								<span className="icon text-success">
+									{"\u2713"}
+								</span>
+							);
+						} else {
+
+							/*
+							 * x icon
+							 */
+							icon = (
+								<span className="icon text-danger">
+									{"\u2717"}
+								</span>
+							);
+						}
+					} else {
+
+						/*
+						 * right arrow icon
+						 */
+						icon = (
+							<span className="icon">
+								{"\u27a0"}
+							</span>
+						);
+					}
+
+				}
+
+
 				return (
 					<div className="list-group-item" key={field + "-" + index}>
 						<dl>
-							<dt>{icon} &nbsp; {thisIterableField.name}</dt>
-							<dd>{foundData ? value : ""}</dd>
+							<dt>
+								{icon}
+								{thisIterableField.name}
+							</dt>
+							<dd className={compact ? "p-l-0" : ""}>
+								{foundData ? value : ""}
+							</dd>
 						</dl>
 					</div>
 				);
@@ -380,7 +422,7 @@ Visit.Overview = React.createClass({
 
 		}
 
-		if(!state.recordVisible || !state.summaryVisible) {
+		if(!state["patientRecord"].visible || !state["visitSummary"].visible) {
 
 			/*
 			 * If either are hidden, combine back into one column
@@ -405,14 +447,14 @@ Visit.Overview = React.createClass({
 				/*
 				 * If the summary is marked as visible...
 				 */
-				if(state.summaryVisible) {
+				if(state.visitSummary.visible) {
 
 					/*
 					 * Build summary list
 					 */
 					summaryList = (
 						<div className="list-group list-group-flush">
-							{this.buildList(props.summaryFields, thisPatient, state.summaryRenderEmpty)}
+							{this.buildList(props.summaryFields, thisPatient, state.visitSummary.compact)}
 						</div>
 					);
 				} else {
@@ -437,21 +479,24 @@ Visit.Overview = React.createClass({
 				return (
 					<div className={innerColumnSize}>
 						<div className="forcept-patient-summary card">
-							<div className="card-header" onClick={this.toggleCardState("summaryVisible")}>
+							<div className="card-header" onClick={props.toggleComponentState("visitSummary", "visible")}>
 								<h6 className="m-b-0">
 									<span className="fa fa-user-md"></span>
 									&nbsp; Visit Summary
-									<span className={["pull-right fa", state.summaryVisible ? "fa-chevron-down" : "fa-chevron-up"].join(" ")}></span>
+									<span className={["pull-right fa", state.visitSummary.visible ? "fa-chevron-down" : "fa-chevron-up"].join(" ")}></span>
 								</h6>
 							</div>
 							{summaryList}
 							<div className="card-footer">
 								<div className="dropdown">
-									<span className="fa fa-cog" data-toggle="dropdown"></span>
+									<button type="button" className="btn btn-link p-x-0 p-y-0" data-toggle="dropdown">
+										<span className="fa fa-cog"></span>
+									</button>
 									<div className="dropdown-menu dropdown-menu-top">
-										<h6 className="dropdown-header">Card settings</h6>
-										<a className="dropdown-item" onClick={this.toggleCardState("summaryRenderEmpty")}>
-											{state.summaryRenderEmpty ? "Hide empty fields" : "Display empty fields"}
+										<h6 className="dropdown-header">Display settings</h6>
+										<a className="dropdown-item" onClick={props.toggleComponentState("visitSummary", "compact")}>
+											<span className={"fa fa-fw m-r " + (state["visitSummary"].compact ? "fa-eye" : "fa-eye-slash")}></span>
+											{state["visitSummary"].compact ? "Use checklist mode" : "Use compact mode"}
 										</a>
 									</div>
 								</div>
@@ -474,91 +519,18 @@ Visit.Overview = React.createClass({
 			/*
 			 * If the patient record is open...
 			 */
-			if(state.recordVisible) {
+			if(state.patientRecord.visible) {
 
 				/*
 				 * Build list for patient record
 				 */
 				recordList = (
 	            	<div className="list-group list-group-flush">
-						{this.buildList(iterableFields, thisPatient, state.recordRenderEmpty)}
+						{this.buildList(iterableFields, thisPatient, state.patientRecord.compact)}
 	                </div>
 				);
 
-				//-- Begin search for patient photo --\\
-				if(thisPatient.hasOwnProperty('photo') && thisPatient.photo !== null) {
-
-					var resources = props.hasOwnProperty("resources") ? props.resources : {}, // Grab resources passed as properties to Overview
-						resourceKeys = []; // Array of resource IDs to search for / fetch
-
-					console.group("Photo:");
-						console.log("This patient has a photo property.");
-
-					try {
-						if(typeof thisPatient.photo === "string") {
-							console.log("The photo property is a STRING");
-
-							// Attempt to...
-							try {
-								// ...parse JSON from database as string
-								resourceKeys = JSON.parse(thisPatient.photo);
-							} catch(e) {
-								console.error("Failed to parse photo string into JSON array.");
-								resourceKeys = [];
-							}
-
-						} else {
-							console.log("The photo property is NOT a STRING");
-							console.info("Photo property type: %s", typeof thisPatient.photo);
-
-							// Otherwise, just push the object
-							resourceKeys = thisPatient.photo;
-						}
-					} catch(e) {
-						console.error("Some sort of error parsing photo string (not a JSON error...)");
-						resourceKeys = [];
-					}
-
-					// If we found some resources to load...
-					if(resourceKeys.length > 0) {
-
-						// Since Photo field only allows one upload, we'll grab the first key in the array
-						// (it's probably the only key...)
-						var photoKey = resourceKeys[0];
-
-						console.log("Photo resource ID is %s, checking resource storage...", photoKey);
-
-						// Check if we have this resource in storage already.
-						if(resources.hasOwnProperty(photoKey)) {
-
-							// For the immutable Photo input, the one and only file is the patient photo.
-							var photoData = resources[photoKey];
-
-							console.log("Photo found in preloaded resources: %O", photoData);
-
-							photo = (
-								<Fields.Resource
-									id={photoKey}
-									resource={{ type: "image/jpeg", data: photoData.data}}
-									handleStoreResource={props.onStoreResource} />
-							);
-
-						} else {
-							console.log("Photo not found in resources, creating resource object with instructions to grab resource via AJAX");
-
-							photo = (
-								<Fields.Resource
-									id={photoKey}
-									resource={{ type: "image/jpeg" }}
-									handleStoreResource={props.onStoreResource} />
-							);
-						}
-					}
-
-					console.groupEnd(); // End "Photo:"
-
-				}
-				//-- End photo search --\\
+				photo = Utilities.getPatientPhotoAsResource(thisPatient, props.hasOwnProperty("resources") ? props.resources : {}, this.handleStoreResource);
 
 			} else {
 
@@ -581,22 +553,25 @@ Visit.Overview = React.createClass({
 			var patientCardDOM = (
 				<div className={innerColumnSize}>
 					<div className="card forcept-patient-summary">
-						<div className="card-header" onClick={this.toggleCardState("recordVisible")}>
+						<div className="card-header" onClick={props.toggleComponentState("patientRecord", "visible")}>
 							<h6 className="m-b-0">
 								<span className="fa fa-clipboard"></span>
 								&nbsp; Patient record
-								<span className={["pull-right fa", state.recordVisible ? "fa-chevron-down" : "fa-chevron-up"].join(" ")}></span>
+								<span className={["pull-right fa", state.patientRecord.visible ? "fa-chevron-down" : "fa-chevron-up"].join(" ")}></span>
 							</h6>
 						</div>
 						{photo}
 						{recordList}
 						<div className="card-footer">
 							<div className="dropdown">
-								<span className="fa fa-cog" data-toggle="dropdown"></span>
+								<button type="button" className="btn btn-link p-x-0 p-y-0" data-toggle="dropdown">
+									<span className="fa fa-cog"></span>
+								</button>
 								<div className="dropdown-menu dropdown-menu-top">
-									<h6 className="dropdown-header">Card settings</h6>
-									<a className="dropdown-item" onClick={this.toggleCardState("recordRenderEmpty")}>
-										{state.recordRenderEmpty ? "Hide empty fields" : "Display empty fields"}
+									<h6 className="dropdown-header">Display settings</h6>
+									<a className="dropdown-item" onClick={props.toggleComponentState("patientRecord", "compact")}>
+										<span className={"fa fa-fw m-r " + (state.patientRecord.compact ? "fa-eye" : "fa-eye-slash")}></span>
+										{state.patientRecord.compact ? "Use checklist mode" : "Use compact mode"}
 									</a>
 								</div>
 							</div>

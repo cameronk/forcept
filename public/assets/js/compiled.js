@@ -1,4 +1,297 @@
 /**
+ * utilities/Utilities.jsx
+ * @author Cameron Kelley
+ */
+
+/*
+ * Add debug data to tooltip
+ */
+function __debug() {
+	var compile = "";
+	for(var i = 0; i < arguments.length; i++) {
+		var data = arguments[i];
+		if(typeof data == "object" && data !== null) {
+			data = JSON.stringify(data, null, "  ");
+		}
+		compile += (data + "<br/><br/>");
+	}
+	$("#forcept-debug-content pre").html(compile);
+}
+
+function isTrue(statement) {
+	switch(typeof statement) {
+		case "boolean":
+			return statement === true;
+		case "string":
+			return statement === "true";
+		default:
+			return false;
+	}
+}
+
+function base64bytes(string) {
+	var splitHeadAndData = string.split(',');
+	return Math.round( (splitHeadAndData[1].length - splitHeadAndData[0].length) * 0.75 );
+}
+
+function getFileSize(n,a,b,c,d){
+	return (a=a?[1e3,'k','B']:[1024,'K','iB'],b=Math,c=b.log,
+	d=c(n)/c(a[0])|0,n/b.pow(a[0],d)).toFixed(2)
+	+' '+(d?(a[1]+'MGTPEZY')[--d]+a[2]:'Bytes');
+}
+
+
+var Utilities = {
+
+	/*
+	 * Calculate aged based on a given date
+	 */
+	calculateAge: function(date) {
+		// Setup date objects
+		var birthday = +new Date(date),
+			now = Date.now(),
+			age = null;
+
+		// Make sure the birthday is in the past
+		if(birthday < now) {
+
+			// Start by trying to calculate in years
+			var years = ~~((now - birthday) / (31557600000)); // 24 * 3600 * 365.25 * 1000
+
+			// If the birthday is < 1 year, use months
+			if(years === 0) {
+				var months = ((now - birthday) / (2629800000)); // 24 * 3600 * 365.25 * 1000 all over 12
+				age = ~~months !== 0 ? months.toFixed(1) + " months" : "<1 month"; // If <1 month, show "<1" instead of zero
+			} else {
+				age = years + " years";
+			}
+
+		}
+
+		return age;
+	},
+
+
+	/*
+	 * Handle automatic generation of field data
+	 */
+	applyGeneratedFields: function( patient ) {
+
+		// Patient full name
+		var fullName = null;
+		var abbrName = null;
+
+		if(
+			typeof patient.first_name === "string"
+			&& typeof patient.last_name === "string"
+			&& patient.first_name.length > 0
+			&& patient.last_name.length > 0
+		) {
+			fullName = patient.first_name + " " + patient.last_name;
+			abbrName = patient.first_name[0].toUpperCase() + " " + patient.last_name;
+		} else {
+			fullName = "Unnamed Patient";
+			abbrName = "Unnamed Patient";
+			if(typeof patient.first_name === "string" && patient.first_name.length > 0 ) {
+				fullName = patient.first_name;
+				abbrName = patient.first_name;
+			}
+			if(typeof patient.last_name === "string" && patient.last_name.length > 0) {
+				fullName = patient.last_name;
+				abbrName = patient.last_name;
+			}
+		}
+
+		patient.full_name = fullName;
+		patient.abbr_name = abbrName;
+
+
+		// Age
+		var age = null,
+			birthday = patient.birthday;
+		if(
+			typeof birthday === "string"
+			&& birthday.length > 0
+		) {
+			age = Utilities.calculateAge(birthday);
+		}
+
+		patient.age = age;
+
+		// Return patient object
+		return patient;
+	},
+
+	/*
+	 * Get full name of patient (or "Unnamed Patient") if none defined
+	 */
+	getFullName: function(thisPatient) {
+		if(thisPatient.hasOwnProperty('full_name') && thisPatient.full_name !== null && thisPatient.full_name.length > 0) {
+			return thisPatient.full_name;
+		} else {
+			// Try to buiild one
+			var checkName = [];
+			if(thisPatient.hasOwnProperty("first_name") && thisPatient.first_name !== null && thisPatient.first_name.length > 0) {
+				checkName.push(thisPatient.first_name);
+			}
+			if(thisPatient.hasOwnProperty("last_name") && thisPatient.last_name !== null && thisPatient.last_name.length > 0) {
+				checkName.push(thisPatient.last_name);
+			}
+
+			return checkName.length > 0 ? checkName.join(" ") : "Unnamed Patient";
+		}
+	},
+
+	timeAgo: function(time) {
+			var units = [
+			{ name: "second", limit: 60, in_seconds: 1 },
+			{ name: "minute", limit: 3600, in_seconds: 60 },
+			{ name: "hour", limit: 86400, in_seconds: 3600  },
+			{ name: "day", limit: 604800, in_seconds: 86400 },
+			{ name: "week", limit: 2629743, in_seconds: 604800  },
+			{ name: "month", limit: 31556926, in_seconds: 2629743 },
+			{ name: "year", limit: null, in_seconds: 31556926 }
+		];
+		var diff = (new Date() - new Date(time*1000)) / 1000;
+		if (diff < 5) return "now";
+
+		var i = 0, unit;
+		while (unit = units[i++]) {
+			if (diff < unit.limit || !unit.limit){
+				var diff =  Math.floor(diff / unit.in_seconds);
+				return diff + " " + unit.name + (diff>1 ? "s" : "");
+			}
+		};
+	},
+
+	/*
+	 * Eloquent returns some boolean fields as strings.
+	 * Use this function to check if a statement is true.
+	 * if the value is (string) "true" : (string) "false"
+	 */
+	isTrue: function(statement) {
+		switch(typeof statement) {
+			case "boolean":
+				return statement === true;
+			case "string":
+				return statement === "true";
+			default:
+				return false;
+		}
+	},
+
+	/*
+	 *
+	 */
+	getPatientPhotoAsResource: function(thisPatient, resources, handleStoreResource, resourceClassName) {
+
+		var photo;
+		resources = resources || {};
+		handleStoreResource = handleStoreResource || function() { };
+		resourceClassName = resourceClassName || "";
+
+		if(thisPatient
+			&& thisPatient.hasOwnProperty('photo')
+			&& thisPatient.photo !== null) {
+
+			var resourceKeys = []; // Array of resource IDs to search for / fetch
+
+			console.group("Photo:");
+				console.log("This patient has a photo property.");
+
+			try {
+				if(typeof thisPatient.photo === "string") {
+					console.log("The photo property is a STRING");
+
+					/*
+					 * Attempt to parse JSON from database as string
+					 */
+					try {
+						resourceKeys = JSON.parse(thisPatient.photo);
+					} catch(e) {
+						console.error("Failed to parse photo string into JSON array.");
+						resourceKeys = [];
+					}
+
+				} else {
+					console.log("The photo property is NOT a STRING");
+					console.info("Photo property type: %s", typeof thisPatient.photo);
+
+					// Otherwise, just push the object
+					resourceKeys = thisPatient.photo;
+				}
+			} catch(e) {
+				console.error("Some sort of error parsing photo string (not a JSON error...)");
+				resourceKeys = [];
+			}
+
+			// If we found some resources to load...
+			if(resourceKeys.length > 0) {
+
+				// Since Photo field only allows one upload, we'll grab the first key in the array
+				// (it's probably the only key...)
+				var photoKey = resourceKeys[0];
+
+				console.log("Photo resource ID is %s, checking resource storage...", photoKey);
+
+				// Check if we have this resource in storage already.
+				if(resources.hasOwnProperty(photoKey)) {
+
+					// For the immutable Photo input, the one and only file is the patient photo.
+					var photoData = resources[photoKey];
+
+					console.log("Photo found in preloaded resources: %O", photoData);
+
+					photo = (
+						React.createElement(Fields.Resource, {
+							id: photoKey, 
+							className: resourceClassName, 
+							resource: { type: "image/jpeg", data: photoData.data}, 
+							handleStoreResource: handleStoreResource})
+					);
+
+				} else {
+					console.log("Photo not found in resources, creating resource object with instructions to grab resource via AJAX");
+
+					photo = (
+						React.createElement(Fields.Resource, {
+							id: photoKey, 
+							className: resourceClassName, 
+							resource: { type: "image/jpeg"}, 
+							handleStoreResource: handleStoreResource})
+					);
+				}
+			}
+
+			console.groupEnd(); // End "Photo:"
+
+		}
+
+		return photo;
+	}
+};
+
+/**
+ * utilities/Prototype.jsx
+ * @author Cameron Kelley
+ *
+ * Modify Javascript prototypes to add functionality.
+ */
+
+if (!String.prototype.format) {
+    String.prototype.format = function() {
+        var str = this.toString();
+        if (!arguments.length)
+            return str;
+        var args = typeof arguments[0],
+            args = (("string" == args || "number" == args) ? arguments : arguments[0]);
+        for (arg in args)
+            str = str.replace(RegExp("\\{" + arg + "\\}", "gi"), args[arg]);
+        return str;
+    }
+}
+
+/**
  * data-displays/DataDisplays.jsx
  */
 
@@ -323,8 +616,8 @@ DataDisplays.PatientAggregate = React.createClass({displayName: "PatientAggregat
  */
 
 var Fields = {
-	labelColumnClasses: "col-xl-3 col-lg-4 col-md-3 col-sm-3 col-xs-12",
-	inputColumnClasses: "col-xl-9 col-lg-8 col-md-9 col-sm-9 col-xs-12"
+	labelColumnClasses: "col-sm-4 col-xs-12",
+	inputColumnClasses: "col-sm-8 col-xs-12"
 };
 
 Fields.FieldLabel = React.createClass({displayName: "FieldLabel",
@@ -1808,6 +2101,13 @@ Fields.Resource = React.createClass({displayName: "Resource",
 				if(!props.resource.hasOwnProperty('data') || props.resource.data.length === 0) {
 					console.log("HEADS UP: data not found for resource!");
 					console.log(props);
+					console.log(props.resource);
+					console.log("typeof1: %s", typeof props.resource);
+					console.log("hasOwnProperty('data'): %s", props.resource.hasOwnProperty('data'));
+					console.log("typeof2: %s", typeof props.resource.data);
+					console.log("typeof3: %s", typeof props.resource['data']);
+					if(props.resource.hasOwnProperty('data'))
+						console.log("length: %s", props.resource.data.length);
 					this.fetchData();
 				}
 
@@ -3638,14 +3938,31 @@ FlowEditor.Field.Settings = React.createClass({displayName: "Settings",
 });
 
 /**
- * patients.jsx
+ * patients/Patients.jsx
+ * @author Cameron Kelley
  */
 
-var PatientsTable = React.createClass({displayName: "PatientsTable",
+var Patients = {
 
+};
+
+/**
+ * patients/Table.jsx
+ * @author Cameron Kelley
+ *
+ * Searchable patients table.
+ */
+
+Patients.Table = React.createClass({displayName: "Table",
+
+    /*
+     *
+     */
     getInitialState: function() {
         return {
             patients: {},
+
+            isFetching: false,
 
             name: "",
             forceptID: "",
@@ -3653,17 +3970,30 @@ var PatientsTable = React.createClass({displayName: "PatientsTable",
         };
     },
 
+    /*
+     *
+     */
     componentWillMount: function() {
-        this.getPatients();
+        var props = this.props;
+        if(props.hasOwnProperty("preload") && props.preload === true) {
+            this.getPatients();
+        }
     },
 
+    /*
+     *
+     */
     getPatients: function(endpt, method, constraints) {
+
         endpt = endpt || "fetch";
         var type = (endpt === "fetch" ? "GET" : "POST");
         method = method || "";
         constraints = constraints || {};
-
         constraints._token = document.querySelector("meta[name='csrf-token']").getAttribute('value');
+
+        this.setState({
+            isFetching: true
+        });
 
         $.ajax({
             type: type,
@@ -3679,12 +4009,16 @@ var PatientsTable = React.createClass({displayName: "PatientsTable",
                 }
 
                 this.setState({
+                    isFetching: false,
                     patients: patients
                 });
             }.bind(this)
         });
     },
 
+    /*
+     *
+     */
     handleSearchNameChange: function(event) {
         var value = event.target.value;
         if(value.length == 0) {
@@ -3696,6 +4030,9 @@ var PatientsTable = React.createClass({displayName: "PatientsTable",
         });
     },
 
+    /*
+     *
+     */
     handleSearchForceptIDChange: function(event) {
         var value = event.target.value;
         if(value.length == 0) {
@@ -3707,6 +4044,9 @@ var PatientsTable = React.createClass({displayName: "PatientsTable",
         });
     },
 
+    /*
+     *
+     */
     handleDoSearch: function(type) {
         console.log("handleDoSearch");
         this.getPatients("search", "", {
@@ -3715,44 +4055,102 @@ var PatientsTable = React.createClass({displayName: "PatientsTable",
         });
     },
 
+    /*
+     *
+     */
     render: function() {
-        var patientRows;
 
-        var patients = this.state.patients,
+        var patientRows, messageRow,
+            props = this.props,
+            state = this.state,
+            patients = this.state.patients,
             patientIDs = Object.keys(patients),
-            patientsCount = patientIDs.length;
+            patientsCount = patientIDs.length,
+            excludePatients = ((props.hasOwnProperty("exclude") && Array.isArray(props.exclude)) ? props.exclude : []);
 
-        if(patientsCount > 0) {
-            patientRows = patientIDs.map(function(patientID, index) {
-                var thisPatient = patients[patientID];
+        /*
+         * If we're fetching, show a loading message.
+         */
+        if(state.isFetching) {
+            messageRow = (
+                React.createElement("tr", null, 
+                    React.createElement("td", {colSpan: 8}, 
+						React.createElement("div", {className: "row p-t", id: "page-header-message-block"}, 
+							React.createElement("div", {className: "col-xs-2 text-xs-right hidden-sm-down"}, 
+								React.createElement("img", {src: "/assets/img/loading.gif"})
+							), 
+							React.createElement("div", {className: "col-xs-10 p-t"}, 
+								React.createElement("h2", null, 
+                                    React.createElement("span", {className: "fa fa-circle-o-notch fa-spin hidden-md-up"}), " Fetching patients..."
+                                )
+							)
+						)
+                    )
+                )
+            );
+        } else if(patientsCount > 0) {
 
-                var photo;
-                if(thisPatient.hasOwnProperty('photo') && thisPatient.photo !== null) {
-                    var resourceObj = [];
-                    try {
-                        resourceObj = JSON.parse(thisPatient.photo);
-                    } catch(e) {
-                        console.log("could not parse patient photo");
-                    }
-                    if(resourceObj.length > 0) {
-                        photo = (
-                            React.createElement(Fields.Resource, {
-                                id: resourceObj[0], 
-                                resource: { type: "image/jpeg"}, 
-                                className: "thumbnail"})
-                        );
-                    }
-                } else {
-                    photo = "No photo";
+            var alreadyInAVisitCount = 0;
+            var excludedCount = 0;
+
+            console.log("Excluding %O", excludePatients);
+
+            /*
+             * Render patient rows.
+             */
+            patientRows = patientIDs.map(function(patientIndex, index) {
+
+                var thisPatient = patients[patientIndex];
+
+                /*
+                 * Hide patient if ID is found in
+                 * excludePatients array.
+                 */
+                if(excludePatients.indexOf(thisPatient.id.toString()) !== -1) {
+                    excludedCount++;
+                    return;
                 }
 
-                var visitLabel = (
-                    React.createElement("em", null, "Checked out")
-                ),
-                    visitsCount = thisPatient.visits.length;
+                var action,
+                    actionType = "link",
+                    photo = Utilities.getPatientPhotoAsResource(thisPatient, {}, function() {}, "thumbnail"),
+                    visitsCount = thisPatient.visits.length,
+                    visitLabel = (
+                        React.createElement("em", null, "Checked out")
+                    );
 
+                /*
+                 * Update action type if property was passed.
+                 */
+                if(props.hasOwnProperty("action")) {
+
+                    /*
+                     * If the action is "import",
+                     * check for an import handler function.
+                     */
+                    if(props.action !== "import" || props.hasOwnProperty("handleImportPatient")) {
+                        actionType = props.action;
+                    }
+
+                }
+
+                /*
+                 * If this patient has visits,
+                 * create a visit label.
+                 */
                 if(visitsCount > 0) {
-                    if(thisPatient.hasOwnProperty("visit") && thisPatient.visit !== null) {
+                    if(thisPatient.hasOwnProperty("current_visit") && thisPatient.current_visit !== null) {
+
+                        /*
+                         * If our action is "import", we don't want
+                         * to display any patients that are currently
+                         * in a visit.
+                         */
+                        if(actionType === "import") {
+                            alreadyInAVisitCount++;
+                            return;
+                        }
+
                         visitLabel = (
                             React.createElement("a", {href: ["/visits/stage/", thisPatient.visit.stage, "/handle/", thisPatient.visit.id].join("")}, 
                                 React.createElement("h4", null, 
@@ -3765,6 +4163,38 @@ var PatientsTable = React.createClass({displayName: "PatientsTable",
                     }
                 }
 
+                /*
+                 * Build action DOM.
+                 */
+                switch(actionType) {
+
+                    /*
+                     * Show an import button.
+                     */
+                    case "import":
+                        action = (
+                            React.createElement("button", {type: "button", className: "btn btn-block btn-primary", onClick: props.handleImportPatient(thisPatient)}, 
+                                React.createElement("span", {className: "fa fa-download"}), " Import"
+                            )
+                        );
+                        break;
+
+                    /*
+                     * Link to the patient profile.
+                     */
+                    case "link":
+                    default:
+                        action = (
+                            React.createElement("a", {href: ["/patients/view/", thisPatient.id].join("")}, 
+                                "View »"
+                            )
+                        );
+                        break;
+                }
+
+                /*
+                 * Build the patient row.
+                 */
                 return (
                     React.createElement("tr", null, 
                         React.createElement("td", {width: 200}, 
@@ -3778,31 +4208,77 @@ var PatientsTable = React.createClass({displayName: "PatientsTable",
                         React.createElement("td", null, 
                             Utilities.getFullName(thisPatient)
                         ), 
-                        React.createElement("td", null, 
+                        React.createElement("td", {className: "hidden-sm-down"}, 
                             thisPatient.visits.length
                         ), 
                         React.createElement("td", null, 
                             visitLabel
                         ), 
-                        React.createElement("td", null, 
+                        React.createElement("td", {className: "hidden-xs-down"}, 
                             thisPatient.created_at
                         ), 
-                        React.createElement("td", null, 
+                        React.createElement("td", {className: "hidden-sm-down"}, 
                             thisPatient.updated_at
                         ), 
                         React.createElement("td", null, 
-                            React.createElement("a", {href: ["/patients/view/", thisPatient.id].join("")}, 
-                                "»"
-                            )
+                            action
                         )
                     )
                 );
             }.bind(this));
+
+            /*
+             * Display a message alerting the user
+             * that some patients weren't displayed.
+             */
+            var invalidCount = (excludedCount + alreadyInAVisitCount);
+            if(invalidCount > 0) {
+                messageRow = (
+                    React.createElement("tr", {className: "table-warning p-y"}, 
+                        React.createElement("td", {colSpan: 8}, 
+                            React.createElement("h6", null, 
+                                React.createElement("span", {className: "fa fa-fw fa-warning m-x"}), " ", invalidCount, " patient", invalidCount === 1 ? "" : "s", " matched criteria, but are invalid in this context."
+                            ), 
+                            React.createElement("h6", {className: "text-muted"}, 
+                                alreadyInAVisitCount, " are already in a visit — ", excludedCount, " are already in ", React.createElement("em", null, "this"), " visit."
+                            )
+                        )
+                    )
+                );
+            }
+
+        } else {
+            messageRow = (
+                React.createElement("tr", null, 
+                    React.createElement("td", {colSpan: 8}, 
+						React.createElement("div", {className: "row p-t", id: "page-header-message-block"}, 
+							React.createElement("div", {className: "col-xs-2 text-xs-right hidden-sm-down"}, 
+								React.createElement("h1", {className: "display-3"}, 
+                                    React.createElement("span", {className: "fa fa-user-times"})
+                                )
+							), 
+							React.createElement("div", {className: "col-xs-10 p-t"}, 
+								React.createElement("h2", null, 
+                                    React.createElement("span", {className: "fa fa-user-times hidden-md-up"}), " No patients match these criteria."
+                                ), 
+								React.createElement("p", null, 
+									"You can refine your search with the controls above."
+								)
+							)
+						)
+                    )
+                )
+            );
         }
 
         return (
-            React.createElement("div", {className: "p-t"}, 
-                React.createElement("h1", null, "Patients (", patientsCount, ")"), 
+            React.createElement("div", null, 
+                React.createElement("h2", {className: "m-y"}, 
+                    props.hasOwnProperty("icon") ? (
+                        React.createElement("span", {className: props.icon})
+                    ) : "", 
+                    props.title.format({ count: patientsCount })
+                ), 
                 React.createElement("fieldset", {className: "fieldset"}, 
                     React.createElement("div", {className: "row"}, 
                         React.createElement("div", {className: "col-xs-12 col-sm-4"}, 
@@ -3854,21 +4330,22 @@ var PatientsTable = React.createClass({displayName: "PatientsTable",
                                     React.createElement("th", null, 
                                         "Visits"
                                     ), 
-                                    React.createElement("th", null, 
+                                    React.createElement("th", {className: "hidden-sm-down"}, 
                                         "Location"
                                     ), 
-                                    React.createElement("th", null, 
+                                    React.createElement("th", {className: "hidden-xs-down"}, 
                                         "Created at"
                                     ), 
-                                    React.createElement("th", null, 
+                                    React.createElement("th", {className: "hidden-sm-down"}, 
                                         "Last updated"
                                     ), 
-                                    React.createElement("th", null
-
+                                    React.createElement("th", null, 
+                                        "Action"
                                     )
                                 )
                             ), 
                             React.createElement("tbody", null, 
+                                messageRow, 
                                 patientRows
                             )
                         )
@@ -4120,188 +4597,6 @@ var StageVisits = React.createClass({displayName: "StageVisits",
 
 });
 
-/**
- * Forcept.jsx
- */
-
-/*
- * Add debug data to tooltip
- */
-function __debug() {
-	var compile = "";
-	for(var i = 0; i < arguments.length; i++) {
-		var data = arguments[i];
-		if(typeof data == "object" && data !== null) {
-			data = JSON.stringify(data, null, "  ");
-		}
-		compile += (data + "<br/><br/>");
-	}
-	$("#forcept-debug-content pre").html(compile);
-}
-
-function isTrue(statement) {
-	switch(typeof statement) {
-		case "boolean":
-			return statement === true;
-		case "string":
-			return statement === "true";
-		default:
-			return false;
-	}
-}
-
-function base64bytes(string) {
-	var splitHeadAndData = string.split(',');
-	return Math.round( (splitHeadAndData[1].length - splitHeadAndData[0].length) * 0.75 );
-}
-
-function getFileSize(n,a,b,c,d){
-	return (a=a?[1e3,'k','B']:[1024,'K','iB'],b=Math,c=b.log,
-	d=c(n)/c(a[0])|0,n/b.pow(a[0],d)).toFixed(2)
-	+' '+(d?(a[1]+'MGTPEZY')[--d]+a[2]:'Bytes');
-}
-
-
-var Utilities = {
-
-	/*
-	 * Calculate aged based on a given date
-	 */
-	calculateAge: function(date) {
-		// Setup date objects
-		var birthday = +new Date(date),
-			now = Date.now(),
-			age = null;
-
-		// Make sure the birthday is in the past
-		if(birthday < now) {
-
-			// Start by trying to calculate in years
-			var years = ~~((now - birthday) / (31557600000)); // 24 * 3600 * 365.25 * 1000
-
-			// If the birthday is < 1 year, use months
-			if(years === 0) {
-				var months = ((now - birthday) / (2629800000)); // 24 * 3600 * 365.25 * 1000 all over 12
-				age = ~~months !== 0 ? months.toFixed(1) + " months" : "<1 month"; // If <1 month, show "<1" instead of zero
-			} else {
-				age = years + " years";
-			}
-
-		}
-
-		return age;
-	},
-
-
-	/*
-	 * Handle automatic generation of field data
-	 */
-	applyGeneratedFields: function( patient ) {
-
-		// Patient full name
-		var fullName = null;
-		var abbrName = null;
-
-		if(
-			typeof patient.first_name === "string"
-			&& typeof patient.last_name === "string"
-			&& patient.first_name.length > 0
-			&& patient.last_name.length > 0
-		) {
-			fullName = patient.first_name + " " + patient.last_name;
-			abbrName = patient.first_name[0].toUpperCase() + " " + patient.last_name;
-		} else {
-			fullName = "Unnamed Patient";
-			abbrName = "Unnamed Patient";
-			if(typeof patient.first_name === "string" && patient.first_name.length > 0 ) {
-				fullName = patient.first_name;
-				abbrName = patient.first_name;
-			}
-			if(typeof patient.last_name === "string" && patient.last_name.length > 0) {
-				fullName = patient.last_name;
-				abbrName = patient.last_name;
-			}
-		}
-
-		patient.full_name = fullName;
-		patient.abbr_name = abbrName;
-
-
-		// Age
-		var age = null,
-			birthday = patient.birthday;
-		if(
-			typeof birthday === "string"
-			&& birthday.length > 0
-		) {
-			age = Utilities.calculateAge(birthday);
-		}
-
-		patient.age = age;
-
-		// Return patient object
-		return patient;
-	},
-
-	/*
-	 * Get full name of patient (or "Unnamed Patient") if none defined
-	 */
-	getFullName: function(thisPatient) {
-		if(thisPatient.hasOwnProperty('full_name') && thisPatient.full_name !== null && thisPatient.full_name.length > 0) {
-			return thisPatient.full_name;
-		} else {
-			// Try to buiild one
-			var checkName = [];
-			if(thisPatient.hasOwnProperty("first_name") && thisPatient.first_name !== null && thisPatient.first_name.length > 0) {
-				checkName.push(thisPatient.first_name);
-			}
-			if(thisPatient.hasOwnProperty("last_name") && thisPatient.last_name !== null && thisPatient.last_name.length > 0) {
-				checkName.push(thisPatient.last_name);
-			}
-
-			return checkName.length > 0 ? checkName.join(" ") : "Unnamed Patient";
-		}
-	},
-
-	timeAgo: function(time) {
-			var units = [
-			{ name: "second", limit: 60, in_seconds: 1 },
-			{ name: "minute", limit: 3600, in_seconds: 60 },
-			{ name: "hour", limit: 86400, in_seconds: 3600  },
-			{ name: "day", limit: 604800, in_seconds: 86400 },
-			{ name: "week", limit: 2629743, in_seconds: 604800  },
-			{ name: "month", limit: 31556926, in_seconds: 2629743 },
-			{ name: "year", limit: null, in_seconds: 31556926 }
-		];
-		var diff = (new Date() - new Date(time*1000)) / 1000;
-		if (diff < 5) return "now";
-
-		var i = 0, unit;
-		while (unit = units[i++]) {
-			if (diff < unit.limit || !unit.limit){
-				var diff =  Math.floor(diff / unit.in_seconds);
-				return diff + " " + unit.name + (diff>1 ? "s" : "");
-			}
-		};
-	},
-
-	/*
-	 * Eloquent returns some boolean fields as strings.
-	 * Use this function to check if a statement is true.
-	 * if the value is (string) "true" : (string) "false"
-	 */
-	isTrue: function(statement) {
-		switch(typeof statement) {
-			case "boolean":
-				return statement === true;
-			case "string":
-				return statement === "true";
-			default:
-				return false;
-		}
-	},
-};
-
 /* ========================================= */
 
 /**
@@ -4359,6 +4654,25 @@ var Visit = React.createClass({displayName: "Visit",
 			 */
 			visibleItem: 0,
 
+
+			/*
+			 * Some component states are stored in
+			 * the visit container, because we need
+			 * to share them between each component
+			 * in order to properly display information
+			 * (for example, column organization)
+			 */
+			componentStates: {
+				patientRecord: {
+					visible: true,
+					compact: false,
+				},
+				visitSummary: {
+					visible: true,
+					compact: true,
+				}
+			},
+
 			patients: {},
 			resources: {},
 			prescriptions: {},
@@ -4411,6 +4725,23 @@ var Visit = React.createClass({displayName: "Visit",
 		}
 
 		console.groupEnd();
+	},
+
+	/*
+	 * Toggle the state of a visit sub-component.
+	 */
+	toggleComponentState: function(component, value) {
+		return function(event) {
+			var state = this.state;
+			if(state.componentStates.hasOwnProperty(component)
+				&& state.componentStates[component].hasOwnProperty(value)) {
+				state.componentStates[component][value] = !state.componentStates[component][value];
+
+				this.setState({
+					componentStates: state.componentStates,
+				});
+			}
+		}.bind(this);
 	},
 
 	/*
@@ -4517,18 +4848,20 @@ var Visit = React.createClass({displayName: "Visit",
 	 * @return void
 	 */
 	handleImportPatient: function(patient) {
+		return function(event) {
 
-		/*
-		 * If the patient was pulled from field data table,
-		 * we need to "add it from scratch" to create the
-		 * respective Patient record.
-		 */
-		if(patient.hasOwnProperty('field_number') && patient.field_number !== null) {
-			this.handlePatientAddfromScratch(patient);
-		} else {
-			this.handlePatientAdd(patient);
-		}
+			/*
+			 * If the patient was pulled from field data table,
+			 * we need to "add it from scratch" to create the
+			 * respective Patient record.
+			 */
+			if(patient.hasOwnProperty('field_number') && patient.field_number !== null) {
+				this.handlePatientAddfromScratch(patient);
+			} else {
+				this.handlePatientAdd(patient);
+			}
 
+		}.bind(this);
 	},
 
 	/*
@@ -4664,13 +4997,12 @@ var Visit = React.createClass({displayName: "Visit",
 		/*
 		 * Instantiate ALL the things
 		 */
-		var props = this.props,
+		var patientRow,
+			createPatientControl, importPatientControl,
+			loadingItem, importingItem,
+			props = this.props,
 			state = this.state,
 			patientKeys = Object.keys(state.patients),
-			patientRow,
-			createPatientControl,
-			importPatientControl,
-			loadingItem, importingItem,
 			controlsDisabled = (state.displayState !== "default")
 			submitDisabled 	 = (controlsDisabled || !state.isValid);
 
@@ -4692,18 +5024,24 @@ var Visit = React.createClass({displayName: "Visit",
 					)
 				);
 				patientRow = (
-					React.createElement(Visit.ImportBlock, {
-						_token: props._token, 
-
-						onPatientAdd: this.handleImportPatient, 
-						onClose: this.switchVisibleItem(0)})
+					React.createElement(Patients.Table, {
+						icon: "fa fa-download m-r m-l", 
+						title: "Import a patient", 
+						action: "import", 
+						preload: false, 
+						exclude: patientKeys, 
+						handleImportPatient: this.handleImportPatient})
 				);
 				break;
 
 			/**
-			 * Show the no-patients message
+			 * Show a message.
 			 */
 			case 0:
+
+				/*
+				 * Check if we have any patients in this visit.
+				 */
 				if(patientKeys.length === 0) {
 					patientRow = (
 						React.createElement("div", {className: "row p-t", id: "page-header-message-block"}, 
@@ -4737,7 +5075,8 @@ var Visit = React.createClass({displayName: "Visit",
 			 * Show the patient provided by visibleItem.
 			 */
 			default:
-				if(patientKeys.indexOf(state.visibleItem.toString()) !== -1) {
+				var patientIndex = patientKeys.indexOf(state.visibleItem.toString());
+				if(patientIndex !== -1) {
 					patientRow = (
 						React.createElement("div", {className: "row" + (controlsDisabled ? " disabled" : "")}, 
 
@@ -4746,12 +5085,12 @@ var Visit = React.createClass({displayName: "Visit",
 							  *
 							  * Overview:
 							  * - stages WITHOUT summary: offset 1 on both sides (total area: 10)
+							  * TODO finish this
 							  */
 
 							React.createElement(Visit.Overview, {
 								fields: props.patientFields, 
 								patient: state.patients[state.visibleItem], 
-								mini: false, 
 								resources: state.resources, 
 
 								/*
@@ -4762,7 +5101,13 @@ var Visit = React.createClass({displayName: "Visit",
 								/*
 								 * Fields to summarize in summary card
 								 */
-								summaryFields: props.summaryFields}), 
+								summaryFields: props.summaryFields, 
+
+								/*
+								 * Handle component state & toggling.
+								 */
+								componentStates: state.componentStates, 
+								toggleComponentState: this.toggleComponentState}), 
 
 							React.createElement(Visit.Patient, {
 								/*
@@ -4780,7 +5125,7 @@ var Visit = React.createClass({displayName: "Visit",
 								 */
 								patient: state.patients[state.visibleItem], 
 								id: state.visibleItem, 
-								index: 0, 
+								index: patientIndex, 
 
 								/*
 								 * All available fields
@@ -4793,6 +5138,12 @@ var Visit = React.createClass({displayName: "Visit",
 								summaryFields: props.summaryFields, 
 
 								/*
+								 * Handle component state & toggling.
+								 */
+								componentStates: state.componentStates, 
+								toggleComponentState: this.toggleComponentState, 
+
+								/*
 								 * Event handlers
 								 */
 								onPatientDataChange: this.topLevelPatientStateChange, 
@@ -4800,12 +5151,12 @@ var Visit = React.createClass({displayName: "Visit",
 						)
 					);
 				} else {
+					// TODO figure out what to do here
 					patientRow = (
 						React.createElement("div", null, "test")
 					);
 				}
 				break;
-
 
 		}
 
@@ -5639,16 +5990,39 @@ Visit.Overview = React.createClass({displayName: "Overview",
 			/*
 			 * Record card
 			 */
-			recordVisible: true,
-			recordRenderEmpty: true,
+			// recordVisible: true,
+			// recordRenderEmpty: true,
 
 			/*
 			 * Summary card
 			 */
-			summaryVisible: true,
-			summaryRenderEmpty: false
+			// summaryVisible: true,
+			// summaryRenderEmpty: false
 
 		};
+	},
+
+	/*
+	 *
+	 */
+	componentWillMount: function() {
+		this.setValue(this.props);
+	},
+
+	/*
+	 *
+	 */
+	componentWillReceiveProps: function(newProps) {
+		this.setValue(newProps);
+	},
+
+	/*
+	 *
+	 */
+	setValue: function(props) {
+		if(props.hasOwnProperty("componentStates")) {
+			this.setState(props.componentStates);
+		}
 	},
 
 	/*
@@ -5668,7 +6042,7 @@ Visit.Overview = React.createClass({displayName: "Overview",
 	/*
 	 * Build a summary list from patient data and iterable fields.
 	 */
-	buildList: function(iterableFields, thisPatient, displayEmptyFields) {
+	buildList: function(iterableFields, thisPatient, compact) {
 
 		var props = this.props,
 			state = this.state,
@@ -5865,7 +6239,7 @@ Visit.Overview = React.createClass({displayName: "Overview",
 				 * jump to next iteration before rendering
 				 * the list item element.
 				 */
-				if(!displayEmptyFields) {
+				if(compact) {
 					console.groupEnd(); // End: "Field %i..."
 					return;
 				}
@@ -5875,39 +6249,6 @@ Visit.Overview = React.createClass({displayName: "Overview",
 
 			//-- End patient field checking --\\
 
-
-			/*
-			 * Choose which icon to display
-			 */
-			if(!isGeneratedField) {
-				if(foundData) {
-
-					/*
-					 * check mark icon
-					 */
-					icon = (
-						React.createElement("span", {className: "text-success"}, 
-							"\u2713"
-						)
-					);
-				} else {
-
-					/*
-					 * x icon
-					 */
-					icon = (
-						React.createElement("span", {className: "text-danger"}, 
-							"\u2717"
-						)
-					);
-				}
-			} else {
-
-				/*
-				 * right arrow icon
-				 */
-				icon = "\u27a0";
-			}
 
 			/*
 			 * Return this list item.
@@ -5921,11 +6262,63 @@ Visit.Overview = React.createClass({displayName: "Overview",
 					)
 				);
 			} else {
+
+				/*
+				 * Only display icons when we're
+				 * displaying ALL fields
+				 */
+				if(!compact) {
+
+					/*
+					 * Choose which icon to display
+					 */
+					if(!isGeneratedField) {
+						if(foundData) {
+
+							/*
+							 * check mark icon
+							 */
+							icon = (
+								React.createElement("span", {className: "icon text-success"}, 
+									"\u2713"
+								)
+							);
+						} else {
+
+							/*
+							 * x icon
+							 */
+							icon = (
+								React.createElement("span", {className: "icon text-danger"}, 
+									"\u2717"
+								)
+							);
+						}
+					} else {
+
+						/*
+						 * right arrow icon
+						 */
+						icon = (
+							React.createElement("span", {className: "icon"}, 
+								"\u27a0"
+							)
+						);
+					}
+
+				}
+
+
 				return (
 					React.createElement("div", {className: "list-group-item", key: field + "-" + index}, 
 						React.createElement("dl", null, 
-							React.createElement("dt", null, icon, "   ", thisIterableField.name), 
-							React.createElement("dd", null, foundData ? value : "")
+							React.createElement("dt", null, 
+								icon, 
+								thisIterableField.name
+							), 
+							React.createElement("dd", {className: compact ? "p-l-0" : ""}, 
+								foundData ? value : ""
+							)
 						)
 					)
 				);
@@ -5999,7 +6392,7 @@ Visit.Overview = React.createClass({displayName: "Overview",
 
 		}
 
-		if(!state.recordVisible || !state.summaryVisible) {
+		if(!state["patientRecord"].visible || !state["visitSummary"].visible) {
 
 			/*
 			 * If either are hidden, combine back into one column
@@ -6024,14 +6417,14 @@ Visit.Overview = React.createClass({displayName: "Overview",
 				/*
 				 * If the summary is marked as visible...
 				 */
-				if(state.summaryVisible) {
+				if(state.visitSummary.visible) {
 
 					/*
 					 * Build summary list
 					 */
 					summaryList = (
 						React.createElement("div", {className: "list-group list-group-flush"}, 
-							this.buildList(props.summaryFields, thisPatient, state.summaryRenderEmpty)
+							this.buildList(props.summaryFields, thisPatient, state.visitSummary.compact)
 						)
 					);
 				} else {
@@ -6056,21 +6449,24 @@ Visit.Overview = React.createClass({displayName: "Overview",
 				return (
 					React.createElement("div", {className: innerColumnSize}, 
 						React.createElement("div", {className: "forcept-patient-summary card"}, 
-							React.createElement("div", {className: "card-header", onClick: this.toggleCardState("summaryVisible")}, 
+							React.createElement("div", {className: "card-header", onClick: props.toggleComponentState("visitSummary", "visible")}, 
 								React.createElement("h6", {className: "m-b-0"}, 
 									React.createElement("span", {className: "fa fa-user-md"}), 
 									"  Visit Summary", 
-									React.createElement("span", {className: ["pull-right fa", state.summaryVisible ? "fa-chevron-down" : "fa-chevron-up"].join(" ")})
+									React.createElement("span", {className: ["pull-right fa", state.visitSummary.visible ? "fa-chevron-down" : "fa-chevron-up"].join(" ")})
 								)
 							), 
 							summaryList, 
 							React.createElement("div", {className: "card-footer"}, 
 								React.createElement("div", {className: "dropdown"}, 
-									React.createElement("span", {className: "fa fa-cog", "data-toggle": "dropdown"}), 
+									React.createElement("button", {type: "button", className: "btn btn-link p-x-0 p-y-0", "data-toggle": "dropdown"}, 
+										React.createElement("span", {className: "fa fa-cog"})
+									), 
 									React.createElement("div", {className: "dropdown-menu dropdown-menu-top"}, 
-										React.createElement("h6", {className: "dropdown-header"}, "Card settings"), 
-										React.createElement("a", {className: "dropdown-item", onClick: this.toggleCardState("summaryRenderEmpty")}, 
-											state.summaryRenderEmpty ? "Hide empty fields" : "Display empty fields"
+										React.createElement("h6", {className: "dropdown-header"}, "Display settings"), 
+										React.createElement("a", {className: "dropdown-item", onClick: props.toggleComponentState("visitSummary", "compact")}, 
+											React.createElement("span", {className: "fa fa-fw m-r " + (state["visitSummary"].compact ? "fa-eye" : "fa-eye-slash")}), 
+											state["visitSummary"].compact ? "Use checklist mode" : "Use compact mode"
 										)
 									)
 								)
@@ -6093,91 +6489,18 @@ Visit.Overview = React.createClass({displayName: "Overview",
 			/*
 			 * If the patient record is open...
 			 */
-			if(state.recordVisible) {
+			if(state.patientRecord.visible) {
 
 				/*
 				 * Build list for patient record
 				 */
 				recordList = (
 	            	React.createElement("div", {className: "list-group list-group-flush"}, 
-						this.buildList(iterableFields, thisPatient, state.recordRenderEmpty)
+						this.buildList(iterableFields, thisPatient, state.patientRecord.compact)
 	                )
 				);
 
-				//-- Begin search for patient photo --\\
-				if(thisPatient.hasOwnProperty('photo') && thisPatient.photo !== null) {
-
-					var resources = props.hasOwnProperty("resources") ? props.resources : {}, // Grab resources passed as properties to Overview
-						resourceKeys = []; // Array of resource IDs to search for / fetch
-
-					console.group("Photo:");
-						console.log("This patient has a photo property.");
-
-					try {
-						if(typeof thisPatient.photo === "string") {
-							console.log("The photo property is a STRING");
-
-							// Attempt to...
-							try {
-								// ...parse JSON from database as string
-								resourceKeys = JSON.parse(thisPatient.photo);
-							} catch(e) {
-								console.error("Failed to parse photo string into JSON array.");
-								resourceKeys = [];
-							}
-
-						} else {
-							console.log("The photo property is NOT a STRING");
-							console.info("Photo property type: %s", typeof thisPatient.photo);
-
-							// Otherwise, just push the object
-							resourceKeys = thisPatient.photo;
-						}
-					} catch(e) {
-						console.error("Some sort of error parsing photo string (not a JSON error...)");
-						resourceKeys = [];
-					}
-
-					// If we found some resources to load...
-					if(resourceKeys.length > 0) {
-
-						// Since Photo field only allows one upload, we'll grab the first key in the array
-						// (it's probably the only key...)
-						var photoKey = resourceKeys[0];
-
-						console.log("Photo resource ID is %s, checking resource storage...", photoKey);
-
-						// Check if we have this resource in storage already.
-						if(resources.hasOwnProperty(photoKey)) {
-
-							// For the immutable Photo input, the one and only file is the patient photo.
-							var photoData = resources[photoKey];
-
-							console.log("Photo found in preloaded resources: %O", photoData);
-
-							photo = (
-								React.createElement(Fields.Resource, {
-									id: photoKey, 
-									resource: { type: "image/jpeg", data: photoData.data}, 
-									handleStoreResource: props.onStoreResource})
-							);
-
-						} else {
-							console.log("Photo not found in resources, creating resource object with instructions to grab resource via AJAX");
-
-							photo = (
-								React.createElement(Fields.Resource, {
-									id: photoKey, 
-									resource: { type: "image/jpeg"}, 
-									handleStoreResource: props.onStoreResource})
-							);
-						}
-					}
-
-					console.groupEnd(); // End "Photo:"
-
-				}
-				//-- End photo search --\\
+				photo = Utilities.getPatientPhotoAsResource(thisPatient, props.hasOwnProperty("resources") ? props.resources : {}, this.handleStoreResource);
 
 			} else {
 
@@ -6200,22 +6523,25 @@ Visit.Overview = React.createClass({displayName: "Overview",
 			var patientCardDOM = (
 				React.createElement("div", {className: innerColumnSize}, 
 					React.createElement("div", {className: "card forcept-patient-summary"}, 
-						React.createElement("div", {className: "card-header", onClick: this.toggleCardState("recordVisible")}, 
+						React.createElement("div", {className: "card-header", onClick: props.toggleComponentState("patientRecord", "visible")}, 
 							React.createElement("h6", {className: "m-b-0"}, 
 								React.createElement("span", {className: "fa fa-clipboard"}), 
 								"  Patient record", 
-								React.createElement("span", {className: ["pull-right fa", state.recordVisible ? "fa-chevron-down" : "fa-chevron-up"].join(" ")})
+								React.createElement("span", {className: ["pull-right fa", state.patientRecord.visible ? "fa-chevron-down" : "fa-chevron-up"].join(" ")})
 							)
 						), 
 						photo, 
 						recordList, 
 						React.createElement("div", {className: "card-footer"}, 
 							React.createElement("div", {className: "dropdown"}, 
-								React.createElement("span", {className: "fa fa-cog", "data-toggle": "dropdown"}), 
+								React.createElement("button", {type: "button", className: "btn btn-link p-x-0 p-y-0", "data-toggle": "dropdown"}, 
+									React.createElement("span", {className: "fa fa-cog"})
+								), 
 								React.createElement("div", {className: "dropdown-menu dropdown-menu-top"}, 
-									React.createElement("h6", {className: "dropdown-header"}, "Card settings"), 
-									React.createElement("a", {className: "dropdown-item", onClick: this.toggleCardState("recordRenderEmpty")}, 
-										state.recordRenderEmpty ? "Hide empty fields" : "Display empty fields"
+									React.createElement("h6", {className: "dropdown-header"}, "Display settings"), 
+									React.createElement("a", {className: "dropdown-item", onClick: props.toggleComponentState("patientRecord", "compact")}, 
+										React.createElement("span", {className: "fa fa-fw m-r " + (state.patientRecord.compact ? "fa-eye" : "fa-eye-slash")}), 
+										state.patientRecord.compact ? "Use checklist mode" : "Use compact mode"
 									)
 								)
 							)
@@ -6300,34 +6626,6 @@ Visit.Patient = React.createClass({displayName: "Patient",
 			console.log("Stage type: %s", props.stageType);
 			console.log("Iterable field count: %i", countFields);
 			console.log("Iterable field keys: %O", fieldKeys);
-			// console.log("Summary field count : %i", countSummaryFields);
-
-		// Build summary DOM
-		/*if(summaryFields !== null && typeof summaryFields === "object" && countSummaryFields > 0) {
-
-			// TODO this sucks, figure out a better way
-			var leftColumnFields = {},
-				rightColumnFields = {},
-				patientsObjectSpoof = {};
-
-			patientsObjectSpoof[props.patient.patient_id] = props.patient;
-
-			summaryFieldsKeys.map(function(key, index) {
-				if(index > (countSummaryFields - 1) / 2) {
-					rightColumnFields[key] = summaryFields[key];
-				} else {
-					leftColumnFields[key] = summaryFields[key];
-				}
-			}.bind(this));
-
-			console.log("Left column: %O", leftColumnFields);
-			console.log("Right column: %O", rightColumnFields);
-
-			summary = (
-				<div className="row">
-				</div>
-			);
-		}*/
 
 		var fieldsDOM;
 
@@ -6557,13 +6855,27 @@ Visit.Patient = React.createClass({displayName: "Patient",
 
 		/*
 		 * Test for available summaryFields.
+		 * Also check if one of the two overview cards
+		 * is hidden (thereby collapsing the column)
 		 */
 		if(props.hasOwnProperty("summaryFields")
 			&& typeof props.summaryFields === "object"
 			&& props.summaryFields !== null
-			&& Object.keys(props.summaryFields).length > 0) {
+			&& Object.keys(props.summaryFields).length > 0
+			&& props.componentStates["patientRecord"].visible
+			&& props.componentStates["visitSummary"].visible) {
+
+
+			/*
+			 * With both cards expanded...
+			 */
 			patientColumnSize = "col-xs-12 col-sm-12 col-md-12 col-lg-6 col-xl-6";
+
 		} else {
+
+			/*
+			 * Without summary cards OR if one card is collapsed...
+			 */
 			patientColumnSize = "col-xs-12 col-sm-12 col-md-8 col-lg-8 col-xl-6";
 		}
 

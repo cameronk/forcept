@@ -1,12 +1,20 @@
 /**
- * patients.jsx
+ * patients/Table.jsx
+ * @author Cameron Kelley
+ *
+ * Searchable patients table.
  */
 
-var PatientsTable = React.createClass({
+Patients.Table = React.createClass({
 
+    /*
+     *
+     */
     getInitialState: function() {
         return {
             patients: {},
+
+            isFetching: false,
 
             name: "",
             forceptID: "",
@@ -14,17 +22,30 @@ var PatientsTable = React.createClass({
         };
     },
 
+    /*
+     *
+     */
     componentWillMount: function() {
-        this.getPatients();
+        var props = this.props;
+        if(props.hasOwnProperty("preload") && props.preload === true) {
+            this.getPatients();
+        }
     },
 
+    /*
+     *
+     */
     getPatients: function(endpt, method, constraints) {
+
         endpt = endpt || "fetch";
         var type = (endpt === "fetch" ? "GET" : "POST");
         method = method || "";
         constraints = constraints || {};
-
         constraints._token = document.querySelector("meta[name='csrf-token']").getAttribute('value');
+
+        this.setState({
+            isFetching: true
+        });
 
         $.ajax({
             type: type,
@@ -40,12 +61,16 @@ var PatientsTable = React.createClass({
                 }
 
                 this.setState({
+                    isFetching: false,
                     patients: patients
                 });
             }.bind(this)
         });
     },
 
+    /*
+     *
+     */
     handleSearchNameChange: function(event) {
         var value = event.target.value;
         if(value.length == 0) {
@@ -57,6 +82,9 @@ var PatientsTable = React.createClass({
         });
     },
 
+    /*
+     *
+     */
     handleSearchForceptIDChange: function(event) {
         var value = event.target.value;
         if(value.length == 0) {
@@ -68,6 +96,9 @@ var PatientsTable = React.createClass({
         });
     },
 
+    /*
+     *
+     */
     handleDoSearch: function(type) {
         console.log("handleDoSearch");
         this.getPatients("search", "", {
@@ -76,44 +107,102 @@ var PatientsTable = React.createClass({
         });
     },
 
+    /*
+     *
+     */
     render: function() {
-        var patientRows;
 
-        var patients = this.state.patients,
+        var patientRows, messageRow,
+            props = this.props,
+            state = this.state,
+            patients = this.state.patients,
             patientIDs = Object.keys(patients),
-            patientsCount = patientIDs.length;
+            patientsCount = patientIDs.length,
+            excludePatients = ((props.hasOwnProperty("exclude") && Array.isArray(props.exclude)) ? props.exclude : []);
 
-        if(patientsCount > 0) {
-            patientRows = patientIDs.map(function(patientID, index) {
-                var thisPatient = patients[patientID];
+        /*
+         * If we're fetching, show a loading message.
+         */
+        if(state.isFetching) {
+            messageRow = (
+                <tr>
+                    <td colSpan={8}>
+						<div className="row p-t" id="page-header-message-block">
+							<div className="col-xs-2 text-xs-right hidden-sm-down">
+								<img src="/assets/img/loading.gif" />
+							</div>
+							<div className="col-xs-10 p-t">
+								<h2>
+                                    <span className="fa fa-circle-o-notch fa-spin hidden-md-up"></span> Fetching patients...
+                                </h2>
+							</div>
+						</div>
+                    </td>
+                </tr>
+            );
+        } else if(patientsCount > 0) {
 
-                var photo;
-                if(thisPatient.hasOwnProperty('photo') && thisPatient.photo !== null) {
-                    var resourceObj = [];
-                    try {
-                        resourceObj = JSON.parse(thisPatient.photo);
-                    } catch(e) {
-                        console.log("could not parse patient photo");
-                    }
-                    if(resourceObj.length > 0) {
-                        photo = (
-                            <Fields.Resource
-                                id={resourceObj[0]}
-                                resource={{ type: "image/jpeg" }}
-                                className="thumbnail" />
-                        );
-                    }
-                } else {
-                    photo = "No photo";
+            var alreadyInAVisitCount = 0;
+            var excludedCount = 0;
+
+            console.log("Excluding %O", excludePatients);
+
+            /*
+             * Render patient rows.
+             */
+            patientRows = patientIDs.map(function(patientIndex, index) {
+
+                var thisPatient = patients[patientIndex];
+
+                /*
+                 * Hide patient if ID is found in
+                 * excludePatients array.
+                 */
+                if(excludePatients.indexOf(thisPatient.id.toString()) !== -1) {
+                    excludedCount++;
+                    return;
                 }
 
-                var visitLabel = (
-                    <em>Checked out</em>
-                ),
-                    visitsCount = thisPatient.visits.length;
+                var action,
+                    actionType = "link",
+                    photo = Utilities.getPatientPhotoAsResource(thisPatient, {}, function() {}, "thumbnail"),
+                    visitsCount = thisPatient.visits.length,
+                    visitLabel = (
+                        <em>Checked out</em>
+                    );
 
+                /*
+                 * Update action type if property was passed.
+                 */
+                if(props.hasOwnProperty("action")) {
+
+                    /*
+                     * If the action is "import",
+                     * check for an import handler function.
+                     */
+                    if(props.action !== "import" || props.hasOwnProperty("handleImportPatient")) {
+                        actionType = props.action;
+                    }
+
+                }
+
+                /*
+                 * If this patient has visits,
+                 * create a visit label.
+                 */
                 if(visitsCount > 0) {
-                    if(thisPatient.hasOwnProperty("visit") && thisPatient.visit !== null) {
+                    if(thisPatient.hasOwnProperty("current_visit") && thisPatient.current_visit !== null) {
+
+                        /*
+                         * If our action is "import", we don't want
+                         * to display any patients that are currently
+                         * in a visit.
+                         */
+                        if(actionType === "import") {
+                            alreadyInAVisitCount++;
+                            return;
+                        }
+
                         visitLabel = (
                             <a href={["/visits/stage/", thisPatient.visit.stage, "/handle/", thisPatient.visit.id].join("")}>
                                 <h4>
@@ -126,6 +215,38 @@ var PatientsTable = React.createClass({
                     }
                 }
 
+                /*
+                 * Build action DOM.
+                 */
+                switch(actionType) {
+
+                    /*
+                     * Show an import button.
+                     */
+                    case "import":
+                        action = (
+                            <button type="button" className="btn btn-block btn-primary" onClick={props.handleImportPatient(thisPatient)}>
+                                <span className="fa fa-download"></span> Import
+                            </button>
+                        );
+                        break;
+
+                    /*
+                     * Link to the patient profile.
+                     */
+                    case "link":
+                    default:
+                        action = (
+                            <a href={["/patients/view/", thisPatient.id].join("")}>
+                                View &raquo;
+                            </a>
+                        );
+                        break;
+                }
+
+                /*
+                 * Build the patient row.
+                 */
                 return (
                     <tr>
                         <td width={200}>
@@ -139,31 +260,77 @@ var PatientsTable = React.createClass({
                         <td>
                             {Utilities.getFullName(thisPatient)}
                         </td>
-                        <td>
+                        <td className="hidden-sm-down">
                             {thisPatient.visits.length}
                         </td>
                         <td>
                             {visitLabel}
                         </td>
-                        <td>
+                        <td className="hidden-xs-down">
                             {thisPatient.created_at}
                         </td>
-                        <td>
+                        <td className="hidden-sm-down">
                             {thisPatient.updated_at}
                         </td>
                         <td>
-                            <a href={["/patients/view/", thisPatient.id].join("")}>
-                                &raquo;
-                            </a>
+                            {action}
                         </td>
                     </tr>
                 );
             }.bind(this));
+
+            /*
+             * Display a message alerting the user
+             * that some patients weren't displayed.
+             */
+            var invalidCount = (excludedCount + alreadyInAVisitCount);
+            if(invalidCount > 0) {
+                messageRow = (
+                    <tr className="table-warning p-y">
+                        <td colSpan={8}>
+                            <h6>
+                                <span className="fa fa-fw fa-warning m-x"></span> {invalidCount} patient{invalidCount === 1 ? "" : "s"} matched criteria, but are invalid in this context.
+                            </h6>
+                            <h6 className="text-muted">
+                                {alreadyInAVisitCount} are already in a visit &mdash; {excludedCount} are already in <em>this</em> visit.
+                            </h6>
+                        </td>
+                    </tr>
+                );
+            }
+
+        } else {
+            messageRow = (
+                <tr>
+                    <td colSpan={8}>
+						<div className="row p-t" id="page-header-message-block">
+							<div className="col-xs-2 text-xs-right hidden-sm-down">
+								<h1 className="display-3">
+                                    <span className="fa fa-user-times"></span>
+                                </h1>
+							</div>
+							<div className="col-xs-10 p-t">
+								<h2>
+                                    <span className="fa fa-user-times hidden-md-up"></span> No patients match these criteria.
+                                </h2>
+								<p>
+									You can refine your search with the controls above.
+								</p>
+							</div>
+						</div>
+                    </td>
+                </tr>
+            );
         }
 
         return (
-            <div className="p-t">
-                <h1>Patients ({patientsCount})</h1>
+            <div>
+                <h2 className="m-y">
+                    {props.hasOwnProperty("icon") ? (
+                        <span className={props.icon}></span>
+                    ) : ""}
+                    {props.title.format({ count: patientsCount })}
+                </h2>
                 <fieldset className="fieldset">
                     <div className="row">
                         <div className="col-xs-12 col-sm-4">
@@ -215,21 +382,22 @@ var PatientsTable = React.createClass({
                                     <th>
                                         Visits
                                     </th>
-                                    <th>
+                                    <th className="hidden-sm-down">
                                         Location
                                     </th>
-                                    <th>
+                                    <th className="hidden-xs-down">
                                         Created at
                                     </th>
-                                    <th>
+                                    <th className="hidden-sm-down">
                                         Last updated
                                     </th>
                                     <th>
-
+                                        Action
                                     </th>
                                 </tr>
                             </thead>
                             <tbody>
+                                {messageRow}
                                 {patientRows}
                             </tbody>
                         </table>

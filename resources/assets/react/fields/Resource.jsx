@@ -68,6 +68,13 @@ Fields.Resource = React.createClass({
 				if(!props.resource.hasOwnProperty('data') || props.resource.data.length === 0) {
 					console.log("HEADS UP: data not found for resource!");
 					console.log(props);
+					console.log(props.resource);
+					console.log("typeof1: %s", typeof props.resource);
+					console.log("hasOwnProperty('data'): %s", props.resource.hasOwnProperty('data'));
+					console.log("typeof2: %s", typeof props.resource.data);
+					console.log("typeof3: %s", typeof props.resource['data']);
+					if(props.resource.hasOwnProperty('data'))
+						console.log("length: %s", props.resource.data.length);
 					this.fetchData();
 				}
 

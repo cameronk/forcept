@@ -51,34 +51,6 @@ Visit.Patient = React.createClass({
 			console.log("Stage type: %s", props.stageType);
 			console.log("Iterable field count: %i", countFields);
 			console.log("Iterable field keys: %O", fieldKeys);
-			// console.log("Summary field count : %i", countSummaryFields);
-
-		// Build summary DOM
-		/*if(summaryFields !== null && typeof summaryFields === "object" && countSummaryFields > 0) {
-
-			// TODO this sucks, figure out a better way
-			var leftColumnFields = {},
-				rightColumnFields = {},
-				patientsObjectSpoof = {};
-
-			patientsObjectSpoof[props.patient.patient_id] = props.patient;
-
-			summaryFieldsKeys.map(function(key, index) {
-				if(index > (countSummaryFields - 1) / 2) {
-					rightColumnFields[key] = summaryFields[key];
-				} else {
-					leftColumnFields[key] = summaryFields[key];
-				}
-			}.bind(this));
-
-			console.log("Left column: %O", leftColumnFields);
-			console.log("Right column: %O", rightColumnFields);
-
-			summary = (
-				<div className="row">
-				</div>
-			);
-		}*/
 
 		var fieldsDOM;
 
@@ -308,13 +280,27 @@ Visit.Patient = React.createClass({
 
 		/*
 		 * Test for available summaryFields.
+		 * Also check if one of the two overview cards
+		 * is hidden (thereby collapsing the column)
 		 */
 		if(props.hasOwnProperty("summaryFields")
 			&& typeof props.summaryFields === "object"
 			&& props.summaryFields !== null
-			&& Object.keys(props.summaryFields).length > 0) {
+			&& Object.keys(props.summaryFields).length > 0
+			&& props.componentStates["patientRecord"].visible
+			&& props.componentStates["visitSummary"].visible) {
+
+
+			/*
+			 * With both cards expanded...
+			 */
 			patientColumnSize = "col-xs-12 col-sm-12 col-md-12 col-lg-6 col-xl-6";
+
 		} else {
+
+			/*
+			 * Without summary cards OR if one card is collapsed...
+			 */
 			patientColumnSize = "col-xs-12 col-sm-12 col-md-8 col-lg-8 col-xl-6";
 		}
 

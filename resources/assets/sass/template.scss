@@ -47,6 +47,9 @@ $forcept-content-header-secondary: darken($forcept-content-header-background, 10
  * Imports
  */
 
+// Fields
+@import "fields";
+
 // Navigation
 @import "navigation";
 

@@ -12,6 +12,10 @@ var Sheets = [
     './resources/assets/sass/template-basic.scss'
 ];
 var Scripts = [
+    // utilities
+    './resources/assets/react/utilities/Utilities.jsx',
+    './resources/assets/react/utilities/*.jsx',
+
     // data-displays
     './resources/assets/react/data-displays/DataDisplays.jsx',
     './resources/assets/react/data-displays/*.jsx',
@@ -25,16 +29,12 @@ var Scripts = [
     './resources/assets/react/flow-editor/*.jsx',
 
     // patients
-    './resources/assets/react/patients/Table.jsx',
+    './resources/assets/react/patients/Patients.jsx',
     './resources/assets/react/patients/*.jsx',
 
     // stage-visits
     './resources/assets/react/stage-visits/StageVisits.jsx',
     './resources/assets/react/stage-visits/*.jsx',
-
-    // utilities
-    './resources/assets/react/utilities/Utilities.jsx',
-    './resources/assets/react/utilities/*.jsx',
 
     // visit
     './resources/assets/react/visit/Visit.jsx',

@@ -55,6 +55,25 @@ var Visit = React.createClass({
 			 */
 			visibleItem: 0,
 
+
+			/*
+			 * Some component states are stored in
+			 * the visit container, because we need
+			 * to share them between each component
+			 * in order to properly display information
+			 * (for example, column organization)
+			 */
+			componentStates: {
+				patientRecord: {
+					visible: true,
+					compact: false,
+				},
+				visitSummary: {
+					visible: true,
+					compact: true,
+				}
+			},
+
 			patients: {},
 			resources: {},
 			prescriptions: {},
@@ -107,6 +126,23 @@ var Visit = React.createClass({
 		}
 
 		console.groupEnd();
+	},
+
+	/*
+	 * Toggle the state of a visit sub-component.
+	 */
+	toggleComponentState: function(component, value) {
+		return function(event) {
+			var state = this.state;
+			if(state.componentStates.hasOwnProperty(component)
+				&& state.componentStates[component].hasOwnProperty(value)) {
+				state.componentStates[component][value] = !state.componentStates[component][value];
+
+				this.setState({
+					componentStates: state.componentStates,
+				});
+			}
+		}.bind(this);
 	},
 
 	/*
@@ -213,18 +249,20 @@ var Visit = React.createClass({
 	 * @return void
 	 */
 	handleImportPatient: function(patient) {
+		return function(event) {
 
-		/*
-		 * If the patient was pulled from field data table,
-		 * we need to "add it from scratch" to create the
-		 * respective Patient record.
-		 */
-		if(patient.hasOwnProperty('field_number') && patient.field_number !== null) {
-			this.handlePatientAddfromScratch(patient);
-		} else {
-			this.handlePatientAdd(patient);
-		}
+			/*
+			 * If the patient was pulled from field data table,
+			 * we need to "add it from scratch" to create the
+			 * respective Patient record.
+			 */
+			if(patient.hasOwnProperty('field_number') && patient.field_number !== null) {
+				this.handlePatientAddfromScratch(patient);
+			} else {
+				this.handlePatientAdd(patient);
+			}
 
+		}.bind(this);
 	},
 
 	/*
@@ -360,13 +398,12 @@ var Visit = React.createClass({
 		/*
 		 * Instantiate ALL the things
 		 */
-		var props = this.props,
+		var patientRow,
+			createPatientControl, importPatientControl,
+			loadingItem, importingItem,
+			props = this.props,
 			state = this.state,
 			patientKeys = Object.keys(state.patients),
-			patientRow,
-			createPatientControl,
-			importPatientControl,
-			loadingItem, importingItem,
 			controlsDisabled = (state.displayState !== "default")
 			submitDisabled 	 = (controlsDisabled || !state.isValid);
 
@@ -388,18 +425,24 @@ var Visit = React.createClass({
 					</li>
 				);
 				patientRow = (
-					<Visit.ImportBlock
-						_token={props._token}
-
-						onPatientAdd={this.handleImportPatient}
-						onClose={this.switchVisibleItem(0)} />
+					<Patients.Table
+						icon={"fa fa-download m-r m-l"}
+						title={"Import a patient"}
+						action={"import"}
+						preload={false}
+						exclude={patientKeys}
+						handleImportPatient={this.handleImportPatient} />
 				);
 				break;
 
 			/**
-			 * Show the no-patients message
+			 * Show a message.
 			 */
 			case 0:
+
+				/*
+				 * Check if we have any patients in this visit.
+				 */
 				if(patientKeys.length === 0) {
 					patientRow = (
 						<div className="row p-t" id="page-header-message-block">
@@ -433,7 +476,8 @@ var Visit = React.createClass({
 			 * Show the patient provided by visibleItem.
 			 */
 			default:
-				if(patientKeys.indexOf(state.visibleItem.toString()) !== -1) {
+				var patientIndex = patientKeys.indexOf(state.visibleItem.toString());
+				if(patientIndex !== -1) {
 					patientRow = (
 						<div className={"row" + (controlsDisabled ? " disabled" : "")}>
 
@@ -442,12 +486,12 @@ var Visit = React.createClass({
 							  *
 							  * Overview:
 							  * - stages WITHOUT summary: offset 1 on both sides (total area: 10)
+							  * TODO finish this
 							  */}
 
 							<Visit.Overview
 								fields={props.patientFields}
 								patient={state.patients[state.visibleItem]}
-								mini={false}
 								resources={state.resources}
 
 								/*
@@ -458,7 +502,13 @@ var Visit = React.createClass({
 								/*
 								 * Fields to summarize in summary card
 								 */
-								summaryFields={props.summaryFields} />
+								summaryFields={props.summaryFields}
+
+								/*
+								 * Handle component state & toggling.
+								 */
+								componentStates={state.componentStates}
+								toggleComponentState={this.toggleComponentState} />
 
 							<Visit.Patient
 								/*
@@ -476,7 +526,7 @@ var Visit = React.createClass({
 								 */
 								patient={state.patients[state.visibleItem]}
 								id={state.visibleItem}
-								index={0}
+								index={patientIndex}
 
 								/*
 								 * All available fields
@@ -489,6 +539,12 @@ var Visit = React.createClass({
 								summaryFields={props.summaryFields}
 
 								/*
+								 * Handle component state & toggling.
+								 */
+								componentStates={state.componentStates}
+								toggleComponentState={this.toggleComponentState}
+
+								/*
 								 * Event handlers
 								 */
 								onPatientDataChange={this.topLevelPatientStateChange}
@@ -496,12 +552,12 @@ var Visit = React.createClass({
 						</div>
 					);
 				} else {
+					// TODO figure out what to do here
 					patientRow = (
 						<div>test</div>
 					);
 				}
 				break;
-
 
 		}
 

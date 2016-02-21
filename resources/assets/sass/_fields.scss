@@ -1,0 +1,24 @@
+/**
+ * _fields.scss
+ */
+
+
+// Resource
+.forcept-patient-photo-contain {
+
+	max-height: 300px;
+	overflow-y: auto;
+	overflow-x: hidden;
+
+    &.thumbnail {
+        padding: .25rem;
+        line-height: 1.5;
+        background-color: #fff;
+        border: 1px solid #ddd;
+        border-radius: .25rem;
+        margin: 0 auto;
+    }
+	img {
+		width: 100%;
+	}
+}

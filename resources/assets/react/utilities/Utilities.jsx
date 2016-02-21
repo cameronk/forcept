@@ -1,5 +1,6 @@
 /**
- * Forcept.jsx
+ * utilities/Utilities.jsx
+ * @author Cameron Kelley
  */
 
 /*
@@ -178,4 +179,94 @@ var Utilities = {
 				return false;
 		}
 	},
+
+	/*
+	 *
+	 */
+	getPatientPhotoAsResource: function(thisPatient, resources, handleStoreResource, resourceClassName) {
+
+		var photo;
+		resources = resources || {};
+		handleStoreResource = handleStoreResource || function() { };
+		resourceClassName = resourceClassName || "";
+
+		if(thisPatient
+			&& thisPatient.hasOwnProperty('photo')
+			&& thisPatient.photo !== null) {
+
+			var resourceKeys = []; // Array of resource IDs to search for / fetch
+
+			console.group("Photo:");
+				console.log("This patient has a photo property.");
+
+			try {
+				if(typeof thisPatient.photo === "string") {
+					console.log("The photo property is a STRING");
+
+					/*
+					 * Attempt to parse JSON from database as string
+					 */
+					try {
+						resourceKeys = JSON.parse(thisPatient.photo);
+					} catch(e) {
+						console.error("Failed to parse photo string into JSON array.");
+						resourceKeys = [];
+					}
+
+				} else {
+					console.log("The photo property is NOT a STRING");
+					console.info("Photo property type: %s", typeof thisPatient.photo);
+
+					// Otherwise, just push the object
+					resourceKeys = thisPatient.photo;
+				}
+			} catch(e) {
+				console.error("Some sort of error parsing photo string (not a JSON error...)");
+				resourceKeys = [];
+			}
+
+			// If we found some resources to load...
+			if(resourceKeys.length > 0) {
+
+				// Since Photo field only allows one upload, we'll grab the first key in the array
+				// (it's probably the only key...)
+				var photoKey = resourceKeys[0];
+
+				console.log("Photo resource ID is %s, checking resource storage...", photoKey);
+
+				// Check if we have this resource in storage already.
+				if(resources.hasOwnProperty(photoKey)) {
+
+					// For the immutable Photo input, the one and only file is the patient photo.
+					var photoData = resources[photoKey];
+
+					console.log("Photo found in preloaded resources: %O", photoData);
+
+					photo = (
+						<Fields.Resource
+							id={photoKey}
+							className={resourceClassName}
+							resource={{ type: "image/jpeg", data: photoData.data}}
+							handleStoreResource={handleStoreResource} />
+					);
+
+				} else {
+					console.log("Photo not found in resources, creating resource object with instructions to grab resource via AJAX");
+
+					photo = (
+						<Fields.Resource
+							id={photoKey}
+							className={resourceClassName}
+							resource={{ type: "image/jpeg" }}
+							handleStoreResource={handleStoreResource} />
+					);
+				}
+			}
+
+			console.groupEnd(); // End "Photo:"
+
+		}
+
+		return photo;
+	}
 };
