@@ -272,6 +272,15 @@ var Utilities = {
 };
 
 /**
+ * utilities/AjaxSetup.jsx
+ * @author Cameron Kelley
+ */
+
+$( document ).ajaxError(function(event, jqxhr, settings, thrownError) {
+    console.error("ajaxError: %O, %O, %O, %O", event, jqxhr, settings, thrownError);
+});
+
+/**
  * utilities/Prototype.jsx
  * @author Cameron Kelley
  *
@@ -839,7 +848,8 @@ Fields.Date = React.createClass({displayName: "Date",
 	 */
 	dashesToSlashes: function(date) {
 		date = date.split("-");
-		return [date[1], date[2], date[0]].join("/");
+		var slashes = [date[1], date[2], date[0]].join("/");
+		return slashes === "//" ? "" : slashes;
 	},
 
 	/*
@@ -2708,7 +2718,7 @@ Fields.Text = React.createClass({displayName: "Text",
 	 */
 	setValue: function(props) {
 		this.setState({
-			value: (props.hasOwnProperty('value') && props.value !== null) ?  props.value : ""
+			value: (props.hasOwnProperty('value') && props.value !== null) ? props.value : ""
 		});
 	},
 
@@ -4911,14 +4921,23 @@ var Visit = React.createClass({displayName: "Visit",
 	toggleComponentState: function(component, value) {
 		return function(event) {
 			var state = this.state;
+
+			/*
+			 * Make sure this is a valid state value.
+			 */
 			if(state.componentStates.hasOwnProperty(component)
 				&& state.componentStates[component].hasOwnProperty(value)) {
+
+				/*
+				 * Invert current state.
+				 */
 				state.componentStates[component][value] = !state.componentStates[component][value];
 
 				this.setState({
 					componentStates: state.componentStates,
 				});
 			}
+
 		}.bind(this);
 	},
 
@@ -4927,7 +4946,8 @@ var Visit = React.createClass({displayName: "Visit",
 	 */
 	handleConfirmFinishVisit: function( destination, modalObject ) {
 
-		var props = this.props;
+		var props = this.props,
+			patients = this.state.patients;
 
 		/*
 		 * change displayState to submitting.
@@ -4951,10 +4971,15 @@ var Visit = React.createClass({displayName: "Visit",
 			data: {
 				"_token": props._token,
 				visit: props.visitID,
-				patients: this.state.patients,
+				patients: patients,
 				stage: props.currentStage,
 				destination: destination
 			},
+
+			/**
+			 * Update container state with
+			 * XHR progress
+			 */
 			xhr: function() {
 
 				/*
@@ -4976,6 +5001,11 @@ var Visit = React.createClass({displayName: "Visit",
 				return xhr;
 
 			}.bind(this),
+
+			/**
+			 * On completion, reset progress and
+			 * update displayState
+			 */
 			success: function(resp) {
 				this.setState({
 					/*
@@ -4992,18 +5022,29 @@ var Visit = React.createClass({displayName: "Visit",
 					 * Display a message
 					 */
 					displayState: "submitted",
-					visibleItem: 0
-				});
-			}.bind(this),
-			error: function(resp) {
+					visibleItem: 0,
 
-			},
-			complete: function(resp) {
-				console.log("Complete: %O", resp);
-				this.setState({
+					/*
+					 *
+					 */
 					movedResponse: resp.responseJSON
 				});
-			}.bind(this)
+			}.bind(this),
+
+			/**
+			 * Allot 3 seconds per patient for sending data
+			 */
+			timeout: (Object.keys(patients).length * 3000),
+
+			/**
+			 * Handle an error (timeout or response error)
+			 */
+			error: function(resp) {
+				console.error("confirmFinishVisit returned error: %O", resp);
+				// this.setState({
+				//
+				// });
+			}
 		});
 	},
 
@@ -5842,7 +5883,7 @@ Visit.Overview = React.createClass({displayName: "Overview",
 	 */
 	getInitialState: function() {
 		return {
-			
+
 		};
 	},
 
@@ -6160,7 +6201,7 @@ Visit.Overview = React.createClass({displayName: "Overview",
 		 * If at least one field had data,
 		 * display the list. Otherwise, display a message.
 		 */
-		if(fieldsWithData === 0) {
+		if(fieldsWithData === 0 && compact === true) {
 			return (
 				React.createElement("div", {className: "list-group-item"}, 
 					React.createElement("strong", null, "No data found.")

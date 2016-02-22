@@ -16,7 +16,7 @@ Visit.Overview = React.createClass({
 	 */
 	getInitialState: function() {
 		return {
-			
+
 		};
 	},
 
@@ -334,7 +334,7 @@ Visit.Overview = React.createClass({
 		 * If at least one field had data,
 		 * display the list. Otherwise, display a message.
 		 */
-		if(fieldsWithData === 0) {
+		if(fieldsWithData === 0 && compact === true) {
 			return (
 				<div className="list-group-item">
 					<strong>No data found.</strong>

@@ -36,7 +36,7 @@ Fields.Text = React.createClass({
 	 */
 	setValue: function(props) {
 		this.setState({
-			value: (props.hasOwnProperty('value') && props.value !== null) ?  props.value : ""
+			value: (props.hasOwnProperty('value') && props.value !== null) ? props.value : ""
 		});
 	},
 

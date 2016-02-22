@@ -135,14 +135,23 @@ var Visit = React.createClass({
 	toggleComponentState: function(component, value) {
 		return function(event) {
 			var state = this.state;
+
+			/*
+			 * Make sure this is a valid state value.
+			 */
 			if(state.componentStates.hasOwnProperty(component)
 				&& state.componentStates[component].hasOwnProperty(value)) {
+
+				/*
+				 * Invert current state.
+				 */
 				state.componentStates[component][value] = !state.componentStates[component][value];
 
 				this.setState({
 					componentStates: state.componentStates,
 				});
 			}
+
 		}.bind(this);
 	},
 
@@ -151,7 +160,8 @@ var Visit = React.createClass({
 	 */
 	handleConfirmFinishVisit: function( destination, modalObject ) {
 
-		var props = this.props;
+		var props = this.props,
+			patients = this.state.patients;
 
 		/*
 		 * change displayState to submitting.
@@ -175,10 +185,15 @@ var Visit = React.createClass({
 			data: {
 				"_token": props._token,
 				visit: props.visitID,
-				patients: this.state.patients,
+				patients: patients,
 				stage: props.currentStage,
 				destination: destination
 			},
+
+			/**
+			 * Update container state with
+			 * XHR progress
+			 */
 			xhr: function() {
 
 				/*
@@ -200,6 +215,11 @@ var Visit = React.createClass({
 				return xhr;
 
 			}.bind(this),
+
+			/**
+			 * On completion, reset progress and
+			 * update displayState
+			 */
 			success: function(resp) {
 				this.setState({
 					/*
@@ -216,18 +236,29 @@ var Visit = React.createClass({
 					 * Display a message
 					 */
 					displayState: "submitted",
-					visibleItem: 0
-				});
-			}.bind(this),
-			error: function(resp) {
+					visibleItem: 0,
 
-			},
-			complete: function(resp) {
-				console.log("Complete: %O", resp);
-				this.setState({
+					/*
+					 *
+					 */
 					movedResponse: resp.responseJSON
 				});
-			}.bind(this)
+			}.bind(this),
+
+			/**
+			 * Allot 3 seconds per patient for sending data
+			 */
+			timeout: (Object.keys(patients).length * 3000),
+
+			/**
+			 * Handle an error (timeout or response error)
+			 */
+			error: function(resp) {
+				console.error("confirmFinishVisit returned error: %O", resp);
+				// this.setState({
+				//
+				// });
+			}
 		});
 	},
 

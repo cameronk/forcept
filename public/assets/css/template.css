@@ -4659,7 +4659,7 @@ a.bg-danger:focus, a.bg-danger:hover {
   .forcept-visit-submit-overlay > div {
     padding: 1rem;
     box-shadow: 0 0 12px 0.5px rgba(0, 0, 0, 0.3);
-    background: rgba(255, 255, 255, 0.9); }
+    background: #fff; }
     .forcept-visit-submit-overlay > div progress {
       margin-top: 1rem;
       margin-bottom: 0; }

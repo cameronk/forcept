@@ -70,7 +70,8 @@ Fields.Date = React.createClass({
 	 */
 	dashesToSlashes: function(date) {
 		date = date.split("-");
-		return [date[1], date[2], date[0]].join("/");
+		var slashes = [date[1], date[2], date[0]].join("/");
+		return slashes === "//" ? "" : slashes;
 	},
 
 	/*
