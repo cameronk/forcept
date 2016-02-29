@@ -113,6 +113,8 @@
     </div>
 </div>
 
+<!--| Container for future modal rendering |-->
+<div id="forcept-modal-container"></div>
 
 <!--| Debug container |-->
 <div class="container-fluid hidden" id="forcept-debug-content">

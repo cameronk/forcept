@@ -16,6 +16,10 @@ var Scripts = [
     './resources/assets/react/utilities/Utilities.jsx',
     './resources/assets/react/utilities/*.jsx',
 
+    // verbiage
+    // './resources/assets/react/verbiage/Verbiage.jsx',
+    // './resources/assets/react/verbiage/*.jsx',
+
     // modals
     './resources/assets/react/modals/Modals.jsx',
     './resources/assets/react/modals/*.jsx',

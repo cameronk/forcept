@@ -56,7 +56,6 @@ var Visit = React.createClass({
 			 */
 			visibleItem: 0,
 
-
 			/*
 			 * Some component states are stored in
 			 * the visit container, because we need
@@ -222,6 +221,7 @@ var Visit = React.createClass({
 			 */
 			success: function(resp) {
 				this.setState({
+
 					/*
 					 * Reset progress back to 0
 					 */
@@ -241,7 +241,8 @@ var Visit = React.createClass({
 					/*
 					 *
 					 */
-					movedResponse: resp.responseJSON
+					movedResponse: resp
+
 				});
 			}.bind(this),
 
@@ -253,12 +254,28 @@ var Visit = React.createClass({
 			/**
 			 * Handle an error (timeout or response error)
 			 */
-			error: function(resp) {
-				console.error("confirmFinishVisit returned error: %O", resp);
-				// this.setState({
-				//
-				// });
-			}
+			error: function(xhr) {
+
+				/*
+				 * Abort request modal
+				 */
+				Request.abort(xhr, function() {
+					this.setState({
+
+						/*
+						 * Reset progress back to 0
+						 */
+						progress: 0,
+
+						/*
+						 * Display a message
+						 */
+						displayState: "default"
+
+					});
+				}.bind(this));
+
+			}.bind(this)
 		});
 	},
 
@@ -282,15 +299,6 @@ var Visit = React.createClass({
 				visibleItem: patient.id
 			}, this.validate); // Validate after updating patients
 		}
-	},
-
-	/*
-	 *
-	 */
-	setDisplayState: function(state) {
-		this.setState({
-			displayState: state
-		});
 	},
 
 	/*
@@ -342,16 +350,25 @@ var Visit = React.createClass({
 				url: "/patients/create",
 				data: data,
 				success: function(resp) {
+					this.setDisplayState("default");
 					if(resp.status == "success") {
 						this.handlePatientAdd(resp.patient);
 					}
 				}.bind(this),
-				error: function(resp) {
-					console.log("handlePatientAddfromScratch: error");
-					console.log(resp);
-				},
-				complete: function() {
-					this.setDisplayState("default");
+				error: function(xhr) {
+
+					/*
+					 * Abort request modal
+					 */
+					Request.abort(xhr, function() {
+
+						this.setState({
+							displayState: "default",
+							visibleItem: 0,
+						});
+
+					}.bind(this));
+
 				}.bind(this)
 			});
 		}.bind(this);
@@ -373,13 +390,22 @@ var Visit = React.createClass({
 	 */
 	switchVisibleItem: function( patientID ) {
 		return function(event) {
-			if(this.state.visibleItem !== patientID) {
+			if(this.state.visibleItem != patientID) {
 				this.setState({
 					displayState: "default", // in case we were importing...
 					visibleItem: patientID
 				});
 			}
 		}.bind(this);
+	},
+
+	/*
+	 *
+	 */
+	setDisplayState: function(state) {
+		this.setState({
+			displayState: state
+		});
 	},
 
 	/*
@@ -681,7 +707,7 @@ var Visit = React.createClass({
 			case "loading":
 				loadingItem = (
 					<li className="nav-item">
-						<img src="/assets/img/loading.gif" />
+						<img src="/assets/img/loading.gif" alt="Loading..." />
 					</li>
 				);
 				break;
@@ -715,7 +741,12 @@ var Visit = React.createClass({
 									return (
 										<li className="nav-item" key={"patient-tab-" + patientID}>
 											<a  onClick={this.switchVisibleItem(patientID)}
-												className={"nav-link" + (patientID == state.visibleItem ? " active" : "")}>
+												disabled={controlsDisabled}
+												className={[
+													"nav-link",
+													(patientID == state.visibleItem ? "active" : ""),
+													(controlsDisabled ? "disabled" : "")
+												].join(" ")}>
 												<span className="label label-default">{patientID}</span>
 												&nbsp; {state.patients[patientID].abbr_name}
 											</a>

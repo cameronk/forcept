@@ -38,7 +38,7 @@ $forcept-content-header-secondary: darken($forcept-content-header-background, 10
 
 // add disabled class for row
 .row.disabled {
-    opacity: 0.4;
+    opacity: 0.25;
     pointer-events: none;
 }
 

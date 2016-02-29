@@ -272,15 +272,6 @@ var Utilities = {
 };
 
 /**
- * utilities/AjaxSetup.jsx
- * @author Cameron Kelley
- */
-
-$( document ).ajaxError(function(event, jqxhr, settings, thrownError) {
-    console.error("ajaxError: %O, %O, %O, %O", event, jqxhr, settings, thrownError);
-});
-
-/**
  * utilities/Prototype.jsx
  * @author Cameron Kelley
  *
@@ -301,6 +292,92 @@ if (!String.prototype.format) {
 }
 
 /**
+ * utilities/XMLHttpRequest.jsx
+ * @author Cameron Kelley
+ */
+
+var Request = {
+
+    /*
+     * Return a semantic error object for
+     * usage in more detailed error messages.
+     */
+    getSemanticError: function(xhr) {
+        console.log("getSemanticError: %O", xhr);
+        var message = {
+            summary: "An error occurred.",
+            details: "",
+        };
+
+        if(xhr.hasOwnProperty("responseJSON")
+            && xhr.responseJSON.hasOwnProperty("message")
+            && xhr.responseJSON.message.toString().length > 0) {
+
+            message.details = xhr.responseJSON.message + ".";
+
+            for(var key in xhr.responseJSON) {
+                message[key] = xhr.responseJSON[key];
+            }
+
+        } else {
+            switch(xhr.readyState) {
+                case 0:
+
+                    message.summary  = "Unable to send request.";
+                    message.allowRetry = true;
+
+                    if(xhr.status === 0) {
+                        message.details = "It looks like your internet was disconnected, or the operation timed out. Please ensure your connection is established and try again.";
+                    } else {
+                        message.details = "Your internet may have been disconnected, or an internal error may have occurred. Please ensure your connection is established and try again.";
+                    }
+
+                    break;
+            };
+        }
+
+        return {
+            readyState: xhr.readyState,
+            status: xhr.status,
+            response: message
+        };
+
+    },
+
+    /*
+     *
+     */
+    fatal: function(xhr) {
+        return xhr.readyState === 0;
+    },
+
+    /*
+     *
+     */
+    abort: function(error, onClose) {
+
+        /*
+         * Grab semantic error and set default onClose
+         * as an empty function.
+         */
+        error   = this.getSemanticError(error),
+        onClose = onClose || function() { };
+
+        ReactDOM.render(
+            React.createElement(
+                Modals.Abort,
+                {
+                    error: error,
+                    onClose: onClose
+                }
+            ),
+            document.getElementById('forcept-modal-container')
+        );
+
+    }
+};
+
+/**
  * modals/Modals.jsx
  * @author Cameron Kelley
  */
@@ -309,7 +386,133 @@ var Modals = {
 
 };
 
-/*
+/**
+ * modals/Abort.jsx
+ * @author Cameron Kelley
+ *
+ * Modal that appears during a fatal error.
+ *
+ * Properties
+ *   - error: semantic error object from Request
+ *   - onClose: handler function for closing the modal.
+ */
+
+Modals.Abort = React.createClass({displayName: "Abort",
+
+    /*
+     *
+     */
+    getDefaultProps: function() {
+        return {
+            onClose: function() {}
+        };
+    },
+
+    /*
+     * Define prop types.
+     */
+    propTypes: {
+
+        /**
+         * Required
+         */
+        error:   React.PropTypes.object.isRequired,
+
+        /**
+         * Optional
+         */
+        onClose: React.PropTypes.func,
+
+    },
+
+    /*
+     *
+     */
+    getInitialState: function() {
+        return {
+            visible: false
+        };
+    },
+
+    /*
+     *
+     */
+    componentDidMount: function() {
+        $("#modal-abort")
+            .modal({
+                backdrop: 'static',
+                keyboard: false
+            })
+            .modal('show');
+    },
+
+    /*
+     *
+     */
+    componentDidUpdate: function() {
+
+        $("#modal-abort")
+            .modal({
+                backdrop: 'static',
+                keyboard: false
+            })
+            .modal('show');
+
+    },
+
+    /*
+     *
+     */
+    onClose: function() {
+        this.props.onClose();
+
+        $("#modal-abort")
+            .modal('hide');
+    },
+
+    /*
+     *
+     */
+    onRefresh: function() {
+        window.location.reload();
+    },
+
+    /*
+     *
+     */
+    render: function() {
+        var props = this.props,
+            allowRetry = (props.error.response.hasOwnProperty('allowRetry') && props.error.response.allowRetry === true);
+
+        return (
+            React.createElement("div", {className: "modal fade", id: "modal-abort"}, 
+			    React.createElement("div", {className: "modal-dialog", role: "document"}, 
+			        React.createElement("div", {className: "modal-content"}, 
+			            React.createElement("div", {className: "modal-header"}, 
+			                React.createElement("h4", {className: "modal-title"}, 
+                                React.createElement("span", {className: "fa fa-exclamation-triangle text-danger"}), " ", props.error.response.summary
+                            )
+			            ), 
+			            React.createElement("div", {className: "modal-body alert alert-danger m-b-0"}, 
+			            	props.error.response.details
+			            ), 
+			            React.createElement("div", {className: "modal-footer"}, 
+                            React.createElement("button", {type: "button", className: "btn btn-primary-outline", onClick: this.onRefresh}, 
+                                React.createElement("span", {className: "fa fa-refresh"}), " Refresh the page"
+                            ), 
+			                (allowRetry ? ( React.createElement("button", {type: "button", className: "btn btn-danger-outline", onClick: this.onClose}, 
+			                	"Try again"
+			                )) : "")
+			            )
+			        )
+			    )
+			)
+        )
+    }
+
+});
+
+/**
  * modals/FinishVisit.jsx
  * @author Cameron Kelley
  *
@@ -4199,6 +4402,20 @@ Patients.Table = React.createClass({displayName: "Table",
                     isFetching: false,
                     patients: patients
                 });
+            }.bind(this),
+            error: function(xhr) {
+
+				/*
+				 * Abort request modal
+				 */
+				Request.abort(xhr, function() {
+
+					this.setState({
+						isFetching: false
+					});
+
+				}.bind(this));
+
             }.bind(this)
         });
     },
@@ -4842,7 +5059,6 @@ var Visit = React.createClass({displayName: "Visit",
 			 */
 			visibleItem: 0,
 
-
 			/*
 			 * Some component states are stored in
 			 * the visit container, because we need
@@ -5008,6 +5224,7 @@ var Visit = React.createClass({displayName: "Visit",
 			 */
 			success: function(resp) {
 				this.setState({
+
 					/*
 					 * Reset progress back to 0
 					 */
@@ -5027,7 +5244,8 @@ var Visit = React.createClass({displayName: "Visit",
 					/*
 					 *
 					 */
-					movedResponse: resp.responseJSON
+					movedResponse: resp
+
 				});
 			}.bind(this),
 
@@ -5039,12 +5257,28 @@ var Visit = React.createClass({displayName: "Visit",
 			/**
 			 * Handle an error (timeout or response error)
 			 */
-			error: function(resp) {
-				console.error("confirmFinishVisit returned error: %O", resp);
-				// this.setState({
-				//
-				// });
-			}
+			error: function(xhr) {
+
+				/*
+				 * Abort request modal
+				 */
+				Request.abort(xhr, function() {
+					this.setState({
+
+						/*
+						 * Reset progress back to 0
+						 */
+						progress: 0,
+
+						/*
+						 * Display a message
+						 */
+						displayState: "default"
+
+					});
+				}.bind(this));
+
+			}.bind(this)
 		});
 	},
 
@@ -5068,15 +5302,6 @@ var Visit = React.createClass({displayName: "Visit",
 				visibleItem: patient.id
 			}, this.validate); // Validate after updating patients
 		}
-	},
-
-	/*
-	 *
-	 */
-	setDisplayState: function(state) {
-		this.setState({
-			displayState: state
-		});
 	},
 
 	/*
@@ -5128,16 +5353,25 @@ var Visit = React.createClass({displayName: "Visit",
 				url: "/patients/create",
 				data: data,
 				success: function(resp) {
+					this.setDisplayState("default");
 					if(resp.status == "success") {
 						this.handlePatientAdd(resp.patient);
 					}
 				}.bind(this),
-				error: function(resp) {
-					console.log("handlePatientAddfromScratch: error");
-					console.log(resp);
-				},
-				complete: function() {
-					this.setDisplayState("default");
+				error: function(xhr) {
+
+					/*
+					 * Abort request modal
+					 */
+					Request.abort(xhr, function() {
+
+						this.setState({
+							displayState: "default",
+							visibleItem: 0,
+						});
+
+					}.bind(this));
+
 				}.bind(this)
 			});
 		}.bind(this);
@@ -5159,13 +5393,22 @@ var Visit = React.createClass({displayName: "Visit",
 	 */
 	switchVisibleItem: function( patientID ) {
 		return function(event) {
-			if(this.state.visibleItem !== patientID) {
+			if(this.state.visibleItem != patientID) {
 				this.setState({
 					displayState: "default", // in case we were importing...
 					visibleItem: patientID
 				});
 			}
 		}.bind(this);
+	},
+
+	/*
+	 *
+	 */
+	setDisplayState: function(state) {
+		this.setState({
+			displayState: state
+		});
 	},
 
 	/*
@@ -5467,7 +5710,7 @@ var Visit = React.createClass({displayName: "Visit",
 			case "loading":
 				loadingItem = (
 					React.createElement("li", {className: "nav-item"}, 
-						React.createElement("img", {src: "/assets/img/loading.gif"})
+						React.createElement("img", {src: "/assets/img/loading.gif", alt: "Loading..."})
 					)
 				);
 				break;
@@ -5501,7 +5744,12 @@ var Visit = React.createClass({displayName: "Visit",
 									return (
 										React.createElement("li", {className: "nav-item", key: "patient-tab-" + patientID}, 
 											React.createElement("a", {onClick: this.switchVisibleItem(patientID), 
-												className: "nav-link" + (patientID == state.visibleItem ? " active" : "")}, 
+												disabled: controlsDisabled, 
+												className: [
+													"nav-link",
+													(patientID == state.visibleItem ? "active" : ""),
+													(controlsDisabled ? "disabled" : "")
+												].join(" ")}, 
 												React.createElement("span", {className: "label label-default"}, patientID), 
 												"  ", state.patients[patientID].abbr_name
 											)

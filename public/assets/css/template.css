@@ -4469,7 +4469,7 @@ a.bg-danger:focus, a.bg-danger:hover {
   line-height: 3.29167rem; }
 
 .row.disabled {
-  opacity: 0.4;
+  opacity: 0.25;
   pointer-events: none; }
 
 /**

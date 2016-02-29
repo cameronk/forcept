@@ -202,7 +202,8 @@ class VisitController extends Controller
         } else {
             return response()->json([
                 'status' => 'failure',
-                'message' => sprintf('Stage with ID %s does not exist', $request->stage)
+                'message' => sprintf('Stage with ID %s does not exist', $request->stage),
+                'allowRetry' => false
             ], 422);
         }
 
@@ -212,8 +213,9 @@ class VisitController extends Controller
             if($destination->count() == 0) {
                 return response()->json([
                     'status' => 'failure',
-                    'message' => sprintf('Destination stage [ID: %s] does not exist', $request->destination)
-                ]);
+                    'message' => sprintf('Destination stage [ID: %s] does not exist', $request->destination),
+                    'retry' => false
+                ], 422);
             }
         }
 
@@ -230,7 +232,8 @@ class VisitController extends Controller
             if(!$saved) {
                 return response()->json([
                     'status' => 'failure',
-                    'message' => 'Failed to save new visit record.'
+                    'message' => 'Failed to save new visit record',
+                    'retry' => true
                 ], 422);
             }
 
@@ -242,8 +245,9 @@ class VisitController extends Controller
             } else {
                 return response()->json([
                     'status' => 'failure',
-                    'message' => sprintf('Visit with ID %s does not exist.', $request->visit)
-                ]);
+                    'message' => sprintf('Visit ID #%s was provided, but does not exist', $request->visit),
+                    'retry' => false
+                ], 422);
             }
         }
 

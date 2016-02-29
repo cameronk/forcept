@@ -1,4 +1,4 @@
-/*
+/**
  * modals/FinishVisit.jsx
  * @author Cameron Kelley
  *

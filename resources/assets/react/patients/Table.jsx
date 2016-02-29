@@ -64,6 +64,20 @@ Patients.Table = React.createClass({
                     isFetching: false,
                     patients: patients
                 });
+            }.bind(this),
+            error: function(xhr) {
+
+				/*
+				 * Abort request modal
+				 */
+				Request.abort(xhr, function() {
+
+					this.setState({
+						isFetching: false
+					});
+
+				}.bind(this));
+
             }.bind(this)
         });
     },
